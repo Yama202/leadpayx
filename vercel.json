@@ -1,3 +1,5 @@
-"crons": [
-  { "path": "/api/cron/reassign-sla", "schedule": "0 3 * * *" }
-]
+{
+  "crons": [
+    { "path": "/api/cron/reassign-sla", "schedule": "0 3 * * *" }
+  ]
+}
