@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 import { requireProfile, requireRole } from "@/lib/auth";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
 import { roundBrlHalfUp } from "@/lib/global-commission";
+import {
+  logSetAdminRoleRpcError,
+  mapSetAdminRoleRpcToUserMessage,
+} from "@/lib/set-admin-role-error";
 import { createClient } from "@/lib/supabase/server";
 import {
   accountIdSchema,
@@ -407,17 +411,19 @@ export async function setAdminRoleAction(
 
   const supabase = await createClient();
   const makeAdmin = parsed.data.action === "promote";
+  const targetEmail = parsed.data.email.trim().toLowerCase();
+  const rpcContext = { targetEmail, makeAdmin };
+
   const { error } = await supabase.rpc("set_admin_role", {
-    target_email: parsed.data.email,
+    target_email: targetEmail,
     make_admin: makeAdmin,
   });
 
   if (error) {
+    logSetAdminRoleRpcError(error, rpcContext);
     return {
       ok: false,
-      message: makeAdmin
-        ? "Não foi possível promover este usuário. Confirme se o cadastro existe."
-        : "Não foi possível revogar este admin. Verifique a confirmação e as proteções.",
+      message: mapSetAdminRoleRpcToUserMessage(error, rpcContext),
     };
   }
 
