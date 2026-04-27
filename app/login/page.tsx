@@ -4,13 +4,22 @@ import { redirectAuthenticatedUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ created?: string }>;
+}) {
   await redirectAuthenticatedUser();
+  const params = await searchParams;
 
   return (
     <AuthCard
       backHref="/"
-      description="Entre para acessar seu painel operacional com permissões do seu perfil."
+      description={
+        params.created === "1"
+          ? "Cadastro criado. Entre com seus dados para continuar."
+          : "Entre para acessar seu painel operacional com permissões do seu perfil."
+      }
       title="Acesse sua operação"
     >
       <LoginForm />

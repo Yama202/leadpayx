@@ -15,6 +15,28 @@ import {
 } from "@/lib/validation";
 import type { Profile } from "@/lib/types";
 
+function getSignupErrorMessage(error: { message?: string; status?: number }) {
+  const message = error.message?.toLowerCase() ?? "";
+
+  if (message.includes("already registered") || message.includes("already exists")) {
+    return "Este e-mail já tem cadastro. Tente entrar ou recuperar o acesso.";
+  }
+
+  if (message.includes("password")) {
+    return "A senha não atende aos critérios mínimos. Use uma senha exclusiva para o LeadPayX.";
+  }
+
+  if (
+    error.status === 500 ||
+    message.includes("database") ||
+    message.includes("saving new user")
+  ) {
+    return "Erro interno ao salvar o cadastro no banco. Código SIGNUP_DB_PROFILE.";
+  }
+
+  return "Não foi possível criar o acesso. Revise os dados e tente novamente.";
+}
+
 export async function loginAction(
   stateOrFormData: ActionState | FormData = initialActionState,
   maybeFormData?: FormData,
@@ -83,17 +105,20 @@ export async function registerAction(
   });
 
   if (error) {
-    return { ok: false, message: "Não foi possível criar o acesso." };
+    console.error("[SIGNUP_ERROR]", {
+      status: error.status,
+      name: error.name,
+      message: error.message,
+    });
+
+    return { ok: false, message: getSignupErrorMessage(error) };
   }
 
   if (data.session) {
     redirect("/complete-profile");
   }
 
-  return {
-    ok: true,
-    message: "Cadastro criado. Confirme seu e-mail se o Supabase exigir confirmação.",
-  };
+  redirect("/login?created=1");
 }
 
 export async function logoutAction() {
