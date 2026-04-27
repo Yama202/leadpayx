@@ -1,46 +1,61 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { cache } from "react";
 
 import { roleHome } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile, UserRole } from "@/lib/types";
 
-export async function getCurrentProfile() {
+function hasSupabaseAuthCookie(cookieList: { name: string }[]) {
+  return cookieList.some(
+    (cookie) => cookie.name.startsWith("sb-") && cookie.name.includes("auth-token"),
+  );
+}
+
+export const getCurrentAuthState = cache(async () => {
+  const cookieStore = await cookies();
+
+  if (!hasSupabaseAuthCookie(cookieStore.getAll())) {
+    return { profile: null, userId: null };
+  }
+
   const supabase = await createClient();
   const { data: claims, error: claimsError } = await supabase.auth.getClaims();
+  const userId = claims?.claims.sub ?? null;
 
-  if (claimsError || !claims?.claims.sub) {
-    return null;
+  if (claimsError || !userId) {
+    return { profile: null, userId: null };
   }
 
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", claims.claims.sub)
+    .eq("id", userId)
     .single<Profile>();
 
   if (error || !data || data.status !== "active") {
-    return null;
+    return { profile: null, userId };
   }
 
-  return data;
+  return { profile: data, userId };
+});
+
+export async function getCurrentProfile() {
+  const { profile } = await getCurrentAuthState();
+
+  return profile;
 }
 
 export async function getAuthenticatedUserId() {
-  const supabase = await createClient();
-  const { data: claims, error } = await supabase.auth.getClaims();
+  const { userId } = await getCurrentAuthState();
 
-  if (error || !claims?.claims.sub) {
-    return null;
-  }
-
-  return claims.claims.sub;
+  return userId;
 }
 
 export async function requireProfile() {
-  const profile = await getCurrentProfile();
+  const { profile, userId } = await getCurrentAuthState();
 
   if (!profile) {
-    const userId = await getAuthenticatedUserId();
     redirect(userId ? "/complete-profile" : "/login");
   }
 
@@ -58,13 +73,11 @@ export async function requireRole(roles: UserRole[]) {
 }
 
 export async function redirectAuthenticatedUser() {
-  const profile = await getCurrentProfile();
+  const { profile, userId } = await getCurrentAuthState();
 
   if (profile) {
     redirect(roleHome[profile.role]);
   }
-
-  const userId = await getAuthenticatedUserId();
 
   if (userId) {
     redirect("/complete-profile");

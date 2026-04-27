@@ -3,8 +3,19 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { getPublicEnv } from "@/lib/env";
 
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-") && cookie.name.includes("auth-token"));
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  if (!hasSupabaseAuthCookie(request)) {
+    return response;
+  }
+
   const env = getPublicEnv();
 
   const supabase = createServerClient(
@@ -36,6 +47,11 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/admin/:path*",
+    "/captador/:path*",
+    "/operador/:path*",
+    "/complete-profile",
+    "/logout",
+    "/access-denied",
   ],
 };

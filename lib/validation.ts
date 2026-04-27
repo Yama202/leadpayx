@@ -7,7 +7,13 @@ export const loginSchema = z.object({
 
 export const registerSchema = loginSchema.extend({
   name: z.string().min(2, "Informe seu nome completo.").max(120),
-  registrationCode: z.string().trim().max(32).optional(),
+  registrationCode: z
+    .string()
+    .trim()
+    .max(32)
+    .regex(/^[a-zA-Z0-9_-]*$/, "Use apenas letras, números, _ ou -.")
+    .transform((value) => (value ? value.toUpperCase() : undefined))
+    .optional(),
 });
 
 function normalizeBrazilianWhatsapp(value: string) {

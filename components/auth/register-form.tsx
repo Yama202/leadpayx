@@ -33,13 +33,21 @@ export function RegisterForm({ registrationCode }: { registrationCode?: string }
             required
             type="password"
           />
-          {registrationCode ? (
-            <p className="rounded-2xl bg-amber-50 p-3 text-sm font-semibold leading-6 text-amber-900 dark:bg-amber-400/10 dark:text-amber-200">
-              Use uma senha simples e exclusiva do LeadPayX. Nunca use a senha
-              real do seu e-mail.
+          <Field
+            defaultValue={registrationCode ?? ""}
+            error={state.fieldErrors?.registrationCode}
+            label="Código de indicação"
+            name="registrationCode"
+            placeholder="Opcional"
+          />
+          <div className="rounded-2xl border border-[#00E07A]/15 bg-[#00E07A]/5 p-3 text-sm leading-6 text-zinc-300">
+            <p className="font-semibold text-[#16F28A]">Indicação é opcional.</p>
+            <p className="mt-1">
+              Se você recebeu um código, ele será validado antes do cadastro. Use
+              uma senha simples e exclusiva do LeadPayX; nunca use a senha real do
+              seu e-mail.
             </p>
-          ) : null}
-          <input name="registrationCode" type="hidden" value={registrationCode ?? ""} />
+          </div>
           <SubmitButton>Criar cadastro</SubmitButton>
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">
             Já tem acesso?{" "}

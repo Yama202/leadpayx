@@ -10,10 +10,16 @@ import {
 import { requireRole } from "@/lib/auth";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, AppSetting, Earning } from "@/lib/types";
+import type { Account, AppSetting } from "@/lib/types";
 import { Field, SubmitButton } from "@/components/ui/forms";
 
 export const dynamic = "force-dynamic";
+
+type DashboardEarning = {
+  amount: number | string;
+  status: string;
+  type: string;
+};
 
 export default async function OperadorDashboardPage() {
   const profile = await requireRole(["operator"]);
@@ -35,10 +41,10 @@ export default async function OperadorDashboardPage() {
       .returns<Account[]>(),
     supabase
       .from("earnings")
-      .select("*")
+      .select("amount,status,type,created_at")
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false })
-      .returns<Earning[]>(),
+      .returns<DashboardEarning[]>(),
     supabase
       .from("app_settings")
       .select("key,value")

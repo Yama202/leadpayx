@@ -18,8 +18,16 @@ import type { Profile } from "@/lib/types";
 function getSignupErrorMessage(error: { message?: string; status?: number }) {
   const message = error.message?.toLowerCase() ?? "";
 
+  if (error.status === 429 || message.includes("rate limit")) {
+    return "Muitas tentativas de cadastro em pouco tempo. Aguarde alguns minutos e tente novamente.";
+  }
+
   if (message.includes("already registered") || message.includes("already exists")) {
     return "Este e-mail já tem cadastro. Tente entrar ou recuperar o acesso.";
+  }
+
+  if (message.includes("invalid email") || message.includes("email address")) {
+    return "Informe um e-mail válido para criar o acesso.";
   }
 
   if (message.includes("password")) {
@@ -36,6 +44,12 @@ function getSignupErrorMessage(error: { message?: string; status?: number }) {
 
   return "Não foi possível criar o acesso. Revise os dados e tente novamente.";
 }
+
+type RegistrationCodeValidation = {
+  valid: boolean;
+  kind: string | null;
+  referrer_name: string | null;
+};
 
 export async function loginAction(
   stateOrFormData: ActionState | FormData = initialActionState,
@@ -93,6 +107,29 @@ export async function registerAction(
 
   const { email, password, name, registrationCode } = parsed.data;
   const supabase = await createClient();
+
+  if (registrationCode) {
+    const { data: codeValidation, error: codeValidationError } = await supabase.rpc(
+      "validate_registration_code",
+      {
+        submitted_code: registrationCode,
+      },
+    );
+    const validationResult = Array.isArray(codeValidation)
+      ? (codeValidation[0] as RegistrationCodeValidation | undefined)
+      : (codeValidation as RegistrationCodeValidation | null);
+
+    if (codeValidationError || !validationResult?.valid) {
+      return {
+        ok: false,
+        message: "Código de indicação inválido, expirado ou indisponível.",
+        fieldErrors: {
+          registrationCode: ["Confira o código ou deixe o campo em branco para continuar sem indicação."],
+        },
+      };
+    }
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,

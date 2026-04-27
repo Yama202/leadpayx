@@ -7,7 +7,13 @@ import { requireRole } from "@/lib/auth";
 import { toCurrency } from "@/lib/payments";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, Earning } from "@/lib/types";
+import type { Account } from "@/lib/types";
+
+type DashboardEarning = {
+  amount: number | string;
+  status: string;
+  type: string;
+};
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +31,9 @@ export default async function CaptadorDashboardPage() {
       .returns<Account[]>(),
     supabase
       .from("earnings")
-      .select("*")
+      .select("amount,status,type")
       .eq("user_id", profile.id)
-      .returns<Earning[]>(),
+      .returns<DashboardEarning[]>(),
     getWhatsappGroupUrl(),
   ]);
 
@@ -84,7 +90,7 @@ export default async function CaptadorDashboardPage() {
           value={toCurrency(normalPendingAmount)}
         />
         <DashboardCard
-          hint="Liberado quando um indicado completa 2 contas."
+          hint="R$10 liberados quando um indicado completa 2 contas."
           label="Saldo de indicação"
           value={toCurrency(referralPendingAmount)}
         />
