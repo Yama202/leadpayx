@@ -1,10 +1,12 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { CaptadorGlobalOffersPanel } from "@/components/domain/captador-global-offers-panel";
 import { ReferralBox } from "@/components/domain/referral-box";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
 import { toCurrency } from "@/lib/payments";
+import { fetchActiveCaptadorGlobalOffersResolved } from "@/lib/queries/captador-global-offers";
 import { getReferralSettings } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +24,8 @@ export default async function CaptadorDashboardPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
 
-  const [{ data: accounts }, { data: earnings }, { data: settings }, whatsappUrl] = await Promise.all([
+  const [{ data: accounts }, { data: earnings }, { data: settings }, whatsappUrl, globalOffers] =
+    await Promise.all([
     supabase
       .from("accounts")
       .select("*")
@@ -47,6 +50,7 @@ export default async function CaptadorDashboardPage() {
       ])
       .returns<AppSetting[]>(),
     getWhatsappGroupUrl(),
+    fetchActiveCaptadorGlobalOffersResolved(supabase, profile),
   ]);
   const referralSettings = getReferralSettings(settings);
 
@@ -94,6 +98,9 @@ export default async function CaptadorDashboardPage() {
           </LinkButton>
         </section>
       ) : null}
+      <div className="mb-6">
+        <CaptadorGlobalOffersPanel items={globalOffers} />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <DashboardCard label="Contas enviadas" value={String(accounts?.length ?? 0)} />
         <DashboardCard label="Ganhos pendentes" value={toCurrency(pendingAmount)} />

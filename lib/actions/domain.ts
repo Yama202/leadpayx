@@ -13,6 +13,8 @@ import {
   adminProfileUpdateSchema,
   accountSchema,
   appSettingsSchema,
+  captadorGlobalOfferSchema,
+  captadorGlobalOfferToggleSchema,
   formDataToObject,
   globalCommissionSettingsSchema,
   initialActionState,
@@ -524,8 +526,8 @@ export async function createRegistrationLinkAction(formData: FormData): Promise<
     role: parsed.data.role,
     origin: parsed.data.origin || null,
     campaign: parsed.data.campaign || null,
-    captador_id: parsed.data.captadorId || null,
-    captador_commission_override: parsed.data.captadorCommissionOverride,
+    captador_id: null,
+    captador_commission_override: null,
     expires_at: parsed.data.expiresAt || null,
     max_uses: parsed.data.maxUses,
     created_by: admin.id,
@@ -534,7 +536,6 @@ export async function createRegistrationLinkAction(formData: FormData): Promise<
   await createAuditLog("registration_link.created", "registration_link", null, {
     code,
     role: parsed.data.role,
-    captadorCommissionOverride: parsed.data.captadorCommissionOverride,
   });
 
   revalidatePath("/admin/links");
@@ -561,6 +562,69 @@ export async function updateRegistrationLinkStatusAction(
   });
 
   revalidatePath("/admin/links");
+}
+
+export async function upsertCaptadorGlobalOfferAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  const formData = maybeFormData ?? (stateOrFormData as FormData);
+  await requireRole(["admin"]);
+  const parsed = captadorGlobalOfferSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    return validationError("Revise os dados do link global.", parsed.error);
+  }
+
+  const supabase = await createClient();
+  const payload = {
+    name: parsed.data.name.trim(),
+    url_base: parsed.data.urlBase.trim(),
+    is_active: parsed.data.isActive,
+    sort_order: parsed.data.sortOrder,
+  };
+
+  if (parsed.data.offerId) {
+    const { error } = await supabase
+      .from("captador_global_offers")
+      .update(payload)
+      .eq("id", parsed.data.offerId);
+
+    if (error) {
+      return { ok: false, message: "Não foi possível atualizar o link." };
+    }
+  } else {
+    const { error } = await supabase.from("captador_global_offers").insert(payload);
+
+    if (error) {
+      return { ok: false, message: "Não foi possível criar o link." };
+    }
+  }
+
+  revalidatePath("/admin/links-operacao");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/indicacoes");
+
+  return { ok: true, message: "Link global salvo." };
+}
+
+export async function toggleCaptadorGlobalOfferActiveAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+  const parsed = captadorGlobalOfferToggleSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const supabase = await createClient();
+  await supabase
+    .from("captador_global_offers")
+    .update({ is_active: parsed.data.nextActive === "true" })
+    .eq("id", parsed.data.offerId);
+
+  revalidatePath("/admin/links-operacao");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/indicacoes");
 }
 
 export async function upsertPromotionOfferAction(

@@ -134,15 +134,6 @@ export const registrationLinkSchema = z.object({
   role: z.enum(["captador", "operator"]),
   origin: z.string().trim().max(120).optional(),
   campaign: z.string().trim().max(120).optional(),
-  captadorId: z.string().uuid().or(z.literal("")).optional(),
-  captadorCommissionOverride: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => (value ? Number(value) : null))
-    .refine((value) => value === null || (Number.isFinite(value) && value > 0), {
-      message: "Informe um valor positivo.",
-    }),
   expiresAt: z.string().or(z.literal("")).optional(),
   maxUses: z
     .string()
@@ -157,6 +148,26 @@ export const registrationLinkSchema = z.object({
 export const registrationLinkStatusSchema = z.object({
   linkId: z.string().uuid(),
   status: z.enum(["active", "inactive"]),
+});
+
+export const captadorGlobalOfferSchema = z.object({
+  offerId: z.string().uuid().optional(),
+  name: z.string().trim().min(2, "Informe o nome da oferta.").max(120),
+  urlBase: z
+    .string()
+    .trim()
+    .url("Informe uma URL válida.")
+    .refine((value) => value.startsWith("https://"), "Use apenas HTTPS."),
+  isActive: z
+    .string()
+    .optional()
+    .transform((value) => value === "on"),
+  sortOrder: z.coerce.number().int().min(0).max(999_999),
+});
+
+export const captadorGlobalOfferToggleSchema = z.object({
+  offerId: z.string().uuid(),
+  nextActive: z.enum(["true", "false"]),
 });
 
 export const promotionOfferSchema = z.object({

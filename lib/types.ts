@@ -104,6 +104,17 @@ export type AppSetting = {
   updated_by?: string | null;
 };
 
+/** Links de operação globais exibidos a todos os captadores (URLs externas). */
+export type CaptadorGlobalOffer = {
+  id: string;
+  name: string;
+  url_base: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PromotionOffer = {
   id: string;
   name: string;
