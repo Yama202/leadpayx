@@ -16,6 +16,7 @@ export function Field({
   readOnly,
   defaultValue,
   error,
+  step,
 }: {
   label: string;
   name: string;
@@ -25,6 +26,7 @@ export function Field({
   readOnly?: boolean;
   defaultValue?: string;
   error?: string[];
+  step?: string;
 }) {
   return (
     <label className="block">
@@ -36,6 +38,7 @@ export function Field({
         placeholder={placeholder}
         readOnly={readOnly}
         required={required}
+        step={step}
         type={type}
       />
       {error?.[0] ? <span className="mt-2 block text-sm text-rose-300">{error[0]}</span> : null}

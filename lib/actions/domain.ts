@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireProfile, requireRole } from "@/lib/auth";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
+import { roundBrlHalfUp } from "@/lib/global-commission";
 import { createClient } from "@/lib/supabase/server";
 import {
   accountIdSchema,
@@ -13,6 +14,7 @@ import {
   accountSchema,
   appSettingsSchema,
   formDataToObject,
+  globalCommissionSettingsSchema,
   initialActionState,
   payoutProcessSchema,
   profileSchema,
@@ -375,8 +377,6 @@ export async function adminUpdateProfileAction(formData: FormData): Promise<void
       role: parsed.data.role,
       status: parsed.data.status,
       whatsapp: parsed.data.whatsapp,
-      captador_commission_override: parsed.data.captadorCommissionOverride,
-      operator_commission_override: parsed.data.operatorCommissionOverride,
     })
     .eq("id", parsed.data.profileId);
 
@@ -384,8 +384,6 @@ export async function adminUpdateProfileAction(formData: FormData): Promise<void
     role: parsed.data.role,
     status: parsed.data.status,
     whatsapp: parsed.data.whatsapp,
-    captadorCommissionOverride: parsed.data.captadorCommissionOverride,
-    operatorCommissionOverride: parsed.data.operatorCommissionOverride,
   });
 
   revalidatePath("/admin/captadores");
@@ -442,8 +440,6 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
 
   const supabase = await createClient();
   const updates = [
-    ["commission_amount_brl", parsed.data.commissionAmount],
-    ["operator_commission_amount_brl", parsed.data.operatorCommissionAmount],
     ["referral_bonus_brl", parsed.data.referralBonus],
     ["referral_completed_accounts_target", parsed.data.referralTarget],
     ["referral_bonus_enabled", parsed.data.referralBonusEnabled],
@@ -466,6 +462,50 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
   );
 
   revalidatePath("/admin/configuracoes");
+}
+
+export async function updateGlobalCommissionsAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  const formData = maybeFormData ?? (stateOrFormData as FormData);
+  await requireRole(["admin"]);
+  const raw = formDataToObject(formData);
+  const parsed = globalCommissionSettingsSchema.safeParse({
+    captadorCommissionPerAccount: raw.captadorCommissionPerAccount,
+    operatorCommissionPerAccount: raw.operatorCommissionPerAccount,
+  });
+
+  if (!parsed.success) {
+    return validationError("Revise os valores de comissão.", parsed.error);
+  }
+
+  const captador = roundBrlHalfUp(parsed.data.captadorCommissionPerAccount);
+  const operador = roundBrlHalfUp(parsed.data.operatorCommissionPerAccount);
+  const supabase = await createClient();
+  const payload = [
+    ["captador_commission_per_account", captador],
+    ["operator_commission_per_account", operador],
+    ["commission_amount_brl", captador],
+    ["operator_commission_amount_brl", operador],
+  ] as const;
+
+  for (const [setting_key, value] of payload) {
+    const { error } = await supabase.rpc("upsert_app_setting", {
+      setting_key,
+      setting_value: value,
+    });
+    if (error) {
+      return { ok: false, message: "Não foi possível salvar as comissões. Tente novamente." };
+    }
+  }
+
+  revalidatePath("/admin/comissoes");
+  revalidatePath("/admin/configuracoes");
+  revalidatePath("/admin/captadores");
+  revalidatePath("/admin/operadores");
+
+  return { ok: true, message: "Comissões globais salvas. Novos ganhos usarão estes valores." };
 }
 
 export async function createRegistrationLinkAction(formData: FormData): Promise<void> {

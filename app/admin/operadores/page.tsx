@@ -66,7 +66,7 @@ export default async function AdminOperadoresPage({
 
   return (
     <RoleBasedLayout
-      description="Operadores ativos entram no balanceamento automático de contas."
+      description="Filas, elegibilidade e contas por operador. Comissão por conta é global para todos os operadores."
       profile={profile}
       title="Operadores"
     >

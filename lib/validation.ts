@@ -83,27 +83,20 @@ export const adminProfileUpdateSchema = z.object({
     .refine((value) => value === null || /^55\d{10,11}$/.test(value), {
       message: "Informe um WhatsApp brasileiro válido com DDD.",
     }),
-  captadorCommissionOverride: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => (value ? Number(value) : null))
-    .refine((value) => value === null || (Number.isFinite(value) && value > 0), {
-      message: "Informe um valor positivo.",
-    }),
-  operatorCommissionOverride: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => (value ? Number(value) : null))
-    .refine((value) => value === null || (Number.isFinite(value) && value > 0), {
-      message: "Informe um valor positivo.",
-    }),
+});
+
+const brlCommissionField = z.coerce
+  .number()
+  .min(0, "Informe um valor zero ou positivo.")
+  .max(999_999.99, "Valor acima do limite permitido para comissão.")
+  .refine((value) => Number.isFinite(value), { message: "Valor inválido." });
+
+export const globalCommissionSettingsSchema = z.object({
+  captadorCommissionPerAccount: brlCommissionField,
+  operatorCommissionPerAccount: brlCommissionField,
 });
 
 export const appSettingsSchema = z.object({
-  commissionAmount: z.coerce.number().positive(),
-  operatorCommissionAmount: z.coerce.number().positive(),
   referralBonus: z.coerce.number().positive(),
   referralTarget: z.coerce.number().int().positive(),
   referralBonusEnabled: z

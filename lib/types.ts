@@ -21,7 +21,9 @@ export type Profile = {
   referred_by: string | null;
   status: ProfileStatus;
   referral_bonus_paid: boolean;
+  /** @deprecated Ignorado no cálculo; comissão vem de `app_settings`. */
   captador_commission_override: number | null;
+  /** @deprecated Ignorado no cálculo; comissão vem de `app_settings`. */
   operator_commission_override: number | null;
   registration_link_id: string | null;
   created_at: string;

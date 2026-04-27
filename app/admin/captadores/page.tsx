@@ -18,7 +18,7 @@ export default async function AdminCaptadoresPage() {
 
   return (
     <RoleBasedLayout
-      description="Gerencie status sem permitir alteração de role por usuários comuns."
+      description="Gestão de captadores: papéis, status e contato. Comissões são globais (página Comissões)."
       profile={profile}
       title="Captadores"
     >

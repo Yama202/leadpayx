@@ -28,6 +28,7 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
     { href: "/admin/pagamentos", label: "Pagamentos" },
     { href: "/admin/links", label: "Links" },
     { href: "/admin/ofertas", label: "Ofertas" },
+    { href: "/admin/comissoes", label: "Comissões" },
     { href: "/admin/configuracoes", label: "Configurações" },
     { href: "/admin/logs", label: "Logs" },
   ],

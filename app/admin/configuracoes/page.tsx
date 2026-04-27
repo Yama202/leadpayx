@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { Button } from "@/components/ui/button";
 import { updateAppSettingsAction } from "@/lib/actions/domain";
@@ -22,7 +24,14 @@ export default async function AdminConfiguracoesPage() {
     .eq("action", "settings.updated")
     .order("created_at", { ascending: false })
     .limit(8)
-    .returns<{ id: string; user_id: string | null; metadata: { key?: string }; created_at: string }[]>();
+    .returns<
+      {
+        id: string;
+        user_id: string | null;
+        metadata: { key?: string; previous?: unknown; next?: unknown };
+        created_at: string;
+      }[]
+    >();
   const values = Object.fromEntries(
     (settings ?? []).map((setting) => [setting.key, setting.value]),
   );
@@ -30,7 +39,7 @@ export default async function AdminConfiguracoesPage() {
 
   return (
     <RoleBasedLayout
-      description="Valores de comissão e bônus ficam no banco para ajuste controlado."
+      description="Operação, indicação e integrações. Comissões por papel ficam em Comissões globais."
       profile={profile}
       title="Configurações"
     >
@@ -44,17 +53,14 @@ export default async function AdminConfiguracoesPage() {
             Operação e pagamento
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#A1A1AA]">
-            Ajustes administrativos ficam auditados e afetam apenas novas leituras operacionais.
+            Ajustes administrativos ficam auditados. Comissões por conta de captador e operador são
+            definidas na página{" "}
+            <Link className="font-bold text-[#16F28A] underline-offset-2 hover:underline" href="/admin/comissoes">
+              Comissões globais
+            </Link>
+            .
           </p>
           </div>
-        <label className="block">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Comissão captador padrão</span>
-          <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={String(values.commission_amount_brl ?? 30)} name="commissionAmount" step="0.01" type="number" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Comissão operador padrão</span>
-          <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={String(values.operator_commission_amount_brl ?? 10)} name="operatorCommissionAmount" step="0.01" type="number" />
-        </label>
         <label className="block">
           <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Bônus de indicação</span>
           <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={String(values.referral_bonus_brl ?? 60)} name="referralBonus" step="0.01" type="number" />
@@ -140,6 +146,11 @@ export default async function AdminConfiguracoesPage() {
                   <p className="font-bold text-slate-950 dark:text-white">
                     {log.metadata?.key ?? "configuração"}
                   </p>
+                  {log.metadata?.previous !== undefined && log.metadata?.next !== undefined ? (
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                      Valor anterior → novo (auditoria numérica)
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     {new Date(log.created_at).toLocaleString("pt-BR")} ·{" "}
                     {log.user_id ? `admin ${log.user_id.slice(0, 8)}` : "sistema"}

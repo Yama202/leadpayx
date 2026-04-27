@@ -63,7 +63,7 @@ export default async function AdminLinksPage() {
             </option>
           ))}
         </select>
-        <input className="min-h-12 rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" name="captadorCommissionOverride" placeholder="Valor captador por conta" step="0.01" type="number" />
+        <input className="min-h-12 rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" name="captadorCommissionOverride" placeholder="Override campanha (opcional)" step="0.01" type="number" />
         <input className="min-h-12 rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" name="expiresAt" type="datetime-local" />
         <input className="min-h-12 rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" name="maxUses" placeholder="Limite de usos" type="number" />
         <Button type="submit">Criar link</Button>
@@ -112,7 +112,7 @@ export default async function AdminLinksPage() {
                     style: "currency",
                     currency: "BRL",
                   })
-                : "usa regra do captador/global"}
+                : "usa comissão global do captador"}
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <CopyLinkButton url={finalUrl} />
