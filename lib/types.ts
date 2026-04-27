@@ -49,6 +49,8 @@ export type Account = {
   completed_at: string | null;
   rejected_at: string | null;
   updated_at: string;
+  /** Operador que concluiu a operação (imutável após finalização). */
+  completed_by_operador_id?: string | null;
 };
 
 export type Earning = {
@@ -96,6 +98,23 @@ export type RegistrationLink = {
 export type AppSetting = {
   key: string;
   value: string | number | boolean | Record<string, unknown> | null;
+  updated_at?: string;
+  updated_by?: string | null;
+};
+
+export type PromotionOffer = {
+  id: string;
+  name: string;
+  description: string;
+  reward_amount: number;
+  promotion_url: string;
+  status: ProfileStatus;
+  valid_until: string | null;
+  display_order: number;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ReferralSummary = {

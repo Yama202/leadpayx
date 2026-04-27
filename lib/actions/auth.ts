@@ -51,6 +51,11 @@ type RegistrationCodeValidation = {
   referrer_name: string | null;
 };
 
+type ReferralBindResult = {
+  status: "empty" | "disabled" | "already_bound" | "invalid" | "self_referral" | "bound";
+  referrer_name: string | null;
+};
+
 export async function loginAction(
   stateOrFormData: ActionState | FormData = initialActionState,
   maybeFormData?: FormData,
@@ -197,6 +202,38 @@ export async function completeProfileAction(
     .eq("id", claims.claims.sub)
     .maybeSingle();
 
+  if (parsed.data.registrationCode && existingProfile?.referred_by) {
+    return {
+      ok: false,
+      message: "Seu cadastro já possui indicação vinculada. Esse vínculo não pode ser alterado.",
+      fieldErrors: {
+        registrationCode: ["A indicação já está definida para este perfil."],
+      },
+    };
+  }
+
+  if (parsed.data.registrationCode && !existingProfile?.referred_by) {
+    const { data: codeValidation, error: codeValidationError } = await supabase.rpc(
+      "validate_registration_code",
+      {
+        submitted_code: parsed.data.registrationCode,
+      },
+    );
+    const validationResult = Array.isArray(codeValidation)
+      ? (codeValidation[0] as RegistrationCodeValidation | undefined)
+      : (codeValidation as RegistrationCodeValidation | null);
+
+    if (codeValidationError || !validationResult?.valid) {
+      return {
+        ok: false,
+        message: "Código de indicação inválido, expirado ou indisponível.",
+        fieldErrors: {
+          registrationCode: ["Confira o código ou deixe o campo em branco para continuar."],
+        },
+      };
+    }
+  }
+
   const { data: profile, error } = existingProfile
     ? await supabase
         .from("profiles")
@@ -227,6 +264,28 @@ export async function completeProfileAction(
 
   if (error || !profile) {
     return { ok: false, message: "Não foi possível completar seu perfil." };
+  }
+
+  if (parsed.data.registrationCode && !profile.referred_by) {
+    const { data: bindData, error: bindError } = await supabase.rpc("bind_referral_code_once", {
+      submitted_code: parsed.data.registrationCode,
+    });
+    const bindResult = Array.isArray(bindData)
+      ? (bindData[0] as ReferralBindResult | undefined)
+      : (bindData as ReferralBindResult | null);
+
+    if (bindError || !bindResult || ["invalid", "self_referral", "disabled"].includes(bindResult.status)) {
+      return {
+        ok: false,
+        message:
+          bindResult?.status === "disabled"
+            ? "A campanha de indicação está pausada no momento."
+            : "Código de indicação inválido, expirado ou indisponível.",
+        fieldErrors: {
+          registrationCode: ["Confira o código ou deixe o campo em branco para continuar."],
+        },
+      };
+    }
   }
 
   redirect(roleHome[profile.role]);

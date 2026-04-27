@@ -37,6 +37,13 @@ export const profileSchema = z.object({
   instagram: z.string().trim().max(80).optional(),
   whatsapp: whatsappSchema,
   pixKey: z.string().trim().min(3, "Informe uma chave Pix válida.").max(160),
+  registrationCode: z
+    .string()
+    .trim()
+    .max(32)
+    .regex(/^[a-zA-Z0-9_-]*$/, "Use apenas letras, números, _ ou -.")
+    .transform((value) => (value ? value.toUpperCase() : undefined))
+    .optional(),
 });
 
 export const accountSchema = z.object({
@@ -99,6 +106,13 @@ export const appSettingsSchema = z.object({
   operatorCommissionAmount: z.coerce.number().positive(),
   referralBonus: z.coerce.number().positive(),
   referralTarget: z.coerce.number().int().positive(),
+  referralBonusEnabled: z
+    .string()
+    .optional()
+    .transform((value) => value === "on"),
+  referralUtmSource: z.string().trim().min(2).max(60).regex(/^[a-zA-Z0-9_-]+$/),
+  referralUtmMedium: z.string().trim().min(2).max(60).regex(/^[a-zA-Z0-9_-]+$/),
+  referralUtmCampaign: z.string().trim().min(2).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   operatorMinCompletedAccounts: z.coerce.number().int().min(0),
   operationalMinBatchSize: z.coerce.number().int().min(1).max(2),
   whatsappGroupUrl: z
@@ -149,6 +163,26 @@ export const registrationLinkSchema = z.object({
 
 export const registrationLinkStatusSchema = z.object({
   linkId: z.string().uuid(),
+  status: z.enum(["active", "inactive"]),
+});
+
+export const promotionOfferSchema = z.object({
+  offerId: z.string().uuid().optional(),
+  name: z.string().trim().min(2, "Informe o nome da oferta.").max(120),
+  description: z.string().trim().min(8, "Descreva as regras da oferta.").max(1200),
+  rewardAmount: z.coerce.number().positive("Informe um valor positivo."),
+  promotionUrl: z
+    .string()
+    .trim()
+    .url("Informe uma URL válida.")
+    .refine((value) => value.startsWith("https://"), "Use apenas links HTTPS."),
+  status: z.enum(["active", "inactive"]).default("active"),
+  validUntil: z.string().or(z.literal("")).optional(),
+  displayOrder: z.coerce.number().int().min(0).max(9999),
+});
+
+export const promotionOfferStatusSchema = z.object({
+  offerId: z.string().uuid(),
   status: z.enum(["active", "inactive"]),
 });
 

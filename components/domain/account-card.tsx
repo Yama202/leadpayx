@@ -4,6 +4,7 @@ import { completeAccountAction, startAccountAction } from "@/lib/actions/domain"
 import { StatusBadge } from "@/components/ui/cards";
 import { Button } from "@/components/ui/button";
 import type { Account } from "@/lib/types";
+import { operatorCanProgressAccount } from "@/lib/account-operation";
 import { SlaIndicator } from "@/components/domain/sla-indicator";
 
 export function AccountCard({
@@ -47,7 +48,12 @@ export function AccountCard({
           {account.rejection_reason}
         </p>
       ) : null}
-      {operatorActions ? (
+      {account.status === "completed" ? (
+        <p className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-3 text-sm font-semibold text-emerald-100">
+          Esta conta já foi operada e finalizada. Não aparecerá novamente na fila ativa.
+        </p>
+      ) : null}
+      {operatorActions && operatorCanProgressAccount(account.status) ? (
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <form action={startAccountAction}>
             <input name="accountId" type="hidden" value={account.id} />

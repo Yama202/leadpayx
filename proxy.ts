@@ -1,3 +1,4 @@
+/** Next.js 16+ request proxy (replaces root `middleware.ts`). Do not add both. */
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 

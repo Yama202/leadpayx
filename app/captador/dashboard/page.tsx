@@ -5,9 +5,10 @@ import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
 import { toCurrency } from "@/lib/payments";
+import { getReferralSettings } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
-import type { Account } from "@/lib/types";
+import type { Account, AppSetting } from "@/lib/types";
 
 type DashboardEarning = {
   amount: number | string;
@@ -21,7 +22,7 @@ export default async function CaptadorDashboardPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
 
-  const [{ data: accounts }, { data: earnings }, whatsappUrl] = await Promise.all([
+  const [{ data: accounts }, { data: earnings }, { data: settings }, whatsappUrl] = await Promise.all([
     supabase
       .from("accounts")
       .select("*")
@@ -34,8 +35,20 @@ export default async function CaptadorDashboardPage() {
       .select("amount,status,type")
       .eq("user_id", profile.id)
       .returns<DashboardEarning[]>(),
+    supabase
+      .from("app_settings")
+      .select("key,value")
+      .in("key", [
+        "referral_bonus_brl",
+        "referral_completed_accounts_target",
+        "referral_utm_source",
+        "referral_utm_medium",
+        "referral_utm_campaign",
+      ])
+      .returns<AppSetting[]>(),
     getWhatsappGroupUrl(),
   ]);
+  const referralSettings = getReferralSettings(settings);
 
   const pendingAmount =
     earnings?.filter((earning) => earning.status === "pending").reduce(
@@ -90,7 +103,7 @@ export default async function CaptadorDashboardPage() {
           value={toCurrency(normalPendingAmount)}
         />
         <DashboardCard
-          hint="R$10 liberados quando um indicado completa 2 contas."
+          hint={`${toCurrency(referralSettings.bonusAmount)} liberados quando um indicado completa ${referralSettings.targetAccounts} contas.`}
           label="Saldo de indicação"
           value={toCurrency(referralPendingAmount)}
         />
@@ -108,7 +121,13 @@ export default async function CaptadorDashboardPage() {
             />
           )}
         </section>
-        <ReferralBox profile={profile} />
+        <ReferralBox
+          appUrl={process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? ""}
+          profile={profile}
+          utmCampaign={referralSettings.utmCampaign}
+          utmMedium={referralSettings.utmMedium}
+          utmSource={referralSettings.utmSource}
+        />
       </div>
     </RoleBasedLayout>
   );

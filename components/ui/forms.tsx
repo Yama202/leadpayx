@@ -13,6 +13,7 @@ export function Field({
   type = "text",
   placeholder,
   required,
+  readOnly,
   defaultValue,
   error,
 }: {
@@ -21,6 +22,7 @@ export function Field({
   type?: string;
   placeholder?: string;
   required?: boolean;
+  readOnly?: boolean;
   defaultValue?: string;
   error?: string[];
 }) {
@@ -32,6 +34,7 @@ export function Field({
         defaultValue={defaultValue}
         name={name}
         placeholder={placeholder}
+        readOnly={readOnly}
         required={required}
         type={type}
       />

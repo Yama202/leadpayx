@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PublicHeader, TrustPaymentBlock } from "@/components/public/institutional-page";
+import { normalizeReferralCode } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 
 const trustChips = [
@@ -21,7 +22,14 @@ const floatingCards = [
   { label: "Pagamento processado", className: "bottom-8 right-2 sm:translate-x-8" },
 ];
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string; utm_content?: string }>;
+}) {
+  const params = await searchParams;
+  const referralCode = normalizeReferralCode(params.ref) || normalizeReferralCode(params.utm_content);
+  const registerHref = referralCode ? `/register?ref=${encodeURIComponent(referralCode)}` : "/register";
   const whatsappUrl = await getWhatsappGroupUrl();
 
   return (
@@ -53,7 +61,7 @@ export default async function Home() {
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
             <Link
               className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[#00E07A] px-7 text-sm font-black uppercase tracking-[0.14em] text-[#031008] shadow-[0_0_46px_rgba(0,224,122,0.30)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#16F28A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A]"
-              href="/register"
+              href={registerHref}
             >
               Começar agora
             </Link>

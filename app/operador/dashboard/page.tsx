@@ -1,4 +1,5 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { PromotionOfferGrid } from "@/components/domain/promotion-offer-grid";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { Button, LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
@@ -8,6 +9,7 @@ import {
   rejectAccountFormAction,
 } from "@/lib/actions/domain";
 import { requireRole } from "@/lib/auth";
+import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, AppSetting } from "@/lib/types";
@@ -15,13 +17,21 @@ import { Field, SubmitButton } from "@/components/ui/forms";
 
 export const dynamic = "force-dynamic";
 
+const operatorAccountSelect =
+  "id,captador_id,operador_id,status,account_identifier,account_notes,account_print_path,source_registration_link_id,operation_started_at,operation_deadline_at,reassigned_at,reassign_reason,last_operator_id,rejection_reason,created_at,assigned_at,started_at,completed_at,rejected_at,updated_at,completed_by_operador_id";
+
 type DashboardEarning = {
   amount: number | string;
   status: string;
   type: string;
 };
 
-export default async function OperadorDashboardPage() {
+export default async function OperadorDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ op_error?: string }>;
+}) {
+  const params = await searchParams;
   const profile = await requireRole(["operator"]);
   const supabase = await createClient();
   await reassignExpiredOperatorAccounts();
@@ -31,10 +41,11 @@ export default async function OperadorDashboardPage() {
     { data: settings },
     { data: eligible },
     whatsappUrl,
+    promotionOffers,
   ] = await Promise.all([
     supabase
       .from("accounts")
-      .select("*")
+      .select(operatorAccountSelect)
       .eq("operador_id", profile.id)
       .in("status", ["assigned", "in_progress"])
       .order("assigned_at", { ascending: true })
@@ -52,7 +63,17 @@ export default async function OperadorDashboardPage() {
       .returns<AppSetting[]>(),
     supabase.rpc("is_operator_eligible", { target_operator_id: profile.id }),
     getWhatsappGroupUrl(),
+    fetchActivePromotionOffers(),
   ]);
+  const promotionPreview = promotionOffers.slice(0, 2);
+  const opErrorMessage =
+    params.op_error === "complete"
+      ? "Não foi possível finalizar a conta (prazo, permissão ou estado inválido). Atualize a página e tente novamente."
+      : params.op_error === "start"
+        ? "Não foi possível iniciar a operação (SLA ou estado da conta). Atualize a página."
+        : params.op_error === "invalid"
+          ? "Requisição inválida. Atualize a página e tente novamente."
+          : null;
   const settingValues = Object.fromEntries(
     (settings ?? []).map((setting) => [setting.key, setting.value]),
   );
@@ -85,6 +106,32 @@ export default async function OperadorDashboardPage() {
           </article>
         ))}
       </section>
+      {opErrorMessage ? (
+        <div
+          className="mb-6 rounded-[2rem] border border-rose-400/30 bg-rose-500/10 p-4 text-sm font-semibold text-rose-100"
+          role="alert"
+        >
+          {opErrorMessage}
+        </div>
+      ) : null}
+      {promotionPreview.length ? (
+        <section className="mb-6 rounded-[2rem] border border-[#EAB308]/20 bg-zinc-900/40 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.2)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-[#FDE047]">Promoções ativas</p>
+              <p className="mt-1 text-xs text-zinc-400">
+                Links globais aprovados pelo admin — mesmo catálogo para todos os operadores.
+              </p>
+            </div>
+            <LinkButton className="w-full shrink-0 sm:w-auto" href="/operador/ofertas" variant="secondary">
+              Ver todas
+            </LinkButton>
+          </div>
+          <div className="mt-4">
+            <PromotionOfferGrid offers={promotionPreview} variant="operator" />
+          </div>
+        </section>
+      ) : null}
       {whatsappUrl ? (
         <section className="mb-6 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
           <p className="text-sm font-black text-white">Canal oficial</p>

@@ -12,7 +12,9 @@ export default async function OperadorHistoricoPage() {
   const supabase = await createClient();
   const { data: accounts } = await supabase
     .from("accounts")
-    .select("*")
+    .select(
+      "id,captador_id,operador_id,status,account_identifier,account_notes,account_print_path,operation_deadline_at,reassigned_at,reassign_reason,rejection_reason,assigned_at,started_at,completed_at,rejected_at,completed_by_operador_id",
+    )
     .eq("operador_id", profile.id)
     .in("status", ["completed", "rejected"])
     .order("updated_at", { ascending: false })

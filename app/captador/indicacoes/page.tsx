@@ -3,32 +3,49 @@ import { ReferralBox } from "@/components/domain/referral-box";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { DashboardCard } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
+import { buildReferralUrl, getReferralSettings } from "@/lib/referrals";
 import { createClient } from "@/lib/supabase/server";
-import type { ReferralSummary, RegistrationLink } from "@/lib/types";
+import type { AppSetting, ReferralSummary, RegistrationLink } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function IndicacoesPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-  const { data: count } = await supabase.rpc("get_referral_count", {
-    target_user_id: profile.id,
-  });
-  const { data: referrals } = await supabase.rpc("get_referral_summary", {
-    target_user_id: profile.id,
-  });
-  const { data: links } = await supabase
-    .from("registration_links")
-    .select("*")
-    .eq("captador_id", profile.id)
-    .eq("role", "captador")
-    .eq("status", "active")
-    .or("expires_at.is.null,expires_at.gt.now()")
-    .order("created_at", { ascending: false })
-    .returns<RegistrationLink[]>();
+  const [{ data: count }, { data: referrals }, { data: links }, { data: settings }] =
+    await Promise.all([
+      supabase.rpc("get_referral_count", {
+        target_user_id: profile.id,
+      }),
+      supabase.rpc("get_referral_summary", {
+        target_user_id: profile.id,
+      }),
+      supabase
+        .from("registration_links")
+        .select("id,code,label,role,status,origin,campaign,captador_id,captador_commission_override,expires_at,max_uses,uses_count,created_by,created_at,updated_at")
+        .eq("captador_id", profile.id)
+        .eq("role", "captador")
+        .eq("status", "active")
+        .or("expires_at.is.null,expires_at.gt.now()")
+        .order("created_at", { ascending: false })
+        .returns<RegistrationLink[]>(),
+      supabase
+        .from("app_settings")
+        .select("key,value")
+        .in("key", [
+          "referral_bonus_enabled",
+          "referral_bonus_brl",
+          "referral_completed_accounts_target",
+          "referral_utm_source",
+          "referral_utm_medium",
+          "referral_utm_campaign",
+        ])
+        .returns<AppSetting[]>(),
+    ]);
   const referralRows = (referrals ?? []) as ReferralSummary[];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
   const validLinks = links ?? [];
+  const referralSettings = getReferralSettings(settings);
 
   return (
     <RoleBasedLayout
@@ -42,7 +59,13 @@ export default async function IndicacoesPage() {
           label="Indicados vinculados"
           value={String(count ?? 0)}
         />
-        <ReferralBox profile={profile} />
+        <ReferralBox
+          appUrl={appUrl}
+          profile={profile}
+          utmCampaign={referralSettings.utmCampaign}
+          utmMedium={referralSettings.utmMedium}
+          utmSource={referralSettings.utmSource}
+        />
       </div>
       <section className="mt-6 rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -59,7 +82,13 @@ export default async function IndicacoesPage() {
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {validLinks.length ? (
             validLinks.map((link) => {
-              const finalUrl = `${appUrl}/register?ref=${link.code}`;
+              const finalUrl = buildReferralUrl({
+                appUrl,
+                code: link.code,
+                utmCampaign: link.campaign ?? referralSettings.utmCampaign,
+                utmMedium: link.origin ?? referralSettings.utmMedium,
+                utmSource: referralSettings.utmSource,
+              });
               return (
                 <article className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-950/70" key={link.id}>
                   <p className="font-black text-slate-950 dark:text-white">{link.label}</p>

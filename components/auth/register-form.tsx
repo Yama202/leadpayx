@@ -39,11 +39,13 @@ export function RegisterForm({ registrationCode }: { registrationCode?: string }
             label="Código de indicação"
             name="registrationCode"
             placeholder="Opcional"
+            readOnly={Boolean(registrationCode)}
           />
           <div className="rounded-2xl border border-[#00E07A]/15 bg-[#00E07A]/5 p-3 text-sm leading-6 text-zinc-300">
             <p className="font-semibold text-[#16F28A]">Indicação é opcional.</p>
             <p className="mt-1">
-              Se você recebeu um código, ele será validado antes do cadastro. Use
+              Se você recebeu um link, o código já vem aplicado. Sem link, use
+              este campo como fallback manual. Use
               uma senha simples e exclusiva do LeadPayX; nunca use a senha real do
               seu e-mail.
             </p>

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireProfile, requireRole } from "@/lib/auth";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
@@ -15,6 +16,8 @@ import {
   initialActionState,
   payoutProcessSchema,
   profileSchema,
+  promotionOfferSchema,
+  promotionOfferStatusSchema,
   rejectAccountSchema,
   registrationLinkSchema,
   registrationLinkStatusSchema,
@@ -182,8 +185,13 @@ export async function startAccountAction(formData: FormData): Promise<void> {
   await requireRole(["operator"]);
   const parsed = startAccountSchema.safeParse(formDataToObject(formData));
 
-  if (parsed.success) {
-    await startAccount(parsed.data.accountId);
+  if (!parsed.success) {
+    redirect("/operador/dashboard?op_error=invalid");
+  }
+
+  const { error } = await startAccount(parsed.data.accountId);
+  if (error) {
+    redirect("/operador/dashboard?op_error=start");
   }
 
   revalidatePath("/operador/dashboard");
@@ -194,8 +202,13 @@ export async function completeAccountAction(formData: FormData): Promise<void> {
   await requireRole(["operator"]);
   const parsed = accountIdSchema.safeParse(formDataToObject(formData));
 
-  if (parsed.success) {
-    await completeAccount(parsed.data.accountId);
+  if (!parsed.success) {
+    redirect("/operador/dashboard?op_error=invalid");
+  }
+
+  const { error } = await completeAccount(parsed.data.accountId);
+  if (error) {
+    redirect("/operador/dashboard?op_error=complete");
   }
 
   revalidatePath("/operador/dashboard");
@@ -433,6 +446,10 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
     ["operator_commission_amount_brl", parsed.data.operatorCommissionAmount],
     ["referral_bonus_brl", parsed.data.referralBonus],
     ["referral_completed_accounts_target", parsed.data.referralTarget],
+    ["referral_bonus_enabled", parsed.data.referralBonusEnabled],
+    ["referral_utm_source", parsed.data.referralUtmSource],
+    ["referral_utm_medium", parsed.data.referralUtmMedium],
+    ["referral_utm_campaign", parsed.data.referralUtmCampaign],
     ["operator_min_completed_accounts", parsed.data.operatorMinCompletedAccounts],
     ["operational_min_batch_size", parsed.data.operationalMinBatchSize],
     ["whatsapp_group_url", parsed.data.whatsappGroupUrl],
@@ -506,12 +523,91 @@ export async function updateRegistrationLinkStatusAction(
   revalidatePath("/admin/links");
 }
 
+export async function upsertPromotionOfferAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  const formData = maybeFormData ?? (stateOrFormData as FormData);
+  const admin = await requireRole(["admin"]);
+  const parsed = promotionOfferSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    return validationError("Revise os dados da oferta.", parsed.error);
+  }
+
+  const supabase = await createClient();
+  const payload = {
+    name: parsed.data.name,
+    description: parsed.data.description,
+    reward_amount: parsed.data.rewardAmount,
+    promotion_url: parsed.data.promotionUrl,
+    status: parsed.data.status,
+    valid_until: parsed.data.validUntil || null,
+    display_order: parsed.data.displayOrder,
+    updated_by: admin.id,
+  };
+
+  const { data, error } = parsed.data.offerId
+    ? await supabase
+        .from("promotion_offers")
+        .update(payload)
+        .eq("id", parsed.data.offerId)
+        .select("id")
+        .single()
+    : await supabase
+        .from("promotion_offers")
+        .insert({ ...payload, created_by: admin.id })
+        .select("id")
+        .single();
+
+  if (error || !data) {
+    return { ok: false, message: "Não foi possível salvar a oferta." };
+  }
+
+  await createAuditLog(
+    parsed.data.offerId ? "promotion_offer.updated" : "promotion_offer.created",
+    "promotion_offer",
+    data.id,
+    { status: parsed.data.status, rewardAmount: parsed.data.rewardAmount },
+  );
+
+  revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
+  return { ok: true, message: "Oferta salva e disponível conforme status configurado." };
+}
+
+export async function updatePromotionOfferStatusAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+  const parsed = promotionOfferStatusSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    return;
+  }
+
+  const supabase = await createClient();
+  await supabase
+    .from("promotion_offers")
+    .update({ status: parsed.data.status })
+    .eq("id", parsed.data.offerId);
+
+  await createAuditLog("promotion_offer.status_updated", "promotion_offer", parsed.data.offerId, {
+    status: parsed.data.status,
+  });
+
+  revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
+}
+
 export async function updateProfileFormAction(formData: FormData): Promise<void> {
   await updateProfileAction(formData);
 }
 
 export async function submitAccountFormAction(formData: FormData): Promise<void> {
   await submitAccountAction(formData);
+}
+
+export async function upsertPromotionOfferFormAction(formData: FormData): Promise<void> {
+  await upsertPromotionOfferAction(formData);
 }
 
 export async function rejectAccountFormAction(formData: FormData): Promise<void> {

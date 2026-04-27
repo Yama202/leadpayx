@@ -1,8 +1,27 @@
 import { LinkButton } from "@/components/ui/button";
+import { buildReferralUrl } from "@/lib/referrals";
 import type { Profile } from "@/lib/types";
 
-export function ReferralBox({ profile }: { profile: Profile }) {
-  const href = `/register?ref=${profile.referral_code}`;
+export function ReferralBox({
+  appUrl,
+  profile,
+  utmCampaign,
+  utmMedium,
+  utmSource,
+}: {
+  appUrl: string;
+  profile: Profile;
+  utmCampaign: string;
+  utmMedium: string;
+  utmSource: string;
+}) {
+  const href = buildReferralUrl({
+    appUrl,
+    code: profile.referral_code,
+    utmCampaign,
+    utmMedium,
+    utmSource,
+  });
 
   return (
     <div className="rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
@@ -11,8 +30,8 @@ export function ReferralBox({ profile }: { profile: Profile }) {
         {href}
       </p>
       <p className="mt-3 text-sm leading-6 text-[#A1A1AA]">
-        Quando o indicado atingir o critério configurado pela administração, o
-        bônus único é gerado automaticamente sem duplicidade.
+        O código é único e o vínculo do indicado é imutável após aplicado. O bônus
+        único é gerado automaticamente quando a regra configurada for atingida.
       </p>
       <LinkButton className="mt-5 w-full" href={href} variant="secondary">
         Abrir link

@@ -6,8 +6,9 @@ import {
   updateRegistrationLinkStatusAction,
 } from "@/lib/actions/domain";
 import { requireRole } from "@/lib/auth";
+import { buildReferralUrl, getReferralSettings } from "@/lib/referrals";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, RegistrationLink } from "@/lib/types";
+import type { AppSetting, Profile, RegistrationLink } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function AdminLinksPage() {
   const profile = await requireRole(["admin"]);
   const supabase = await createClient();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
-  const [{ data: links }, { data: captadores }] = await Promise.all([
+  const [{ data: links }, { data: captadores }, { data: settings }] = await Promise.all([
     supabase
       .from("registration_links")
       .select("*")
@@ -23,12 +24,18 @@ export default async function AdminLinksPage() {
       .returns<RegistrationLink[]>(),
     supabase
       .from("profiles")
-      .select("*")
+      .select("id,name,email,role,instagram,whatsapp,pix_key,referral_code,referred_by,status,referral_bonus_paid,captador_commission_override,operator_commission_override,registration_link_id,created_at,updated_at")
       .eq("role", "captador")
       .eq("status", "active")
       .order("name")
       .returns<Profile[]>(),
+    supabase
+      .from("app_settings")
+      .select("key,value")
+      .in("key", ["referral_utm_source", "referral_utm_medium", "referral_utm_campaign"])
+      .returns<AppSetting[]>(),
   ]);
+  const referralSettings = getReferralSettings(settings);
 
   return (
     <RoleBasedLayout
@@ -64,8 +71,16 @@ export default async function AdminLinksPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {links?.map((link) => {
-          const finalPath = `/register?ref=${link.code}`;
-          const finalUrl = `${appUrl}${finalPath}`;
+          const finalUrl =
+            link.role === "captador"
+              ? buildReferralUrl({
+                  appUrl,
+                  code: link.code,
+                  utmCampaign: link.campaign ?? referralSettings.utmCampaign,
+                  utmMedium: link.origin ?? referralSettings.utmMedium,
+                  utmSource: referralSettings.utmSource,
+                })
+              : `${appUrl}/register?ref=${link.code}`;
 
           return (
           <article

@@ -7,12 +7,14 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
   captador: [
     { href: "/captador/dashboard", label: "Início" },
     { href: "/captador/enviar-conta", label: "Enviar" },
-    { href: "/captador/minhas-contas", label: "Contas" },
+    { href: "/captador/ofertas", label: "Ofertas" },
     { href: "/captador/indicacoes", label: "Indicações" },
+    { href: "/captador/minhas-contas", label: "Contas" },
     { href: "/captador/pagamentos", label: "Pagamentos" },
   ],
   operator: [
     { href: "/operador/dashboard", label: "Fila" },
+    { href: "/operador/ofertas", label: "Promoções" },
     { href: "/operador/contas", label: "Contas" },
     { href: "/operador/historico", label: "Histórico" },
     { href: "/operador/pagamentos", label: "Pagamentos" },
@@ -25,6 +27,8 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
     { href: "/admin/contas", label: "Contas" },
     { href: "/admin/pagamentos", label: "Pagamentos" },
     { href: "/admin/links", label: "Links" },
+    { href: "/admin/ofertas", label: "Ofertas" },
+    { href: "/admin/configuracoes", label: "Configurações" },
     { href: "/admin/logs", label: "Logs" },
   ],
 };
