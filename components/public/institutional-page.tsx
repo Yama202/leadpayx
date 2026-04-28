@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { BrandLogo } from "@/components/ui/brand";
 import { LinkButton } from "@/components/ui/button";
 
 const navItems = [
@@ -21,12 +22,7 @@ export function PublicHeader({ registerHref = "/register" }: { registerHref?: st
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6">
       <nav className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between rounded-[1.5rem] border border-white/10 bg-[#070909]/75 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl sm:px-5">
         <Link aria-label="LeadPayX início" className="flex min-h-11 items-center gap-3" href="/">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#00E07A]/30 bg-[#00E07A]/10 text-xs font-black tracking-tight text-[#16F28A] shadow-[0_0_28px_rgba(0,224,122,0.22)]">
-            LPX
-          </span>
-          <span className="text-base font-black tracking-tight text-white">
-            LeadPay<span className="text-[#00E07A]">X</span>
-          </span>
+          <BrandLogo variant="compact" />
         </Link>
 
         <div className="hidden items-center gap-7 lg:flex">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { BrandMark } from "@/components/ui/brand";
+import { BrandLogo } from "@/components/ui/brand";
 import type { UserRole } from "@/lib/types";
 
 const navItems: Record<UserRole, { href: string; label: string }[]> = {
@@ -35,7 +35,7 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
 export function DesktopSidebar({ role }: { role: UserRole }) {
   return (
     <aside className="sticky top-0 hidden h-dvh w-72 shrink-0 border-r border-white/[0.08] bg-[#070909]/88 p-6 text-white shadow-2xl shadow-black/30 backdrop-blur-xl lg:flex lg:flex-col">
-      <BrandMark />
+      <BrandLogo showTagline variant="horizontal" />
       <nav className="mt-10 flex-1 space-y-2">
         {navItems[role].map((item) => (
           <Link

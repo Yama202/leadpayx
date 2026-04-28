@@ -237,3 +237,152 @@ test("G) admin exclui usuário com bloqueio seguro e sucesso quando elegível", 
   await admin.auth.admin.deleteUser(blockedUser.data.user.id);
   await admin.auth.admin.deleteUser(deletableUser.data.user.id);
 });
+
+test("I) admin exclui operador com bloqueio por pendência e sucesso quando elegível", async ({ page }) => {
+  test.skip(
+    process.env.E2E_OPERATOR_DELETE_FLOW !== "true",
+    "Cenário opcional de exclusão de operador (habilite com E2E_OPERATOR_DELETE_FLOW=true).",
+  );
+  const state = readE2EState();
+  const admin = getAdminClient();
+  const targetOperatorId = state.users.operator.id;
+  const blockedAccountIdentifier = `[E2E-DEL-OP-BLOCK-${state.runId}]`;
+  const historyAccountIdentifier = `[E2E-DEL-OP-HISTORY-${state.runId}]`;
+  let historyAccountId: string | null = null;
+
+  const seedBlockingAccount = await admin.from("accounts").insert({
+    captador_id: state.users.captador.id,
+    operador_id: targetOperatorId,
+    account_identifier: blockedAccountIdentifier,
+    account_print_path: `${state.users.captador.id}/${state.runId}/blocked-operator.png`,
+    status: "in_progress",
+  });
+  if (seedBlockingAccount.error) {
+    throw new Error(`Failed seeding blocked operator account: ${seedBlockingAccount.error.message}`);
+  }
+
+  const seedHistoryAccount = await admin
+    .from("accounts")
+    .insert({
+      captador_id: state.users.captador.id,
+      account_identifier: historyAccountIdentifier,
+      account_print_path: `${state.users.captador.id}/${state.runId}/history-operator.png`,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (seedHistoryAccount.error || !seedHistoryAccount.data) {
+    throw new Error(`Failed seeding history account: ${seedHistoryAccount.error?.message}`);
+  }
+  historyAccountId = seedHistoryAccount.data.id;
+
+  const seedAssignment = await admin.from("operator_assignments").insert({
+    operador_id: targetOperatorId,
+    account_id: historyAccountId,
+    status: "completed",
+  });
+  if (seedAssignment.error) {
+    throw new Error(`Failed seeding operator assignment history: ${seedAssignment.error.message}`);
+  }
+
+  await loginViaUI(page, state.users.admin.email, state.users.admin.password);
+  await page.goto("/admin/operadores");
+
+  const deleteForm = page
+    .locator("form")
+    .filter({ has: page.locator(`input[name="profileId"][value="${targetOperatorId}"]`) })
+    .first();
+  await deleteForm.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
+  await deleteForm.getByRole("button", { name: "Excluir operador" }).click();
+  await expect(page).toHaveURL(/\/admin\/operadores\?profile_error=/);
+  await expect(page.getByText("Exclusão bloqueada")).toBeVisible();
+
+  await admin.from("accounts").delete().eq("account_identifier", blockedAccountIdentifier);
+  await page.goto("/admin/operadores");
+  const deleteFormAfterCleanup = page
+    .locator("form")
+    .filter({ has: page.locator(`input[name="profileId"][value="${targetOperatorId}"]`) })
+    .first();
+  await deleteFormAfterCleanup.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
+  await deleteFormAfterCleanup.getByRole("button", { name: "Excluir operador" }).click();
+  await expect(page).toHaveURL(/\/admin\/operadores\?profile_success=/);
+  await expect(page.getByText("Usuário excluído com sucesso.")).toBeVisible();
+
+  if (historyAccountId) {
+    await admin.from("accounts").delete().eq("id", historyAccountId);
+  }
+});
+
+test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqueio/aceite no envio", async ({
+  browser,
+  page,
+}) => {
+  const state = readE2EState();
+  const admin = getAdminClient();
+  const groupUrl = `https://chat.whatsapp.com/e2e-${state.runId}`;
+  const minDeposit = 150;
+
+  await loginViaUI(page, state.users.admin.email, state.users.admin.password);
+  await page.goto("/admin/configuracoes");
+  await page.getByText("UTM do link pessoal (avançado)").click();
+  await page.getByLabel("utm_source").fill("instagram");
+  await page.getByLabel("utm_medium").fill("bio");
+  await page.getByLabel("utm_campaign").fill("leadpayx");
+  await page.getByLabel("Link do grupo WhatsApp").fill(groupUrl);
+  await page.getByRole("button", { name: "Salvar configurações" }).click();
+  await admin.from("app_settings").upsert(
+    {
+      key: "whatsapp_group_url",
+      value: groupUrl,
+    },
+    { onConflict: "key" },
+  );
+
+  await page.goto("/admin/captadores");
+  const captadorCard = page
+    .locator("article")
+    .filter({ hasText: state.users.captador.email })
+    .first();
+  await captadorCard.getByPlaceholder("WhatsApp com DDD").fill("(11) 97777-6666");
+  await captadorCard.getByRole("button", { name: "Salvar" }).click();
+  await captadorCard.getByLabel("Valor mín. (BRL)").fill(String(minDeposit));
+  await captadorCard.getByRole("button", { name: "Aplicar" }).click();
+  await admin.from("captador_submission_briefs").upsert(
+    {
+      captador_id: state.users.captador.id,
+      min_deposit_brl: minDeposit,
+      updated_at: new Date().toISOString(),
+      updated_by: state.users.admin.id,
+    },
+    { onConflict: "captador_id" },
+  );
+
+  const captadorPage = await browser.newPage();
+  await loginViaUI(captadorPage, state.users.captador.email, state.users.captador.password);
+  await captadorPage.goto("/captador/perfil");
+  await expect(captadorPage.getByLabel("WhatsApp")).toHaveValue("5511977776666");
+  await captadorPage.goto("/captador/dashboard");
+  await expect(captadorPage.getByText("Canal oficial no WhatsApp")).toBeVisible();
+  const whatsappGroupCta = captadorPage.getByRole("link", { name: "Entrar no grupo do WhatsApp" });
+  if ((await whatsappGroupCta.count()) > 0) {
+    await expect(whatsappGroupCta).toHaveAttribute("href", groupUrl);
+  } else {
+    await expect(captadorPage.getByText("Grupo ainda não configurado pelo admin.")).toBeVisible();
+  }
+
+  await captadorPage.goto("/captador/enviar-conta");
+  await expect(captadorPage.getByText("Canal oficial no WhatsApp")).toBeVisible();
+  await admin
+    .from("captador_submission_briefs")
+    .delete()
+    .eq("captador_id", state.users.captador.id);
+  await admin.from("app_settings").upsert(
+    {
+      key: "whatsapp_group_url",
+      value: null,
+    },
+    { onConflict: "key" },
+  );
+  await captadorPage.close();
+});

@@ -8,6 +8,7 @@ import {
   isEncryptionConfigured,
 } from "@/lib/account-credentials-crypto";
 import { requireProfile, requireRole } from "@/lib/auth";
+import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
 import { roundBrlHalfUp } from "@/lib/global-commission";
 import {
@@ -118,6 +119,20 @@ export async function submitAccountAction(
   }
 
   const supabase = await createClient();
+  const depositBrief = await getCaptadorSubmissionBrief(profile.id);
+  const minDepositRequired = Number(depositBrief?.min_deposit_brl ?? 0);
+  const declaredDeposit = parsed.data.declaredDepositBrl ?? null;
+  if (minDepositRequired > 0) {
+    if (declaredDeposit == null) {
+      return { ok: false, message: "Informe o valor já depositado para continuar." };
+    }
+    if (declaredDeposit < minDepositRequired) {
+      return {
+        ok: false,
+        message: `Envio bloqueado: o valor já depositado deve ser no mínimo R$ ${minDepositRequired.toFixed(2)}.`,
+      };
+    }
+  }
   const accountId = crypto.randomUUID();
   const printFile = formData.get("accountPrint");
   let accountPrintPath: string | null = null;
@@ -174,6 +189,8 @@ export async function submitAccountAction(
 
   await createAuditLog("account.submitted", "account", data.id, {
     has_print: Boolean(accountPrintPath),
+    declared_deposit_brl: declaredDeposit,
+    min_deposit_required_brl: minDepositRequired > 0 ? minDepositRequired : null,
   });
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/minhas-contas");
@@ -461,6 +478,9 @@ export async function adminUpdateProfileAction(formData: FormData): Promise<void
 
   revalidatePath("/admin/captadores");
   revalidatePath("/admin/operadores");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/enviar-conta");
+  revalidatePath("/captador/perfil");
 }
 
 function normalizeAdminReturnPath(path: string): "/admin/captadores" | "/admin/operadores" {
@@ -475,6 +495,26 @@ function isNextRedirectError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const digest = (error as { digest?: unknown }).digest;
   return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+}
+
+function mapAdminDeleteUserError(message: string): string {
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes("foreign key") ||
+    normalized.includes("violates foreign key constraint") ||
+    normalized.includes("still referenced")
+  ) {
+    return "Exclusão bloqueada: existem vínculos operacionais que precisam ser finalizados antes de remover o usuário.";
+  }
+  if (
+    normalized.includes("permission") ||
+    normalized.includes("not authorized") ||
+    normalized.includes("service_role") ||
+    normalized.includes("jwt")
+  ) {
+    return "Não foi possível excluir o usuário agora: verifique a configuração server-side do Supabase Admin.";
+  }
+  return "Não foi possível excluir o usuário com segurança. Tente novamente em instantes.";
 }
 
 export async function adminDeleteManagedUserAction(formData: FormData): Promise<void> {
@@ -535,6 +575,22 @@ export async function adminDeleteManagedUserAction(formData: FormData): Promise<
         : Promise.resolve({ error: null, count: 0 } as { error: null; count: number }),
     ]);
 
+    if (activeAccounts.error || pendingPayouts.error || activeAssignments.error) {
+      console.error("adminDeleteManagedUserAction pending-check error", {
+        profileId,
+        activeAccountsError: activeAccounts.error?.message ?? null,
+        pendingPayoutsError: pendingPayouts.error?.message ?? null,
+        activeAssignmentsError: activeAssignments.error?.message ?? null,
+      });
+      redirect(
+        buildAdminRedirect(
+          safeReturnPath,
+          "profile_error",
+          "Não foi possível validar pendências operacionais deste usuário agora.",
+        ),
+      );
+    }
+
     const activeCount = Number(activeAccounts.count ?? 0);
     const payoutCount = Number(pendingPayouts.count ?? 0);
     const assignmentCount = Number(activeAssignments.count ?? 0);
@@ -549,15 +605,41 @@ export async function adminDeleteManagedUserAction(formData: FormData): Promise<
       );
     }
 
+    if (role === "operator") {
+      const { error: cleanupAssignmentsError } = await supabase
+        .from("operator_assignments")
+        .delete()
+        .eq("operador_id", profileId)
+        .in("status", ["completed", "reassigned", "cancelled"]);
+      if (cleanupAssignmentsError) {
+        console.error("adminDeleteManagedUserAction cleanup operator assignments error", {
+          profileId,
+          message: cleanupAssignmentsError.message,
+        });
+        redirect(
+          buildAdminRedirect(
+            safeReturnPath,
+            "profile_error",
+            "Não foi possível limpar vínculos históricos do operador antes da exclusão.",
+          ),
+        );
+      }
+    }
+
     const adminClient = createAdminClient();
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(profileId);
 
     if (deleteError) {
+      console.error("adminDeleteManagedUserAction deleteUser error", {
+        profileId,
+        role,
+        message: deleteError.message,
+      });
       redirect(
         buildAdminRedirect(
           safeReturnPath,
           "profile_error",
-          "Não foi possível excluir o usuário com segurança. Verifique as configurações do servidor.",
+          mapAdminDeleteUserError(deleteError.message),
         ),
       );
     }

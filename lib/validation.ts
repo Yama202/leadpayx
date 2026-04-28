@@ -73,6 +73,20 @@ export const accountSchema = z.object({
     .min(8, "A senha da conta deve ter pelo menos 8 caracteres.")
     .max(512, "Senha muito longa."),
   accountNotes: z.string().trim().max(1000).optional(),
+  declaredDepositBrl: z
+    .union([z.number(), z.string(), z.null(), z.undefined()])
+    .optional()
+    .transform((value) => {
+      if (value == null) return null;
+      if (typeof value === "number") return Number.isFinite(value) ? value : null;
+      const normalized = value.trim().replace(",", ".");
+      if (!normalized) return null;
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : Number.NaN;
+    })
+    .refine((value) => value == null || (Number.isFinite(value) && value >= 0), {
+      message: "Informe um valor já depositado válido (zero ou positivo).",
+    }),
 });
 
 export const rejectAccountSchema = z.object({

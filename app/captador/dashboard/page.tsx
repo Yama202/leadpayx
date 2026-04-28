@@ -1,16 +1,18 @@
 import { AccountCard } from "@/components/domain/account-card";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
+import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
 import { ReferralBox } from "@/components/domain/referral-box";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
+import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
 import { toCurrency } from "@/lib/payments";
 import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { ACCOUNT_SELECT_CAPTADOR } from "@/lib/account-columns";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, AppSetting, CaptadorSubmissionBrief } from "@/lib/types";
+import type { Account, AppSetting } from "@/lib/types";
 
 type DashboardEarning = {
   amount: number | string;
@@ -24,7 +26,7 @@ export default async function CaptadorDashboardPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
 
-  const [{ data: accounts }, { data: earnings }, { data: settings }, { data: depositBrief }, whatsappUrl] =
+  const [{ data: accounts }, { data: earnings }, { data: settings }, depositBrief, whatsappUrl] =
     await Promise.all([
     supabase
       .from("accounts")
@@ -52,11 +54,7 @@ export default async function CaptadorDashboardPage() {
         "referral_utm_campaign",
       ])
       .returns<AppSetting[]>(),
-    supabase
-      .from("captador_submission_briefs")
-      .select("captador_id, min_deposit_brl, updated_at, updated_by")
-      .eq("captador_id", profile.id)
-      .maybeSingle<CaptadorSubmissionBrief>(),
+    getCaptadorSubmissionBrief(profile.id),
     getWhatsappGroupUrl(),
   ]);
   const referralSettings = getReferralSettings(settings);
@@ -94,20 +92,7 @@ export default async function CaptadorDashboardPage() {
           </article>
         ))}
       </section>
-      {whatsappUrl ? (
-        <section className="mb-6 flex flex-col gap-3 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-black text-white">WhatsApp oficial</p>
-          <LinkButton
-            className="min-h-12 w-full shrink-0 sm:w-auto"
-            href={whatsappUrl}
-            rel="noreferrer"
-            target="_blank"
-            variant="secondary"
-          >
-            Abrir grupo
-          </LinkButton>
-        </section>
-      ) : null}
+      <CaptadorWhatsappGroupAlert whatsappUrl={whatsappUrl} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <DashboardCard label="Contas enviadas" value={String(accounts?.length ?? 0)} />
         <DashboardCard label="Ganhos pendentes" value={toCurrency(pendingAmount)} />

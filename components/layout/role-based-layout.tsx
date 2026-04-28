@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { DesktopSidebar, MobileBottomNav } from "@/components/layout/nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { BackButton } from "@/components/ui/back-button";
+import { BrandLogo } from "@/components/ui/brand";
 import { LinkButton } from "@/components/ui/button";
 import { roleHome } from "@/lib/constants";
 import type { Profile } from "@/lib/types";
@@ -35,7 +36,8 @@ export function RoleBasedLayout({
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#A1A1AA]">{description}</p>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <BrandLogo className="hidden lg:inline-flex" variant="compact" />
                 <BackButton fallbackHref={roleHome[profile.role]} />
                 <LinkButton href="/logout" variant="secondary">
                   Sair

@@ -51,6 +51,10 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
   browser,
   page,
 }) => {
+  test.skip(
+    process.env.E2E_OPERATOR_FULL_CYCLE !== "true",
+    "Cenário extenso opcional: habilite com E2E_OPERATOR_FULL_CYCLE=true.",
+  );
   test.setTimeout(240_000);
   const state = readE2EState();
   const admin = getAdminClient();

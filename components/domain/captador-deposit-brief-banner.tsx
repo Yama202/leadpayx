@@ -24,8 +24,11 @@ export function CaptadorDepositBriefBanner({ minDepositBrl }: { minDepositBrl: n
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-black text-white">Envio com depósito</p>
-        <p className="mt-0.5 text-xs text-amber-100/90">
-          Inclua no envio comprovante de depósito ≥ {toCurrency(minDepositBrl)} (print ou observações).
+        <p className="mt-0.5 text-xs text-amber-100/95">
+          Valor mínimo já depositado exigido: <strong>{toCurrency(minDepositBrl)}</strong>.
+        </p>
+        <p className="mt-1 text-xs text-amber-100/90">
+          Esse valor permanecerá em uma das contas e poderá ser sacado somente pelo titular da conta.
         </p>
       </div>
     </div>

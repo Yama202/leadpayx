@@ -74,6 +74,17 @@ export function SubmitAccountForm({ depositBriefMinBrl }: { depositBriefMinBrl?:
             name="accountNotes"
             placeholder="Contexto extra: campanha, restrições, observações que não são login/senha"
           />
+          {depositBriefMinBrl != null && depositBriefMinBrl > 0 ? (
+            <Field
+              error={state.fieldErrors?.declaredDepositBrl}
+              label="Valor já depositado (BRL)"
+              name="declaredDepositBrl"
+              placeholder={`Ex.: ${depositBriefMinBrl.toFixed(2)}`}
+              required
+              step="0.01"
+              type="number"
+            />
+          ) : null}
           <label className="block">
             <span className="text-sm font-bold text-slate-200">Print da conta nova</span>
             <input

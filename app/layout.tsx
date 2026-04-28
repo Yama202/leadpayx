@@ -21,9 +21,9 @@ export const metadata: Metadata = {
   },
   description: "Controle leads. Distribua operações. Pague resultados.",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/apple-icon.png",
+    icon: "/icon.png?v=2",
+    shortcut: "/favicon.ico?v=2",
+    apple: "/apple-icon.png?v=2",
   },
   openGraph: {
     title: "LeadPayX",
@@ -34,10 +34,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.png?v=2",
         width: 1200,
         height: 630,
-        alt: "LeadPayX",
+        alt: "LeadPayX - Operação financeira simplificada",
       },
     ],
   },
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "LeadPayX",
     description: "Controle leads. Distribua operações. Pague resultados.",
-    images: ["/og-image.png"],
+    images: ["/og-image.png?v=2"],
   },
 };
 
