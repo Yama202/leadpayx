@@ -2,7 +2,11 @@ import Link from "next/link";
 
 import { ClearDepositBriefButton } from "@/components/admin/clear-deposit-brief-button";
 import { Button } from "@/components/ui/button";
-import { adminUpdateProfileAction, upsertCaptadorDepositBriefAction } from "@/lib/actions/domain";
+import {
+  adminDeleteManagedUserAction,
+  adminUpdateProfileAction,
+  upsertCaptadorDepositBriefAction,
+} from "@/lib/actions/domain";
 import { maskPixKeyForAdmin } from "@/lib/pix-key";
 import { toCurrency } from "@/lib/payments";
 import type { CaptadorSubmissionBrief, Profile } from "@/lib/types";
@@ -99,10 +103,31 @@ export function ProfileAdminCard({
           <Link className="font-bold text-emerald-600 underline-offset-2 hover:underline dark:text-emerald-400" href="/admin/comissoes">
             Comissões globais
           </Link>
-          . Campanhas podem usar override apenas no link de cadastro.
+          .
         </p>
         <Button className="sm:col-span-2" type="submit" variant="secondary">
           Salvar
+        </Button>
+      </form>
+      <form action={adminDeleteManagedUserAction} className="mt-4 space-y-2 rounded-2xl border border-rose-300/40 bg-rose-50/80 p-3 dark:border-rose-400/20 dark:bg-rose-500/10">
+        <input name="profileId" type="hidden" value={profile.id} />
+        <input name="role" type="hidden" value={profile.role} />
+        <input
+          name="returnPath"
+          type="hidden"
+          value={profile.role === "captador" ? "/admin/captadores" : "/admin/operadores"}
+        />
+        <p className="text-xs font-semibold text-rose-700 dark:text-rose-200">
+          Exclusão segura: bloqueia quando há contas/pagamentos em aberto.
+        </p>
+        <input
+          className="min-h-11 w-full rounded-xl border border-rose-300/60 bg-white px-3 text-sm font-semibold text-rose-900 placeholder:text-rose-500/80 dark:border-rose-300/20 dark:bg-slate-950/70 dark:text-rose-100"
+          name="confirmation"
+          placeholder="Digite EXCLUIR para confirmar"
+          required
+        />
+        <Button className="w-full" type="submit" variant="danger">
+          Excluir {profile.role === "captador" ? "captador" : "operador"}
         </Button>
       </form>
       {profile.role === "captador" ? (

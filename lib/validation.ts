@@ -105,6 +105,18 @@ export const adminProfileUpdateSchema = z.object({
     }),
 });
 
+export const adminUserDeleteSchema = z.object({
+  profileId: z.string().uuid(),
+  role: z.enum(["captador", "operator"]),
+  returnPath: z.enum(["/admin/captadores", "/admin/operadores"]),
+  confirmation: z
+    .string()
+    .trim()
+    .refine((value) => value === "EXCLUIR", {
+      message: "Digite EXCLUIR para confirmar.",
+    }),
+});
+
 const brlCommissionField = z.coerce
   .number()
   .min(0, "Informe um valor zero ou positivo.")

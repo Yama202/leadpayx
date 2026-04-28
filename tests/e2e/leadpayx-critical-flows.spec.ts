@@ -1,9 +1,21 @@
 import { expect, test } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 import { loginViaUI } from "./support/auth";
 import { readE2EState } from "./support/e2e-state";
 
 const NAV_THRESHOLD_MS = Number(process.env.E2E_NAV_THRESHOLD_MS ?? 2000);
+
+function getAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for E2E.");
+  }
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 test.describe.configure({ mode: "serial" });
 
@@ -131,4 +143,95 @@ test("Smoke de performance: navegação principal abaixo do threshold", async ({
       `Navegação ${check.url} em ${elapsed}ms (threshold ${NAV_THRESHOLD_MS}ms)`,
     ).toBeLessThan(NAV_THRESHOLD_MS);
   }
+});
+
+test("F) operador vê fila operacional sem promoções e recebe ciclo de 2 contas", async ({ page }) => {
+  const state = readE2EState();
+  const admin = getAdminClient();
+  const idA = `[E2E-FILA-A-${state.runId}]`;
+  const idB = `[E2E-FILA-B-${state.runId}]`;
+  const seed = await admin.from("accounts").insert([
+    {
+      captador_id: state.users.captador.id,
+      account_identifier: idA,
+      account_print_path: `${state.users.captador.id}/${state.runId}/a.png`,
+      status: "pending",
+    },
+    {
+      captador_id: state.users.captador.id,
+      account_identifier: idB,
+      account_print_path: `${state.users.captador.id}/${state.runId}/b.png`,
+      status: "pending",
+    },
+  ]);
+  if (seed.error) {
+    throw new Error(`Failed seeding operator queue accounts: ${seed.error.message}`);
+  }
+
+  await loginViaUI(page, state.users.operator.email, state.users.operator.password);
+  await page.goto("/operador/dashboard");
+
+  await expect(page.getByText("Promoções ativas")).toHaveCount(0);
+  await expect(page.getByText("Ciclos prontos para operar")).toBeVisible();
+  await expect(
+    page
+      .locator("section")
+      .filter({ hasText: "Ciclos prontos para operar" })
+      .first(),
+  ).toBeVisible();
+
+  await admin.from("accounts").delete().in("account_identifier", [idA, idB]);
+});
+
+test("G) admin exclui usuário com bloqueio seguro e sucesso quando elegível", async ({ page }) => {
+  const state = readE2EState();
+  const admin = getAdminClient();
+  const blockedEmail = `e2e.blocked.captador.${state.runId}@leadpayx.test`;
+  const deletableEmail = `e2e.deletable.captador.${state.runId}@leadpayx.test`;
+
+  const blockedUser = await admin.auth.admin.createUser({
+    email: blockedEmail,
+    password: state.users.admin.password,
+    email_confirm: true,
+    user_metadata: { name: `[E2E] Blocked ${state.runId}` },
+  });
+  if (blockedUser.error || !blockedUser.data.user) {
+    throw new Error(`Failed creating blocked user: ${blockedUser.error?.message}`);
+  }
+  const deletableUser = await admin.auth.admin.createUser({
+    email: deletableEmail,
+    password: state.users.admin.password,
+    email_confirm: true,
+    user_metadata: { name: `[E2E] Deletable ${state.runId}` },
+  });
+  if (deletableUser.error || !deletableUser.data.user) {
+    throw new Error(`Failed creating deletable user: ${deletableUser.error?.message}`);
+  }
+
+  const seedBlockingAccount = await admin.from("accounts").insert({
+    captador_id: blockedUser.data.user.id,
+    account_identifier: `[E2E-DEL-BLOCK-${state.runId}]`,
+    account_print_path: `${blockedUser.data.user.id}/${state.runId}/blocked.png`,
+    status: "pending",
+  });
+  if (seedBlockingAccount.error) {
+    throw new Error(`Failed seeding blocking account: ${seedBlockingAccount.error.message}`);
+  }
+
+  await loginViaUI(page, state.users.admin.email, state.users.admin.password);
+  await page.goto("/admin/captadores");
+
+  const blockedCard = page.locator("article").filter({ hasText: blockedEmail }).first();
+  await blockedCard.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
+  await blockedCard.getByRole("button", { name: "Excluir captador" }).click();
+  await expect(page.getByText("Exclusão bloqueada")).toBeVisible();
+
+  const deletableCard = page.locator("article").filter({ hasText: deletableEmail }).first();
+  await deletableCard.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
+  await deletableCard.getByRole("button", { name: "Excluir captador" }).click();
+  await expect(page.getByText("Usuário excluído com sucesso.")).toBeVisible();
+
+  await admin.from("accounts").delete().eq("captador_id", blockedUser.data.user.id);
+  await admin.auth.admin.deleteUser(blockedUser.data.user.id);
+  await admin.auth.admin.deleteUser(deletableUser.data.user.id);
 });

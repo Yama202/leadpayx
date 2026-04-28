@@ -1,6 +1,5 @@
 import { AccountCard } from "@/components/domain/account-card";
 import { OperatorPickBatchForm } from "@/components/domain/operator-pick-batch-form";
-import { PromotionOfferGrid } from "@/components/domain/promotion-offer-grid";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
@@ -10,7 +9,6 @@ import {
 import { operationalCredentialsFromAccount } from "@/lib/account-operational";
 import { ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
 import { requireRole } from "@/lib/auth";
-import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, AppSetting } from "@/lib/types";
@@ -22,6 +20,13 @@ type DashboardEarning = {
   amount: number | string;
   status: string;
   type: string;
+};
+
+type CycleQueueRow = {
+  captador_id: string;
+  captador_name: string | null;
+  pending_count: number | string;
+  first_created_at: string;
 };
 
 export default async function OperadorDashboardPage({
@@ -38,7 +43,7 @@ export default async function OperadorDashboardPage({
     { data: settings },
     { data: eligible },
     whatsappUrl,
-    promotionOffers,
+    { data: cycleQueue },
   ] = await Promise.all([
     supabase
       .from("accounts")
@@ -60,9 +65,8 @@ export default async function OperadorDashboardPage({
       .returns<AppSetting[]>(),
     supabase.rpc("is_operator_eligible", { target_operator_id: profile.id }),
     getWhatsappGroupUrl(),
-    fetchActivePromotionOffers(),
+    supabase.rpc("get_operator_cycle_queue_summary").returns<CycleQueueRow[]>(),
   ]);
-  const promotionPreview = promotionOffers.slice(0, 2);
   const opErrorMessage =
     params.op_error === "complete"
       ? "Não foi possível finalizar a conta (prazo, permissão ou estado inválido). Atualize a página e tente novamente."
@@ -83,6 +87,12 @@ export default async function OperadorDashboardPage({
   const minimumCompleted = Number(settingValues.operator_min_completed_accounts ?? 0);
   const minimumBatch = Number(settingValues.operational_min_batch_size ?? 2);
   const isEligible = Boolean(eligible);
+  const queueRows: CycleQueueRow[] = Array.isArray(cycleQueue) ? cycleQueue : [];
+  const availableCycles = queueRows.map((cycle) => ({
+    captadorId: cycle.captador_id,
+    count: Number(cycle.pending_count ?? 0),
+    name: cycle.captador_name ?? "Captador",
+  }));
 
   return (
     <RoleBasedLayout
@@ -97,24 +107,6 @@ export default async function OperadorDashboardPage({
         >
           {opErrorMessage}
         </div>
-      ) : null}
-      {promotionPreview.length ? (
-        <section className="mb-6 rounded-[2rem] border border-[#EAB308]/20 bg-zinc-900/40 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.2)]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-black text-[#FDE047]">Promoções ativas</p>
-              <p className="mt-1 text-xs text-zinc-400">
-                Mesmas ofertas globais visíveis no app.
-              </p>
-            </div>
-            <LinkButton className="w-full shrink-0 sm:w-auto" href="/operador/ofertas" variant="secondary">
-              Ver todas
-            </LinkButton>
-          </div>
-          <div className="mt-4">
-            <PromotionOfferGrid offers={promotionPreview} variant="operator" />
-          </div>
-        </section>
       ) : null}
       {whatsappUrl ? (
         <section className="mb-6 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
@@ -139,12 +131,31 @@ export default async function OperadorDashboardPage({
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_220px]">
         <DashboardCard
-          hint="Ações críticas respeitam o mínimo configurado pela administração."
+          hint="Somente ciclos com 2 contas do mesmo captador entram na fila."
           label="Lote operacional"
           value={`${minimumBatch} contas`}
         />
         <OperatorPickBatchForm disabled={!isEligible} minimumBatch={minimumBatch} />
       </div>
+      <section className="mt-4 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-black text-white">Ciclos prontos para operar</p>
+          <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-zinc-300">
+            {availableCycles.length} ciclo(s)
+          </span>
+        </div>
+        {availableCycles.length ? (
+          <ul className="mt-3 space-y-2 text-sm text-zinc-300">
+            {availableCycles.slice(0, 5).map((cycle) => (
+              <li className="rounded-xl border border-white/10 bg-black/20 px-3 py-2" key={cycle.captadorId}>
+                {cycle.name}: {cycle.count} conta(s) pendente(s)
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-sm text-zinc-400">Nenhum ciclo com 2 contas pendentes no momento.</p>
+        )}
+      </section>
       {!isEligible ? (
         <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
           Seu operador ainda não está apto para receber novos lotes. A aptidão é liberada automaticamente quando os critérios administrativos forem cumpridos.

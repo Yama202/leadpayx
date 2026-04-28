@@ -23,7 +23,12 @@ function formatDate(value: string | null) {
 export default async function AdminOperadoresPage({
   searchParams,
 }: {
-  searchParams: Promise<{ operator?: string; status?: string }>;
+  searchParams: Promise<{
+    operator?: string;
+    status?: string;
+    profile_error?: string;
+    profile_success?: string;
+  }>;
 }) {
   const profile = await requireRole(["admin"]);
   const supabase = await createClient();
@@ -70,6 +75,16 @@ export default async function AdminOperadoresPage({
       profile={profile}
       title="Operadores"
     >
+      {params.profile_error ? (
+        <div className="mb-4 rounded-2xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100">
+          {params.profile_error}
+        </div>
+      ) : null}
+      {params.profile_success ? (
+        <div className="mb-4 rounded-2xl border border-emerald-300/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-100">
+          {params.profile_success}
+        </div>
+      ) : null}
       <div className="mb-5 rounded-[2rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
         Para criar operador sem service role no app, cadastre o usuário em
         `/register` e promova o perfil para operador aqui. Isso evita secrets no

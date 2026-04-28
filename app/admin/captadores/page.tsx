@@ -6,8 +6,13 @@ import type { CaptadorSubmissionBrief, Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminCaptadoresPage() {
+export default async function AdminCaptadoresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ profile_error?: string; profile_success?: string }>;
+}) {
   const profile = await requireRole(["admin"]);
+  const params = await searchParams;
   const supabase = await createClient();
   const [{ data: captadores }, { data: briefs }] = await Promise.all([
     supabase
@@ -26,6 +31,16 @@ export default async function AdminCaptadoresPage() {
       profile={profile}
       title="Captadores"
     >
+      {params.profile_error ? (
+        <div className="mb-4 rounded-2xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100">
+          {params.profile_error}
+        </div>
+      ) : null}
+      {params.profile_success ? (
+        <div className="mb-4 rounded-2xl border border-emerald-300/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-100">
+          {params.profile_success}
+        </div>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         {captadores?.map((item) => (
           <ProfileAdminCard depositBrief={briefById.get(item.id) ?? null} key={item.id} profile={item} />
