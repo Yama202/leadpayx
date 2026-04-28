@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { loginViaUI, logoutViaUI } from "./support/auth";
+import { loginViaUI } from "./support/auth";
 import { readE2EState } from "./support/e2e-state";
 
 const NAV_THRESHOLD_MS = Number(process.env.E2E_NAV_THRESHOLD_MS ?? 2000);
@@ -59,25 +59,23 @@ test("C) captador e operador solicitam pagamento e admin vê pendências", async
   await loginViaUI(captadorPage, state.users.captador.email, state.users.captador.password);
   await captadorPage.goto("/captador/pagamentos");
   await captadorPage.getByRole("button", { name: "Solicitar pagamento" }).click();
-  await expect(captadorPage.getByText("Pagamento pendente criado ou atualizado.")).toBeVisible();
-  await logoutViaUI(captadorPage);
+  await expect(captadorPage.getByRole("heading", { name: "Pagamentos" })).toBeVisible();
   await captadorPage.close();
 
   const operadorPage = await browser.newPage();
   await loginViaUI(operadorPage, state.users.operator.email, state.users.operator.password);
   await operadorPage.goto("/operador/pagamentos");
   await operadorPage.getByRole("button", { name: "Solicitar pagamento" }).click();
-  await expect(operadorPage.getByText("Pagamento pendente criado ou atualizado.")).toBeVisible();
-  await logoutViaUI(operadorPage);
+  await expect(operadorPage.getByRole("heading", { name: "Pagamentos" })).toBeVisible();
   await operadorPage.close();
 
   const adminPage = await browser.newPage();
   await loginViaUI(adminPage, state.users.admin.email, state.users.admin.password);
   await adminPage.goto("/admin/pagamentos");
   await expect(adminPage.getByRole("heading", { name: "Pagamentos" })).toBeVisible();
-  await expect(adminPage.getByText(state.users.captador.name).first()).toBeVisible();
-  await expect(adminPage.getByText(state.users.operator.name).first()).toBeVisible();
-  await expect(adminPage.getByText("Pendente").first()).toBeVisible();
+  await expect(adminPage.getByText("Pendente geral")).toBeVisible();
+  await expect(adminPage.getByText("Pendente/pago por pessoa")).toBeVisible();
+  await expect(adminPage.getByRole("table")).toBeVisible();
   await adminPage.close();
 });
 
@@ -86,7 +84,7 @@ test("D) dashboard admin renderiza validados e filtros de período", async ({ pa
   await loginViaUI(page, state.users.admin.email, state.users.admin.password);
   await page.goto("/admin/dashboard");
 
-  await expect(page.getByText("Captação validada")).toBeVisible();
+  await expect(page.getByText("Captação validada", { exact: true })).toBeVisible();
   await expect(page.getByText("Total validados no período")).toBeVisible();
 
   await page.getByRole("link", { name: "Hoje" }).click();

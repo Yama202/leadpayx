@@ -72,8 +72,9 @@ async function createUser(
       throw new Error(`Failed creating admin profile: ${insertProfile.error.message}`);
     }
   } else {
-    const { id, ...updatePayload } = profilePayload;
+    const { id, referral_code, ...updatePayload } = profilePayload;
     void id;
+    void referral_code;
     const profileUpdate = await admin
       .from("profiles")
       .update(updatePayload)
@@ -92,16 +93,16 @@ async function seedEarnings(users: E2EState["users"]) {
     {
       user_id: users.captador.id,
       account_id: null,
-      referral_user_id: null,
-      type: "account_completed",
+      referral_user_id: users.operator.id,
+      type: "referral_bonus",
       amount: 35,
       status: "pending",
     },
     {
       user_id: users.operator.id,
       account_id: null,
-      referral_user_id: null,
-      type: "operator_account_completed",
+      referral_user_id: users.captador.id,
+      type: "referral_bonus",
       amount: 28,
       status: "pending",
     },

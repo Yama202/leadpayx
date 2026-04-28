@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 import { loginViaUI } from "./support/auth";
 
@@ -11,6 +12,39 @@ function getRequiredEnv(key: string) {
 }
 
 test.describe.configure({ mode: "serial" });
+
+async function ensureCaptadorUser(email: string, password: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) return;
+
+  const admin = createClient(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data: usersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  let user = usersData.users.find((entry) => entry.email?.toLowerCase() === email.toLowerCase());
+
+  if (!user) {
+    const { data: created } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name: "Captador E2E" },
+    });
+    user = created.user ?? undefined;
+  }
+
+  if (!user) return;
+
+  await admin.from("profiles").upsert({
+    id: user.id,
+    email,
+    name: "Captador E2E",
+    role: "captador",
+    status: "active",
+  });
+}
 
 test("admin cria oferta e captador visualiza oferta ativa", async ({ browser, page }) => {
   const adminPassword = getRequiredEnv("E2E_ADMIN_PASSWORD");
@@ -42,10 +76,11 @@ test("admin cria oferta e captador visualiza oferta ativa", async ({ browser, pa
   await expect(page.locator("article").filter({ hasText: editedOfferName }).first()).toBeVisible();
 
   const captadorPage = await browser.newPage();
-  await loginViaUI(captadorPage, "capitador@gmail.com", captadorPassword);
+  await ensureCaptadorUser("captador@gmail.com", captadorPassword);
+  await loginViaUI(captadorPage, "captador@gmail.com", captadorPassword);
   await captadorPage.goto("/captador/ofertas");
   await expect(captadorPage.getByRole("heading", { name: "Ofertas" })).toBeVisible();
-  await expect(captadorPage.getByText(editedOfferName)).toBeVisible();
+  await expect(captadorPage.locator("article").filter({ hasText: editedOfferName }).first()).toBeVisible();
   await captadorPage.close();
 
   const editedCard = page.locator("article").filter({ hasText: editedOfferName }).first();
