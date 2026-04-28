@@ -160,6 +160,13 @@ export async function submitAccountAction(
     if (accountPrintPath) {
       await supabase.storage.from("account-prints").remove([accountPrintPath]);
     }
+    const normalizedErrorMessage = error?.message?.toLowerCase() ?? "";
+    if (normalizedErrorMessage.includes("account print is required")) {
+      return {
+        ok: false,
+        message: "Envie o print da conta (imagem ou PDF) para continuar.",
+      };
+    }
     return { ok: false, message: "Não foi possível enviar a conta." };
   }
 
