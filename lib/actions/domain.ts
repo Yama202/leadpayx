@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  encryptAccountPassword,
+  isEncryptionConfigured,
+} from "@/lib/account-credentials-crypto";
 import { requireProfile, requireRole } from "@/lib/auth";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
 import { roundBrlHalfUp } from "@/lib/global-commission";
@@ -17,6 +21,8 @@ import {
   adminProfileUpdateSchema,
   accountSchema,
   appSettingsSchema,
+  captadorDepositBriefClearSchema,
+  captadorDepositBriefSchema,
   captadorGlobalOfferSchema,
   captadorGlobalOfferToggleSchema,
   formDataToObject,
@@ -25,9 +31,11 @@ import {
   payoutProcessSchema,
   profileSchema,
   promotionOfferSchema,
+  promotionOfferDeleteSchema,
   promotionOfferStatusSchema,
   rejectAccountSchema,
   registrationLinkSchema,
+  registrationLinkDeleteSchema,
   registrationLinkStatusSchema,
   startAccountSchema,
   validationError,
@@ -92,6 +100,21 @@ export async function submitAccountAction(
     return validationError("Revise a conta enviada.", parsed.error);
   }
 
+  if (!isEncryptionConfigured()) {
+    return {
+      ok: false,
+      message:
+        "Envio de credenciais indisponível: configure ACCOUNTS_CREDENTIALS_SECRET no servidor (mín. 16 caracteres).",
+    };
+  }
+
+  let secretCipher: string;
+  try {
+    secretCipher = encryptAccountPassword(parsed.data.leadAccountPassword);
+  } catch {
+    return { ok: false, message: "Não foi possível proteger a senha da conta. Tente novamente." };
+  }
+
   const supabase = await createClient();
   const accountId = crypto.randomUUID();
   const printFile = formData.get("accountPrint");
@@ -124,6 +147,8 @@ export async function submitAccountAction(
       captador_id: profile.id,
       account_identifier: parsed.data.accountIdentifier,
       account_notes: parsed.data.accountNotes || null,
+      lead_account_email: parsed.data.leadAccountEmail,
+      lead_account_secret_cipher: secretCipher,
       account_print_path: accountPrintPath,
       source_registration_link_id: profile.registration_link_id,
       status: "pending",
@@ -138,11 +163,14 @@ export async function submitAccountAction(
     return { ok: false, message: "Não foi possível enviar a conta." };
   }
 
-  await assignAccountToOperator(data.id);
+  await createAuditLog("account.submitted", "account", data.id, {
+    has_print: Boolean(accountPrintPath),
+  });
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/enviar-conta");
 
-  return { ok: true, message: "Conta enviada e encaminhada para a fila." };
+  return { ok: true, message: "Conta enviada para a fila. Quando houver ciclo completo, um operador apto recebe o lote." };
 }
 
 export async function assignAccountToOperator(accountId: string) {
@@ -164,19 +192,36 @@ export async function assignNextBatchToOperator(
 }
 
 export async function pickNextBatchAction(): Promise<ActionState> {
-  const { error } = await assignNextBatchToOperator();
+  const { data, error } = await assignNextBatchToOperator();
 
   if (error) {
+    if (error.message?.includes("minimum operational batch not available")) {
+      return { ok: false, message: "Ainda não há ciclo completo (2 contas) disponível para atribuição." };
+    }
+    if (error.message?.includes("operator not eligible")) {
+      return { ok: false, message: "Seu perfil ainda não está apto para receber novos lotes." };
+    }
     return { ok: false, message: "Não foi possível pegar o próximo lote." };
   }
 
   revalidatePath("/operador/dashboard");
   revalidatePath("/operador/contas");
-  return { ok: true, message: "Lote atualizado." };
+  const assigned = Number(data ?? 0);
+  return {
+    ok: true,
+    message: assigned > 0 ? `Lote atribuído com ${assigned} conta(s).` : "Nenhum lote novo foi atribuído.",
+  };
 }
 
 export async function pickNextBatchFormAction(): Promise<void> {
   await pickNextBatchAction();
+}
+
+export async function pickNextBatchStateAction(
+  state: ActionState = initialActionState,
+): Promise<ActionState> {
+  void state;
+  return pickNextBatchAction();
 }
 
 export async function completeAccount(accountId: string) {
@@ -335,6 +380,17 @@ export async function processPayoutAction(
   return { ok: true, message: "Pagamento marcado como processado." };
 }
 
+function mapEnsurePayoutRpcError(message: string | undefined): string {
+  const m = message ?? "";
+  if (m.includes("pix_key_required")) {
+    return "Cadastre sua chave Pix em Perfil antes de solicitar pagamento.";
+  }
+  if (m.includes("no pending earnings")) {
+    return "Não há saldo pendente disponível para pagamento.";
+  }
+  return "Não foi possível solicitar pagamento.";
+}
+
 export async function ensurePayoutAction(): Promise<ActionState> {
   const profile = await requireProfile();
   const supabase = await createClient();
@@ -343,10 +399,12 @@ export async function ensurePayoutAction(): Promise<ActionState> {
   });
 
   if (error) {
-    return { ok: false, message: "Não foi possível solicitar pagamento." };
+    return { ok: false, message: mapEnsurePayoutRpcError(error.message) };
   }
 
   revalidatePath("/captador/pagamentos");
+  revalidatePath("/operador/pagamentos");
+  revalidatePath("/admin/pagamentos");
   return { ok: true, message: "Pagamento pendente criado ou atualizado." };
 }
 
@@ -448,7 +506,10 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
 
   const supabase = await createClient();
   const updates = [
-    ["referral_bonus_brl", parsed.data.referralBonus],
+    ["referral_bonus_base_brl", parsed.data.referralBonusBase],
+    ["referral_bonus_increment_brl", parsed.data.referralBonusIncrement],
+    ["referral_bonus_brl", parsed.data.referralBonusBase],
+    ["referral_bonus_tier2_brl", parsed.data.referralBonusIncrement],
     ["referral_completed_accounts_target", parsed.data.referralTarget],
     ["referral_bonus_enabled", parsed.data.referralBonusEnabled],
     ["referral_utm_source", parsed.data.referralUtmSource],
@@ -470,6 +531,61 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
   );
 
   revalidatePath("/admin/configuracoes");
+  revalidatePath("/captador/indicacoes");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/pagamentos");
+}
+
+export async function upsertCaptadorDepositBriefAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+  const parsed = captadorDepositBriefSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return;
+  }
+
+  const admin = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.from("captador_submission_briefs").upsert(
+    {
+      captador_id: parsed.data.captadorId,
+      min_deposit_brl: parsed.data.minDepositBrl,
+      updated_at: new Date().toISOString(),
+      updated_by: admin.id,
+    },
+    { onConflict: "captador_id" },
+  );
+
+  if (!error) {
+    await createAuditLog("captador.deposit_brief_upserted", "profile", parsed.data.captadorId, {
+      min_deposit_brl: parsed.data.minDepositBrl,
+    });
+  }
+
+  revalidatePath("/admin/captadores");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/enviar-conta");
+}
+
+export async function clearCaptadorDepositBriefAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+  const parsed = captadorDepositBriefClearSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("captador_submission_briefs")
+    .delete()
+    .eq("captador_id", parsed.data.captadorId);
+
+  if (!error) {
+    await createAuditLog("captador.deposit_brief_cleared", "profile", parsed.data.captadorId, {});
+  }
+
+  revalidatePath("/admin/captadores");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/enviar-conta");
 }
 
 export async function updateGlobalCommissionsAction(
@@ -544,7 +660,7 @@ export async function createRegistrationLinkAction(formData: FormData): Promise<
     role: parsed.data.role,
   });
 
-  revalidatePath("/admin/links");
+  revalidatePath("/admin/ofertas");
 }
 
 export async function updateRegistrationLinkStatusAction(
@@ -567,7 +683,27 @@ export async function updateRegistrationLinkStatusAction(
     status: parsed.data.status,
   });
 
-  revalidatePath("/admin/links");
+  revalidatePath("/admin/ofertas");
+}
+
+export async function deleteRegistrationLinkAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+  const parsed = registrationLinkDeleteSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return;
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("registration_links")
+    .delete()
+    .eq("id", parsed.data.linkId);
+
+  if (!error) {
+    await createAuditLog("registration_link.deleted", "registration_link", parsed.data.linkId, {});
+  }
+
+  revalidatePath("/admin/ofertas");
 }
 
 export async function upsertCaptadorGlobalOfferAction(
@@ -587,7 +723,6 @@ export async function upsertCaptadorGlobalOfferAction(
     name: parsed.data.name.trim(),
     url_base: parsed.data.urlBase.trim(),
     is_active: parsed.data.isActive,
-    sort_order: parsed.data.sortOrder,
   };
 
   if (parsed.data.offerId) {
@@ -607,9 +742,7 @@ export async function upsertCaptadorGlobalOfferAction(
     }
   }
 
-  revalidatePath("/admin/links-operacao");
-  revalidatePath("/captador/dashboard");
-  revalidatePath("/captador/indicacoes");
+  revalidatePath("/admin/ofertas");
 
   return { ok: true, message: "Link global salvo." };
 }
@@ -628,9 +761,7 @@ export async function toggleCaptadorGlobalOfferActiveAction(formData: FormData):
     .update({ is_active: parsed.data.nextActive === "true" })
     .eq("id", parsed.data.offerId);
 
-  revalidatePath("/admin/links-operacao");
-  revalidatePath("/captador/dashboard");
-  revalidatePath("/captador/indicacoes");
+  revalidatePath("/admin/ofertas");
 }
 
 export async function upsertPromotionOfferAction(
@@ -646,14 +777,17 @@ export async function upsertPromotionOfferAction(
   }
 
   const supabase = await createClient();
+  const descTrim = parsed.data.description.trim();
+  const description =
+    descTrim.length >= 8 ? descTrim : "Promoção ativa — detalhes no painel do captador.";
+  const validUntilInput = parsed.data.validUntilManual?.trim() || parsed.data.validUntil || null;
   const payload = {
     name: parsed.data.name,
-    description: parsed.data.description,
+    description,
     reward_amount: parsed.data.rewardAmount,
     promotion_url: parsed.data.promotionUrl,
     status: parsed.data.status,
-    valid_until: parsed.data.validUntil || null,
-    display_order: parsed.data.displayOrder,
+    valid_until: validUntilInput,
     updated_by: admin.id,
   };
 
@@ -683,6 +817,7 @@ export async function upsertPromotionOfferAction(
 
   revalidatePath("/admin/ofertas");
   revalidatePath("/captador/ofertas");
+  revalidatePath("/operador/ofertas");
   return { ok: true, message: "Oferta salva e disponível conforme status configurado." };
 }
 
@@ -691,14 +826,20 @@ export async function updatePromotionOfferStatusAction(formData: FormData): Prom
   const parsed = promotionOfferStatusSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
+    redirect("/admin/ofertas?offer_error=Requisição inválida para status da oferta.");
     return;
   }
 
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("promotion_offers")
     .update({ status: parsed.data.status })
     .eq("id", parsed.data.offerId);
+
+  if (error) {
+    redirect("/admin/ofertas?offer_error=Não foi possível alterar o status da oferta.");
+    return;
+  }
 
   await createAuditLog("promotion_offer.status_updated", "promotion_offer", parsed.data.offerId, {
     status: parsed.data.status,
@@ -706,18 +847,55 @@ export async function updatePromotionOfferStatusAction(formData: FormData): Prom
 
   revalidatePath("/admin/ofertas");
   revalidatePath("/captador/ofertas");
+  revalidatePath("/operador/ofertas");
+  redirect("/admin/ofertas?offer_success=Status da oferta atualizado.");
 }
 
-export async function updateProfileFormAction(formData: FormData): Promise<void> {
-  await updateProfileAction(formData);
+export async function deletePromotionOfferAction(formData: FormData): Promise<void> {
+  await requireRole(["admin"]);
+  const parsed = promotionOfferDeleteSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    redirect("/admin/ofertas?offer_error=Requisição inválida para exclusão da oferta.");
+    return;
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("promotion_offers")
+    .delete()
+    .eq("id", parsed.data.offerId);
+
+  if (!error) {
+    await createAuditLog("promotion_offer.deleted", "promotion_offer", parsed.data.offerId, {});
+  } else {
+    redirect("/admin/ofertas?offer_error=Não foi possível excluir a oferta.");
+    return;
+  }
+
+  revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
+  revalidatePath("/operador/ofertas");
+  redirect("/admin/ofertas?offer_success=Oferta excluída.");
 }
 
-export async function submitAccountFormAction(formData: FormData): Promise<void> {
-  await submitAccountAction(formData);
+export async function updateProfileFormAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  return updateProfileAction(stateOrFormData, maybeFormData);
+}
+
+export async function submitAccountFormAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  return submitAccountAction(stateOrFormData, maybeFormData);
 }
 
 export async function upsertPromotionOfferFormAction(formData: FormData): Promise<void> {
-  await upsertPromotionOfferAction(formData);
+  const result = await upsertPromotionOfferAction(formData);
+  const key = result.ok ? "offer_success" : "offer_error";
+  redirect(`/admin/ofertas?${key}=${encodeURIComponent(result.message)}`);
 }
 
 export async function rejectAccountFormAction(formData: FormData): Promise<void> {

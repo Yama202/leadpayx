@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isValidPixKey } from "./pix-key.ts";
+
 export const loginSchema = z.object({
   email: z.string().email("Informe um e-mail válido."),
   password: z.string().min(6, "A senha precisa ter pelo menos 6 caracteres."),
@@ -36,7 +38,15 @@ export const profileSchema = z.object({
   name: z.string().min(2, "Informe seu nome.").max(120),
   instagram: z.string().trim().max(80).optional(),
   whatsapp: whatsappSchema,
-  pixKey: z.string().trim().min(3, "Informe uma chave Pix válida.").max(160),
+  pixKey: z
+    .string()
+    .trim()
+    .min(3, "Informe uma chave Pix válida.")
+    .max(160)
+    .refine(isValidPixKey, {
+      message:
+        "Chave Pix: use e-mail, telefone (com DDD), CPF, CNPJ, chave aleatória ou EVP (UUID).",
+    }),
   registrationCode: z
     .string()
     .trim()
@@ -52,6 +62,16 @@ export const accountSchema = z.object({
     .trim()
     .min(3, "Informe um identificador autorizado.")
     .max(160),
+  leadAccountEmail: z
+    .string()
+    .trim()
+    .min(3, "Informe o e-mail da conta.")
+    .email("Informe um e-mail válido.")
+    .transform((v) => v.toLowerCase()),
+  leadAccountPassword: z
+    .string()
+    .min(8, "A senha da conta deve ter pelo menos 8 caracteres.")
+    .max(512, "Senha muito longa."),
   accountNotes: z.string().trim().max(1000).optional(),
 });
 
@@ -97,7 +117,8 @@ export const globalCommissionSettingsSchema = z.object({
 });
 
 export const appSettingsSchema = z.object({
-  referralBonus: z.coerce.number().positive(),
+  referralBonusBase: z.coerce.number().positive(),
+  referralBonusIncrement: z.coerce.number().positive(),
   referralTarget: z.coerce.number().int().positive(),
   referralBonusEnabled: z
     .string()
@@ -121,6 +142,18 @@ export const appSettingsSchema = z.object({
     .string()
     .optional()
     .transform((value) => value === "on"),
+});
+
+export const captadorDepositBriefSchema = z.object({
+  captadorId: z.string().uuid(),
+  minDepositBrl: z.coerce
+    .number()
+    .positive("Informe um valor maior que zero.")
+    .max(99_999_999.99, "Valor acima do limite."),
+});
+
+export const captadorDepositBriefClearSchema = z.object({
+  captadorId: z.string().uuid(),
 });
 
 export const registrationLinkSchema = z.object({
@@ -150,6 +183,10 @@ export const registrationLinkStatusSchema = z.object({
   status: z.enum(["active", "inactive"]),
 });
 
+export const registrationLinkDeleteSchema = z.object({
+  linkId: z.string().uuid(),
+});
+
 export const captadorGlobalOfferSchema = z.object({
   offerId: z.string().uuid().optional(),
   name: z.string().trim().min(2, "Informe o nome da oferta.").max(120),
@@ -162,7 +199,6 @@ export const captadorGlobalOfferSchema = z.object({
     .string()
     .optional()
     .transform((value) => value === "on"),
-  sortOrder: z.coerce.number().int().min(0).max(999_999),
 });
 
 export const captadorGlobalOfferToggleSchema = z.object({
@@ -173,7 +209,12 @@ export const captadorGlobalOfferToggleSchema = z.object({
 export const promotionOfferSchema = z.object({
   offerId: z.string().uuid().optional(),
   name: z.string().trim().min(2, "Informe o nome da oferta.").max(120),
-  description: z.string().trim().min(8, "Descreva as regras da oferta.").max(1200),
+  description: z
+    .string()
+    .trim()
+    .max(1200)
+    .optional()
+    .transform((value) => value ?? ""),
   rewardAmount: z.coerce.number().positive("Informe um valor positivo."),
   promotionUrl: z
     .string()
@@ -182,12 +223,16 @@ export const promotionOfferSchema = z.object({
     .refine((value) => value.startsWith("https://"), "Use apenas links HTTPS."),
   status: z.enum(["active", "inactive"]).default("active"),
   validUntil: z.string().or(z.literal("")).optional(),
-  displayOrder: z.coerce.number().int().min(0).max(9999),
+  validUntilManual: z.string().trim().max(40).optional(),
 });
 
 export const promotionOfferStatusSchema = z.object({
   offerId: z.string().uuid(),
   status: z.enum(["active", "inactive"]),
+});
+
+export const promotionOfferDeleteSchema = z.object({
+  offerId: z.string().uuid(),
 });
 
 export const adminRoleActionSchema = z

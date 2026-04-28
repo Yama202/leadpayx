@@ -28,6 +28,16 @@ export default async function AdminPagamentosPage({
       .returns<FinancialSummary[]>(),
   ]);
   const payoutRows = payouts ?? [];
+  const payoutUserIds = [...new Set(payoutRows.map((row) => row.user_id))];
+  const { data: payoutProfiles } = payoutUserIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id,name,email,role")
+        .in("id", payoutUserIds)
+    : { data: [] };
+  const payoutProfileMap = new Map(
+    (payoutProfiles ?? []).map((item) => [item.id, item]),
+  );
   const proofUrls = await getPaymentProofUrls(payoutRows);
   const financialRows = (financial ?? []) as FinancialSummary[];
   const pendingTotal = financialRows.reduce((sum, row) => sum + Number(row.pending_amount), 0);
@@ -102,6 +112,13 @@ export default async function AdminPagamentosPage({
               </p>
               <StatusBadge status={payout.status === "processed" ? "paid" : "pending"} />
             </div>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              {(payoutProfileMap.get(payout.user_id)?.name ??
+                payoutProfileMap.get(payout.user_id)?.email ??
+                payout.user_id)}{" "}
+              · {payoutProfileMap.get(payout.user_id)?.role ?? "perfil"} ·{" "}
+              {new Date(payout.created_at).toLocaleString("pt-BR")}
+            </p>
             {payout.status === "pending" ? (
               <div className="mt-5">
                 <form action={processPayoutFormAction} className="space-y-5">

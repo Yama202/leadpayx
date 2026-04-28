@@ -37,6 +37,10 @@ export type Account = {
   status: AccountStatus;
   account_identifier: string;
   account_notes: string | null;
+  /** E-mail de login do lead (texto; visível ao captador dono e a papéis operacionais). */
+  lead_account_email: string | null;
+  /** Presente apenas em selects explícitos; nunca enviar ao cliente do captador. */
+  lead_account_secret_cipher?: string | null;
   account_print_path: string | null;
   source_registration_link_id: string | null;
   operation_started_at: string | null;
@@ -110,7 +114,6 @@ export type CaptadorGlobalOffer = {
   name: string;
   url_base: string;
   is_active: boolean;
-  sort_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -123,7 +126,6 @@ export type PromotionOffer = {
   promotion_url: string;
   status: ProfileStatus;
   valid_until: string | null;
-  display_order: number;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -137,6 +139,14 @@ export type ReferralSummary = {
   completed_accounts: number;
   qualified: boolean;
   bonus_paid: boolean;
+};
+
+/** Admin solicita envios com comprovante de depósito ≥ valor (BRL). */
+export type CaptadorSubmissionBrief = {
+  captador_id: string;
+  min_deposit_brl: number;
+  updated_at: string;
+  updated_by: string | null;
 };
 
 export type FinancialSummary = {
