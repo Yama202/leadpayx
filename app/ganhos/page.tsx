@@ -3,15 +3,24 @@ import {
   SectionGrid,
   TrustPaymentBlock,
 } from "@/components/public/institutional-page";
+import type { RegisterLinkSearchInput } from "@/lib/register-href";
+import { buildRegisterHref } from "@/lib/register-href";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 
-export default async function GanhosPage() {
+export default async function GanhosPage({
+  searchParams,
+}: {
+  searchParams: Promise<RegisterLinkSearchInput>;
+}) {
+  const params = await searchParams;
+  const registerHref = buildRegisterHref(params);
   const whatsappUrl = await getWhatsappGroupUrl();
 
   return (
     <PublicPageShell
       description="Ganhos no LeadPayX são calculados por regras administrativas, vinculados a contas concluídas e separados de bônus por indicação para leitura simples."
       eyebrow="Ganhos"
+      registerHref={registerHref}
       title="Remuneração clara, sem confusão operacional"
       whatsappUrl={whatsappUrl}
     >

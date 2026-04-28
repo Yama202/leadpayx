@@ -3,7 +3,8 @@ import { DashboardCard, StatusBadge } from "@/components/ui/cards";
 import { Field, SubmitButton } from "@/components/ui/forms";
 import { processPayoutFormAction } from "@/lib/actions/domain";
 import { requireRole } from "@/lib/auth";
-import { getPaymentProofUrls, parsePeriod, toCurrency } from "@/lib/payments";
+import { parsePeriod, toCurrency } from "@/lib/payments";
+import { getPaymentProofUrls } from "@/lib/payments.server";
 import { createClient } from "@/lib/supabase/server";
 import type { FinancialSummary, Payout } from "@/lib/types";
 

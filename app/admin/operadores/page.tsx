@@ -2,6 +2,7 @@ import { ProfileAdminCard } from "@/components/admin/profile-admin-card";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { DashboardCard, EmptyState, StatusBadge } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
+import { ACCOUNT_SELECT_CAPTADOR } from "@/lib/account-columns";
 import { accountStatusLabel } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, AccountStatus, AppSetting, Profile } from "@/lib/types";
@@ -11,7 +12,6 @@ export const dynamic = "force-dynamic";
 const statusOptions: AccountStatus[] = [
   "pending",
   "assigned",
-  "in_progress",
   "completed",
   "rejected",
 ];
@@ -41,7 +41,7 @@ export default async function AdminOperadoresPage({
       .returns<Profile[]>(),
     supabase
       .from("accounts")
-      .select("*")
+      .select(ACCOUNT_SELECT_CAPTADOR)
       .order("updated_at", { ascending: false })
       .limit(250)
       .returns<Account[]>(),
@@ -103,9 +103,8 @@ export default async function AdminOperadoresPage({
               }`}>
                 {isEligible ? "Apto para distribuição" : `Pendente: mínimo ${minimumCompleted} concluídas`}
               </span>
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <DashboardCard label="Atribuídas" value={String(countByStatus("assigned"))} />
-                <DashboardCard label="Em operação" value={String(countByStatus("in_progress"))} />
                 <DashboardCard label="Concluídas" value={String(countByStatus("completed"))} />
                 <DashboardCard label="Recusadas" value={String(countByStatus("rejected"))} />
                 <DashboardCard label="Pendentes" value={String(countByStatus("pending"))} />

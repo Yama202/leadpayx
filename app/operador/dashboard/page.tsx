@@ -1,13 +1,14 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { OperatorPickBatchForm } from "@/components/domain/operator-pick-batch-form";
 import { PromotionOfferGrid } from "@/components/domain/promotion-offer-grid";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
-import { Button, LinkButton } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import {
-  pickNextBatchFormAction,
-  reassignExpiredOperatorAccounts,
   rejectAccountFormAction,
 } from "@/lib/actions/domain";
+import { operationalCredentialsFromAccount } from "@/lib/account-operational";
+import { ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
 import { requireRole } from "@/lib/auth";
 import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
 import { getWhatsappGroupUrl } from "@/lib/settings";
@@ -16,9 +17,6 @@ import type { Account, AppSetting } from "@/lib/types";
 import { Field, SubmitButton } from "@/components/ui/forms";
 
 export const dynamic = "force-dynamic";
-
-const operatorAccountSelect =
-  "id,captador_id,operador_id,status,account_identifier,account_notes,account_print_path,source_registration_link_id,operation_started_at,operation_deadline_at,reassigned_at,reassign_reason,last_operator_id,rejection_reason,created_at,assigned_at,started_at,completed_at,rejected_at,updated_at,completed_by_operador_id";
 
 type DashboardEarning = {
   amount: number | string;
@@ -34,7 +32,6 @@ export default async function OperadorDashboardPage({
   const params = await searchParams;
   const profile = await requireRole(["operator"]);
   const supabase = await createClient();
-  await reassignExpiredOperatorAccounts();
   const [
     { data: accounts },
     { data: earnings },
@@ -45,7 +42,7 @@ export default async function OperadorDashboardPage({
   ] = await Promise.all([
     supabase
       .from("accounts")
-      .select(operatorAccountSelect)
+      .select(ACCOUNT_SELECT_WITH_SECRET)
       .eq("operador_id", profile.id)
       .in("status", ["assigned", "in_progress"])
       .order("assigned_at", { ascending: true })
@@ -89,23 +86,10 @@ export default async function OperadorDashboardPage({
 
   return (
     <RoleBasedLayout
-      description="Você recebe contas atribuídas pelo sistema, executa a operação e atualiza o status. Não há contato direto com captadores."
+      description="Pegue lote, processe e finalize contas."
       profile={profile}
       title="Fila do operador"
     >
-      <section className="mb-6 grid gap-4 lg:grid-cols-4">
-        {[
-          ["Fila atribuída", "As contas chegam pelo balanceamento do sistema. Você não escolhe captador e não conversa com ele."],
-          ["Operação controlada", "Use começar, finalizar ou recusar com motivo. Todas as ações ficam auditadas."],
-          ["Sem dados sensíveis", "Você processa apenas o necessário para a operação e não vê financeiro do captador."],
-          ["Gestão centralizada", "Dúvidas, ajustes e comunicação passam pelo sistema/admin, não por contato direto."],
-        ].map(([title, text]) => (
-          <article className="rounded-[1.75rem] border border-[#00E07A]/15 bg-[#00E07A]/5 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.18)]" key={title}>
-            <p className="font-black text-[#16F28A]">{title}</p>
-            <p className="mt-2 text-sm leading-6 text-[#A1A1AA]">{text}</p>
-          </article>
-        ))}
-      </section>
       {opErrorMessage ? (
         <div
           className="mb-6 rounded-[2rem] border border-rose-400/30 bg-rose-500/10 p-4 text-sm font-semibold text-rose-100"
@@ -120,7 +104,7 @@ export default async function OperadorDashboardPage({
             <div>
               <p className="text-sm font-black text-[#FDE047]">Promoções ativas</p>
               <p className="mt-1 text-xs text-zinc-400">
-                Links globais aprovados pelo admin — mesmo catálogo para todos os operadores.
+                Mesmas ofertas globais visíveis no app.
               </p>
             </div>
             <LinkButton className="w-full shrink-0 sm:w-auto" href="/operador/ofertas" variant="secondary">
@@ -159,11 +143,7 @@ export default async function OperadorDashboardPage({
           label="Lote operacional"
           value={`${minimumBatch} contas`}
         />
-        <form action={pickNextBatchFormAction}>
-          <Button className="h-full w-full" disabled={!isEligible} type="submit">
-            Pegar lote de {minimumBatch}
-          </Button>
-        </form>
+        <OperatorPickBatchForm disabled={!isEligible} minimumBatch={minimumBatch} />
       </div>
       {!isEligible ? (
         <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
@@ -173,7 +153,12 @@ export default async function OperadorDashboardPage({
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {accounts?.length ? (
           accounts.map((account) => (
-            <AccountCard account={account} key={account.id} operatorActions>
+            <AccountCard
+              account={account}
+              key={account.id}
+              operationalCredentials={operationalCredentialsFromAccount(account)}
+              operatorActions
+            >
               <form action={rejectAccountFormAction} className="space-y-5">
                 <input name="accountId" type="hidden" value={account.id} />
                 <Field

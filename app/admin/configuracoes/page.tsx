@@ -61,13 +61,51 @@ export default async function AdminConfiguracoesPage() {
             .
           </p>
           </div>
+        <div className="sm:col-span-2">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#16F28A]">Indicação (global)</p>
+          <p className="mt-1 text-xs text-[#A1A1AA]">
+            Igual para todos.{" "}
+            <abbr
+              className="cursor-help no-underline"
+              title="1ª indicação qualificada: valor base. Cada novo indicado que atingir a meta: incremento (ex.: R$ 60 + 60 + 60)."
+            >
+              O que é “meta”?
+            </abbr>
+          </p>
+        </div>
         <label className="block">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Bônus de indicação</span>
-          <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={String(values.referral_bonus_brl ?? 60)} name="referralBonus" step="0.01" type="number" />
+          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Valor base (1ª qualificação)</span>
+          <input
+            className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+            defaultValue={String(values.referral_bonus_base_brl ?? values.referral_bonus_brl ?? 60)}
+            name="referralBonusBase"
+            step="0.01"
+            type="number"
+          />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Contas para qualificar indicação</span>
-          <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={String(values.referral_completed_accounts_target ?? 2)} name="referralTarget" type="number" />
+          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Incremento (cada nova qualificação)</span>
+          <input
+            className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+            defaultValue={String(
+              values.referral_bonus_increment_brl ??
+                values.referral_bonus_tier2_brl ??
+                values.referral_bonus_brl ??
+                60,
+            )}
+            name="referralBonusIncrement"
+            step="0.01"
+            type="number"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Meta: contas concluídas por indicado</span>
+          <input
+            className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+            defaultValue={String(values.referral_completed_accounts_target ?? 2)}
+            name="referralTarget"
+            type="number"
+          />
         </label>
         <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-200 sm:col-span-2">
           <input
@@ -77,26 +115,38 @@ export default async function AdminConfiguracoesPage() {
           />
           Campanha de indicação ativa
         </label>
-        <div className="sm:col-span-2">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#16F28A]">
-            UTM padrão do convite
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[#A1A1AA]">
-            Esses parâmetros entram automaticamente no link pessoal do captador.
-          </p>
-        </div>
-        <label className="block">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">utm_source</span>
-          <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={referralSettings.utmSource} name="referralUtmSource" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">utm_medium</span>
-          <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={referralSettings.utmMedium} name="referralUtmMedium" />
-        </label>
-        <label className="block sm:col-span-2">
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">utm_campaign</span>
-          <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={referralSettings.utmCampaign} name="referralUtmCampaign" />
-        </label>
+        <details className="sm:col-span-2 rounded-2xl border border-slate-200 px-4 py-3 dark:border-white/10">
+          <summary className="min-h-11 cursor-pointer text-sm font-bold text-slate-700 dark:text-slate-200">
+            UTM do link pessoal (avançado)
+          </summary>
+          <p className="mt-2 text-xs text-[#A1A1AA]">Anexados ao link fixo de indicação.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">utm_source</span>
+              <input
+                className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+                defaultValue={referralSettings.utmSource}
+                name="referralUtmSource"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">utm_medium</span>
+              <input
+                className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+                defaultValue={referralSettings.utmMedium}
+                name="referralUtmMedium"
+              />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">utm_campaign</span>
+              <input
+                className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+                defaultValue={referralSettings.utmCampaign}
+                name="referralUtmCampaign"
+              />
+            </label>
+          </div>
+        </details>
         <label className="block">
           <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Mínimo de contas concluídas para operador apto</span>
           <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={String(values.operator_min_completed_accounts ?? 0)} name="operatorMinCompletedAccounts" type="number" />

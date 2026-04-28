@@ -1,11 +1,11 @@
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { DashboardCard, EmptyState, StatusBadge } from "@/components/ui/cards";
-import { ensurePayoutFormAction } from "@/lib/actions/domain";
+import { PayoutRequestForm } from "@/components/domain/payout-request-form";
 import { requireRole } from "@/lib/auth";
-import { getPaymentProofUrls, toCurrency } from "@/lib/payments";
+import { toCurrency } from "@/lib/payments";
+import { getPaymentProofUrls } from "@/lib/payments.server";
 import { createClient } from "@/lib/supabase/server";
 import type { Earning, Payout } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -52,11 +52,7 @@ export default async function OperadorPagamentosPage() {
           label="Pix diário"
           value="1x ao dia"
         />
-        <form action={ensurePayoutFormAction}>
-          <Button className="h-full w-full" type="submit" variant="secondary">
-            Solicitar pagamento
-          </Button>
-        </form>
+        <PayoutRequestForm className="h-full" />
       </div>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {payouts?.length ? (

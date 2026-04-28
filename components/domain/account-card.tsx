@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
+import type { OperationalCredentials } from "@/lib/account-operational";
 import { completeAccountAction, startAccountAction } from "@/lib/actions/domain";
+import { OperationalCredentialsPanel } from "@/components/domain/operational-credentials-panel";
 import { StatusBadge } from "@/components/ui/cards";
 import { Button } from "@/components/ui/button";
 import type { Account } from "@/lib/types";
@@ -10,10 +12,13 @@ import { SlaIndicator } from "@/components/domain/sla-indicator";
 export function AccountCard({
   account,
   operatorActions = false,
+  /** Quando definido (operador/admin no servidor), exibe e-mail e senha decifrados. */
+  operationalCredentials,
   children,
 }: {
   account: Account;
   operatorActions?: boolean;
+  operationalCredentials?: OperationalCredentials | null;
   children?: ReactNode;
 }) {
   return (
@@ -29,6 +34,22 @@ export function AccountCard({
         </div>
         <StatusBadge status={account.status} />
       </div>
+      {account.lead_account_email && !operationalCredentials ? (
+        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">
+            E-mail da conta enviado
+          </p>
+          <p className="mt-1 break-all font-mono text-sm text-zinc-200">
+            {account.lead_account_email}
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            A senha foi armazenada de forma protegida e não é exibida aqui.
+          </p>
+        </div>
+      ) : null}
+      {operationalCredentials ? (
+        <OperationalCredentialsPanel credentials={operationalCredentials} />
+      ) : null}
       {account.account_notes ? (
         <p className="mt-4 text-sm leading-6 text-[#A1A1AA]">{account.account_notes}</p>
       ) : null}

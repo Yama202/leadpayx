@@ -1,10 +1,8 @@
 import { ReferralBox } from "@/components/domain/referral-box";
-import { CaptadorGlobalOffersPanel } from "@/components/domain/captador-global-offers-panel";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { DashboardCard } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
-import { fetchActiveCaptadorGlobalOffersResolved } from "@/lib/queries/captador-global-offers";
-import { getReferralSettings } from "@/lib/referrals";
+import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referrals";
 import { createClient } from "@/lib/supabase/server";
 import type { AppSetting, ReferralSummary } from "@/lib/types";
 
@@ -13,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function IndicacoesPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-  const [{ data: count }, { data: referrals }, { data: settings }, globalOffers] = await Promise.all([
+  const [{ data: count }, { data: referrals }, { data: settings }] = await Promise.all([
     supabase.rpc("get_referral_count", {
       target_user_id: profile.id,
     }),
@@ -25,14 +23,16 @@ export default async function IndicacoesPage() {
       .select("key,value")
       .in("key", [
         "referral_bonus_enabled",
+        "referral_bonus_base_brl",
+        "referral_bonus_increment_brl",
         "referral_bonus_brl",
+        "referral_bonus_tier2_brl",
         "referral_completed_accounts_target",
         "referral_utm_source",
         "referral_utm_medium",
         "referral_utm_campaign",
       ])
       .returns<AppSetting[]>(),
-    fetchActiveCaptadorGlobalOffersResolved(supabase, profile),
   ]);
   const referralRows = (referrals ?? []) as ReferralSummary[];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
@@ -40,14 +40,14 @@ export default async function IndicacoesPage() {
 
   return (
     <RoleBasedLayout
-      description="Compartilhe seu código. O bônus é gerado uma única vez após a qualificação do indicado."
+      description="Link fixo do site e links de campanha. Bônus por indicação qualificada."
       profile={profile}
       title="Indicações"
     >
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
         <DashboardCard
-          hint="A listagem individual é restrita para evitar exposição de dados pessoais de outros captadores."
-          label="Indicados vinculados"
+          hint={formatReferralBonusLevaHint(referralSettings)}
+          label="Indicados"
           value={String(count ?? 0)}
         />
         <ReferralBox
@@ -56,14 +56,6 @@ export default async function IndicacoesPage() {
           utmCampaign={referralSettings.utmCampaign}
           utmMedium={referralSettings.utmMedium}
           utmSource={referralSettings.utmSource}
-        />
-      </div>
-
-      <div className="mt-6">
-        <CaptadorGlobalOffersPanel
-          description="Links globais autorizados pela administração. Cada URL inclui UTM para rastrear sua indicação (código ou ID)."
-          items={globalOffers}
-          title="Links oficiais de operação"
         />
       </div>
 

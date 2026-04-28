@@ -3,15 +3,24 @@ import {
   SectionGrid,
   TrustPaymentBlock,
 } from "@/components/public/institutional-page";
+import type { RegisterLinkSearchInput } from "@/lib/register-href";
+import { buildRegisterHref } from "@/lib/register-href";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 
-export default async function FaqPage() {
+export default async function FaqPage({
+  searchParams,
+}: {
+  searchParams: Promise<RegisterLinkSearchInput>;
+}) {
+  const params = await searchParams;
+  const registerHref = buildRegisterHref(params);
   const whatsappUrl = await getWhatsappGroupUrl();
 
   return (
     <PublicPageShell
       description="Respostas diretas sobre operação, pagamento, indicação e segurança do fluxo LeadPayX."
       eyebrow="FAQ"
+      registerHref={registerHref}
       title="Perguntas frequentes"
       whatsappUrl={whatsappUrl}
     >

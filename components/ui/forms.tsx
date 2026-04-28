@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { FormHTMLAttributes, ReactNode } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -83,16 +83,19 @@ export function SubmitButton({ children }: { children: string }) {
 export function ActionForm({
   action,
   initialState,
+  encType,
   children,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   initialState: ActionState;
+  /** Use `multipart/form-data` quando houver upload de arquivo no formulário. */
+  encType?: FormHTMLAttributes<HTMLFormElement>["encType"];
   children: (state: ActionState) => ReactNode;
 }) {
   const [state, formAction] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-5" encType={encType}>
       {children(state)}
       {state.message ? (
         <p

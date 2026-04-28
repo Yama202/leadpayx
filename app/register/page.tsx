@@ -8,7 +8,13 @@ export const dynamic = "force-dynamic";
 export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string; utm_content?: string }>;
+  searchParams: Promise<{
+    ref?: string;
+    utm_content?: string;
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+  }>;
 }) {
   await redirectAuthenticatedUser();
   const params = await searchParams;

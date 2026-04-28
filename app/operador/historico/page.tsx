@@ -1,6 +1,8 @@
 import { AccountCard } from "@/components/domain/account-card";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { EmptyState } from "@/components/ui/cards";
+import { operationalCredentialsFromAccount } from "@/lib/account-operational";
+import { ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Account } from "@/lib/types";
@@ -12,9 +14,7 @@ export default async function OperadorHistoricoPage() {
   const supabase = await createClient();
   const { data: accounts } = await supabase
     .from("accounts")
-    .select(
-      "id,captador_id,operador_id,status,account_identifier,account_notes,account_print_path,operation_deadline_at,reassigned_at,reassign_reason,rejection_reason,assigned_at,started_at,completed_at,rejected_at,completed_by_operador_id",
-    )
+    .select(ACCOUNT_SELECT_WITH_SECRET)
     .eq("operador_id", profile.id)
     .in("status", ["completed", "rejected"])
     .order("updated_at", { ascending: false })
@@ -28,7 +28,13 @@ export default async function OperadorHistoricoPage() {
     >
       <div className="grid gap-4 lg:grid-cols-2">
         {accounts?.length ? (
-          accounts.map((account) => <AccountCard account={account} key={account.id} />)
+          accounts.map((account) => (
+            <AccountCard
+              account={account}
+              key={account.id}
+              operationalCredentials={operationalCredentialsFromAccount(account)}
+            />
+          ))
         ) : (
           <EmptyState description="Finalizações e recusas aparecerão aqui." title="Sem histórico" />
         )}

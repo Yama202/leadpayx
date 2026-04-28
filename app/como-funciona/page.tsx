@@ -3,15 +3,24 @@ import {
   SectionGrid,
   TrustPaymentBlock,
 } from "@/components/public/institutional-page";
+import type { RegisterLinkSearchInput } from "@/lib/register-href";
+import { buildRegisterHref } from "@/lib/register-href";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 
-export default async function ComoFuncionaPage() {
+export default async function ComoFuncionaPage({
+  searchParams,
+}: {
+  searchParams: Promise<RegisterLinkSearchInput>;
+}) {
+  const params = await searchParams;
+  const registerHref = buildRegisterHref(params);
   const whatsappUrl = await getWhatsappGroupUrl();
 
   return (
     <PublicPageShell
       description="O LeadPayX organiza captação, distribuição operacional, status e pagamento em um fluxo rastreável para quem precisa trabalhar com volume sem perder controle."
       eyebrow="Processo"
+      registerHref={registerHref}
       title="Como funciona o LeadPayX"
       whatsappUrl={whatsappUrl}
     >

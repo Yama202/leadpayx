@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { PublicHeader, TrustPaymentBlock } from "@/components/public/institutional-page";
-import { normalizeReferralCode } from "@/lib/referrals";
+import type { RegisterLinkSearchInput } from "@/lib/register-href";
+import { buildRegisterHref } from "@/lib/register-href";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 
 const trustChips = [
@@ -25,11 +26,10 @@ const floatingCards = [
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string; utm_content?: string }>;
+  searchParams: Promise<RegisterLinkSearchInput>;
 }) {
   const params = await searchParams;
-  const referralCode = normalizeReferralCode(params.ref) || normalizeReferralCode(params.utm_content);
-  const registerHref = referralCode ? `/register?ref=${encodeURIComponent(referralCode)}` : "/register";
+  const registerHref = buildRegisterHref(params);
   const whatsappUrl = await getWhatsappGroupUrl();
 
   return (
@@ -40,7 +40,7 @@ export default async function Home({
       <div className="pointer-events-none absolute -left-24 top-1/3 h-px w-[34rem] rotate-12 bg-gradient-to-r from-transparent via-[#00E07A]/40 to-transparent blur-[0.5px]" />
       <div className="pointer-events-none absolute -right-28 top-44 h-px w-[32rem] -rotate-12 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
-      <PublicHeader />
+      <PublicHeader registerHref={registerHref} />
 
       <section className="relative z-10 mx-auto grid min-h-dvh w-full max-w-7xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 sm:pt-32 lg:grid-cols-[1.02fr_0.98fr] lg:gap-8 lg:pt-28">
         <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">

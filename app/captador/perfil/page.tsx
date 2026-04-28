@@ -1,6 +1,5 @@
+import { CaptadorProfileForm } from "@/components/domain/captador-profile-form";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
-import { Field, SubmitButton } from "@/components/ui/forms";
-import { updateProfileFormAction } from "@/lib/actions/domain";
 import { requireRole } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -14,30 +13,8 @@ export default async function PerfilPage() {
       profile={profile}
       title="Perfil"
     >
-      <div className="max-w-2xl rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80">
-        <form action={updateProfileFormAction} className="space-y-5">
-          <Field defaultValue={profile.name ?? ""} label="Nome" name="name" required />
-          <Field
-            defaultValue={profile.instagram ?? ""}
-            label="Instagram"
-            name="instagram"
-            placeholder="@seuperfil"
-          />
-          <Field
-            defaultValue={profile.whatsapp ?? ""}
-            label="WhatsApp"
-            name="whatsapp"
-            placeholder="(11) 99999-9999"
-            required
-          />
-          <Field
-            defaultValue={profile.pix_key ?? ""}
-            label="Chave Pix"
-            name="pixKey"
-            required
-          />
-          <SubmitButton>Salvar perfil</SubmitButton>
-        </form>
+      <div className="max-w-2xl rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+        <CaptadorProfileForm profile={profile} />
       </div>
     </RoleBasedLayout>
   );

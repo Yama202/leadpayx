@@ -3,15 +3,24 @@ import {
   SectionGrid,
   TrustPaymentBlock,
 } from "@/components/public/institutional-page";
+import type { RegisterLinkSearchInput } from "@/lib/register-href";
+import { buildRegisterHref } from "@/lib/register-href";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 
-export default async function IndicacoesPage() {
+export default async function IndicacoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<RegisterLinkSearchInput>;
+}) {
+  const params = await searchParams;
+  const registerHref = buildRegisterHref(params);
   const whatsappUrl = await getWhatsappGroupUrl();
 
   return (
     <PublicPageShell
       description="Indicações são tratadas como fluxo operacional rastreável: link identificado, cadastro associado, meta de conclusão e bônus separado dos ganhos normais."
       eyebrow="Indicações"
+      registerHref={registerHref}
       title="Indicação com regra clara e registro completo"
       whatsappUrl={whatsappUrl}
     >

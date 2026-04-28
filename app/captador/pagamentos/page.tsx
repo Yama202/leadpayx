@@ -1,18 +1,21 @@
+import { PayoutRequestForm } from "@/components/domain/payout-request-form";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState, StatusBadge } from "@/components/ui/cards";
-import { ensurePayoutFormAction } from "@/lib/actions/domain";
 import { requireRole } from "@/lib/auth";
-import { getPaymentProofUrls, toCurrency } from "@/lib/payments";
+import { maskPixKeyForAdmin } from "@/lib/pix-key";
+import { toCurrency } from "@/lib/payments";
+import { getPaymentProofUrls } from "@/lib/payments.server";
+import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referrals";
 import { createClient } from "@/lib/supabase/server";
-import type { Earning, Payout } from "@/lib/types";
+import type { AppSetting, Earning, Payout } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function PagamentosCaptadorPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-  const [{ data: earnings }, { data: payouts }] = await Promise.all([
+  const [{ data: earnings }, { data: payouts }, { data: settings }] = await Promise.all([
     supabase
       .from("earnings")
       .select("*")
@@ -25,7 +28,21 @@ export default async function PagamentosCaptadorPage() {
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false })
       .returns<Payout[]>(),
+    supabase
+      .from("app_settings")
+      .select("key,value")
+      .in("key", [
+        "referral_bonus_base_brl",
+        "referral_bonus_increment_brl",
+        "referral_bonus_brl",
+        "referral_bonus_tier2_brl",
+        "referral_completed_accounts_target",
+      ])
+      .returns<AppSetting[]>(),
   ]);
+  const referralSettings = getReferralSettings(settings);
+  const pixOk = Boolean(profile.pix_key?.trim() && profile.pix_key.trim().length >= 3);
+  const tierHint = formatReferralBonusLevaHint(referralSettings, toCurrency);
 
   const pendingAmount =
     earnings?.filter((earning) => earning.status === "pending").reduce(
@@ -52,11 +69,7 @@ export default async function PagamentosCaptadorPage() {
   };
 
   return (
-    <RoleBasedLayout
-      description="Acompanhe seus ganhos e pagamentos processados."
-      profile={profile}
-      title="Pagamentos"
-    >
+    <RoleBasedLayout description="Ganhos, Pix e solicitação de pagamento." profile={profile} title="Pagamentos">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <DashboardCard label="Disponível" value={toCurrency(pendingAmount)} />
         <DashboardCard label="Ganhos normais" value={toCurrency(normalPendingAmount)} />
@@ -65,26 +78,13 @@ export default async function PagamentosCaptadorPage() {
       </div>
       <section className="mt-4 grid gap-4 lg:grid-cols-2">
         <article className="rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A1A1AA]">
-            Ganhos normais
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[#A1A1AA]">
-            Valores gerados por contas próprias concluídas.
-          </p>
-          <p className="mt-4 text-3xl font-black text-white">
-            {toCurrency(normalPendingAmount)}
-          </p>
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A1A1AA]">Ganhos normais</p>
+          <p className="mt-4 text-3xl font-black text-white">{toCurrency(normalPendingAmount)}</p>
         </article>
         <article className="rounded-[2rem] border border-[#00E07A]/20 bg-[#00E07A]/10 p-5 shadow-[0_24px_80px_rgba(0,224,122,0.08)]">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#16F28A]">
-            Ganhos por indicação
-          </p>
-          <p className="mt-2 text-sm leading-6 text-emerald-100/75">
-            Bônus de R$10 liberado automaticamente quando um indicado completa 2 contas válidas.
-          </p>
-          <p className="mt-4 text-3xl font-black text-emerald-50">
-            {toCurrency(referralPendingAmount)}
-          </p>
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#16F28A]">Indicação</p>
+          <p className="mt-2 text-xs font-semibold leading-5 text-emerald-100/85">{tierHint}</p>
+          <p className="mt-4 text-3xl font-black text-emerald-50">{toCurrency(referralPendingAmount)}</p>
         </article>
       </section>
       <section className="mt-6 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
@@ -92,9 +92,6 @@ export default async function PagamentosCaptadorPage() {
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A1A1AA]">
               Lançamentos
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[#A1A1AA]">
-              Ganhos normais e bônus aparecem separados para facilitar conferência.
             </p>
           </div>
         </div>
@@ -117,20 +114,29 @@ export default async function PagamentosCaptadorPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm text-[#A1A1AA]">
-              Nenhum lançamento de ganho registrado ainda.
-            </p>
+            <p className="rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm text-[#A1A1AA]">Sem lançamentos.</p>
           )}
         </div>
       </section>
-      <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_240px]">
-        <DashboardCard label="Pix diário" value="1x ao dia" hint="Solicitações entram na fila de pagamento do admin." />
-        <form action={ensurePayoutFormAction}>
-          <Button className="h-full w-full" type="submit" variant="secondary">
-            Solicitar pagamento
-          </Button>
-        </form>
-      </div>
+      <section className="mt-4 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A1A1AA]">Chave Pix</p>
+            <p className="mt-1 font-mono text-sm font-semibold text-white">
+              {pixOk ? maskPixKeyForAdmin(profile.pix_key) : "—"}
+            </p>
+            {!pixOk ? (
+              <LinkButton className="mt-3 min-h-12 w-full sm:w-auto" href="/captador/perfil" variant="secondary">
+                Cadastrar Pix
+              </LinkButton>
+            ) : null}
+          </div>
+          <div className="w-full shrink-0 sm:max-w-[240px]">
+            <PayoutRequestForm />
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-[#A1A1AA]">Pagamentos: até 1 solicitação/dia; fila administrativa.</p>
+      </section>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {payouts?.length ? (
           payouts.map((payout) => (

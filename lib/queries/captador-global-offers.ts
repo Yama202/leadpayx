@@ -17,8 +17,7 @@ export async function fetchActiveCaptadorGlobalOffersResolved(
     .from("captador_global_offers")
     .select("id,name,url_base")
     .eq("is_active", true)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .returns<Pick<CaptadorGlobalOffer, "id" | "name" | "url_base">[]>();
 
   if (error || !data?.length) {

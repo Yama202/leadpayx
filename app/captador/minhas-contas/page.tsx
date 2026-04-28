@@ -2,6 +2,7 @@ import { AccountCard } from "@/components/domain/account-card";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { EmptyState } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
+import { ACCOUNT_SELECT_CAPTADOR } from "@/lib/account-columns";
 import { createClient } from "@/lib/supabase/server";
 import type { Account } from "@/lib/types";
 
@@ -12,7 +13,7 @@ export default async function MinhasContasPage() {
   const supabase = await createClient();
   const { data: accounts } = await supabase
     .from("accounts")
-    .select("*")
+    .select(ACCOUNT_SELECT_CAPTADOR)
     .eq("captador_id", profile.id)
     .order("created_at", { ascending: false })
     .returns<Account[]>();

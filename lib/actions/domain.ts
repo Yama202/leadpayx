@@ -780,7 +780,33 @@ export async function upsertPromotionOfferAction(
   const descTrim = parsed.data.description.trim();
   const description =
     descTrim.length >= 8 ? descTrim : "Promoção ativa — detalhes no painel do captador.";
-  const validUntilInput = parsed.data.validUntilManual?.trim() || parsed.data.validUntil || null;
+  const manualValidUntil = parsed.data.validUntilManual?.trim() ?? "";
+  const pickerValidUntil = parsed.data.validUntil?.trim() ?? "";
+  let validUntilInput: string | null = null;
+
+  if (manualValidUntil) {
+    const normalized = manualValidUntil.replace(" ", "T");
+    const parsedDate = new Date(normalized);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return {
+        ok: false,
+        message: "Data inválida em 'Válida até'. Use AAAA-MM-DD HH:mm ou o seletor.",
+        fieldErrors: { validUntilManual: ["Formato inválido para data/hora."] },
+      };
+    }
+    validUntilInput = parsedDate.toISOString();
+  } else if (pickerValidUntil) {
+    const parsedDate = new Date(pickerValidUntil);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return {
+        ok: false,
+        message: "Data inválida em 'Válida até'.",
+        fieldErrors: { validUntil: ["Formato inválido para data/hora."] },
+      };
+    }
+    validUntilInput = parsedDate.toISOString();
+  }
+
   const payload = {
     name: parsed.data.name,
     description,
@@ -805,7 +831,10 @@ export async function upsertPromotionOfferAction(
         .single();
 
   if (error || !data) {
-    return { ok: false, message: "Não foi possível salvar a oferta." };
+    return {
+      ok: false,
+      message: `Não foi possível salvar a oferta.${error?.message ? ` (${error.message})` : ""}`,
+    };
   }
 
   await createAuditLog(

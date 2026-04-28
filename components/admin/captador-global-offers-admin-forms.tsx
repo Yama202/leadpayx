@@ -29,7 +29,7 @@ export function NewCaptadorGlobalOfferForm() {
     <ActionForm action={upsertCaptadorGlobalOfferAction} initialState={initialActionState}>
       {(state: ActionState) => (
         <>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-2">
             <Field
               error={state.fieldErrors?.name}
               label="Nome"
@@ -45,15 +45,7 @@ export function NewCaptadorGlobalOfferForm() {
               required
               type="url"
             />
-            <Field
-              defaultValue="100"
-              error={state.fieldErrors?.sortOrder}
-              label="Ordem"
-              name="sortOrder"
-              required
-              type="number"
-            />
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <CheckboxAtiva defaultChecked />
             </div>
           </div>
@@ -70,7 +62,7 @@ export function EditCaptadorGlobalOfferForm({ offer }: { offer: CaptadorGlobalOf
       {(state: ActionState) => (
         <>
           <input name="offerId" type="hidden" value={offer.id} />
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <Field
               defaultValue={offer.name}
               error={state.fieldErrors?.name}
@@ -86,15 +78,7 @@ export function EditCaptadorGlobalOfferForm({ offer }: { offer: CaptadorGlobalOf
               required
               type="url"
             />
-            <Field
-              defaultValue={String(offer.sort_order)}
-              error={state.fieldErrors?.sortOrder}
-              label="Ordem"
-              name="sortOrder"
-              required
-              type="number"
-            />
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <CheckboxAtiva defaultChecked={offer.is_active} />
             </div>
           </div>

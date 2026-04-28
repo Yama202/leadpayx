@@ -18,14 +18,39 @@ export function normalizeReferralCode(value?: string | null) {
 export function getReferralSettings(settings: AppSetting[] | null | undefined) {
   const values = Object.fromEntries((settings ?? []).map((setting) => [setting.key, setting.value]));
 
+  /** 1ª indicação qualificada (global, igual para todos os captadores). */
+  const bonusBase = Number(values.referral_bonus_base_brl ?? values.referral_bonus_brl ?? 60);
+  /** Cada indicação qualificada adicional (mesmo critério de meta). */
+  const bonusIncrement = Number(
+    values.referral_bonus_increment_brl ??
+      values.referral_bonus_tier2_brl ??
+      values.referral_bonus_brl ??
+      bonusBase,
+  );
+
   return {
     enabled: values.referral_bonus_enabled !== false,
-    bonusAmount: Number(values.referral_bonus_brl ?? 10),
+    bonusBase,
+    bonusIncrement,
+    /** Congelado nos `earnings` na criação; alias legível = base. */
+    bonusAmount: bonusBase,
     targetAccounts: Number(values.referral_completed_accounts_target ?? 2),
     utmSource: settingAsString(values.referral_utm_source, DEFAULT_REFERRAL_UTM.source),
     utmMedium: settingAsString(values.referral_utm_medium, DEFAULT_REFERRAL_UTM.medium),
     utmCampaign: settingAsString(values.referral_utm_campaign, DEFAULT_REFERRAL_UTM.campaign),
   };
+}
+
+/** Texto curto: base + incremento por “leva” de indicados que cumprem a meta (N contas concluídas). */
+export function formatReferralBonusLevaHint(
+  s: ReturnType<typeof getReferralSettings>,
+  formatBrl: (amount: number) => string = (n) =>
+    n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+): string {
+  if (s.bonusBase === s.bonusIncrement) {
+    return `${formatBrl(s.bonusBase)} por qualificação · meta: ${s.targetAccounts} contas concluídas por indicado`;
+  }
+  return `1ª ${formatBrl(s.bonusBase)} · demais ${formatBrl(s.bonusIncrement)} · meta: ${s.targetAccounts} contas/indicado`;
 }
 
 export function buildReferralUrl({

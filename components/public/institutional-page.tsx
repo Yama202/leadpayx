@@ -16,7 +16,7 @@ export type InstitutionalSection = {
   body: string;
 };
 
-export function PublicHeader() {
+export function PublicHeader({ registerHref = "/register" }: { registerHref?: string }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6">
       <nav className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between rounded-[1.5rem] border border-white/10 bg-[#070909]/75 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl sm:px-5">
@@ -50,7 +50,7 @@ export function PublicHeader() {
           </Link>
           <Link
             className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-[#00E07A] px-4 text-sm font-black uppercase tracking-[0.08em] text-[#031008] shadow-[0_0_34px_rgba(0,224,122,0.28)] transition-colors duration-200 hover:bg-[#16F28A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:px-5"
-            href="/register"
+            href={registerHref}
           >
             Começar
           </Link>
@@ -66,19 +66,21 @@ export function PublicPageShell({
   description,
   children,
   whatsappUrl,
+  registerHref = "/register",
 }: {
   eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
   whatsappUrl?: string | null;
+  registerHref?: string;
 }) {
   return (
     <main className="relative min-h-dvh overflow-hidden bg-[#050706] text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(0,224,122,0.16),transparent_30%),radial-gradient(circle_at_86%_10%,rgba(22,242,138,0.08),transparent_24%),linear-gradient(180deg,#050706_0%,#070909_54%,#030504_100%)]" />
       <div className="hero-grid pointer-events-none absolute inset-0 opacity-45" />
       <div className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-[#00E07A]/18 blur-[110px] sm:h-[32rem] sm:w-[32rem]" />
-      <PublicHeader />
+      <PublicHeader registerHref={registerHref} />
 
       <section className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-20 pt-32 sm:px-6 lg:pt-36">
         <div className="max-w-3xl">
@@ -92,7 +94,7 @@ export function PublicPageShell({
             {description}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/register">Criar acesso</LinkButton>
+            <LinkButton href={registerHref}>Criar acesso</LinkButton>
             {whatsappUrl ? (
               <LinkButton href={whatsappUrl} target="_blank" rel="noreferrer" variant="secondary">
                 Entrar no grupo WhatsApp
