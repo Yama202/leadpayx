@@ -20,6 +20,11 @@ export const metadata: Metadata = {
     template: "%s | LeadPayX",
   },
   description: "Controle leads. Distribua operações. Pague resultados.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "LeadPayX",
     description: "Controle leads. Distribua operações. Pague resultados.",
@@ -27,6 +32,20 @@ export const metadata: Metadata = {
     siteName: "LeadPayX",
     locale: "pt_BR",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "LeadPayX",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LeadPayX",
+    description: "Controle leads. Distribua operações. Pague resultados.",
+    images: ["/og-image.png"],
   },
 };
 

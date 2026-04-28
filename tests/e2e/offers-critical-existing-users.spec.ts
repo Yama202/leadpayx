@@ -46,7 +46,7 @@ async function ensureCaptadorUser(email: string, password: string) {
   });
 }
 
-test("admin cria oferta e captador visualiza oferta ativa", async ({ browser, page }) => {
+test("admin cria oferta e captador é redirecionado ao tentar acessar /captador/ofertas", async ({ browser, page }) => {
   const adminPassword = getRequiredEnv("E2E_ADMIN_PASSWORD");
   const captadorPassword = getRequiredEnv("E2E_CAPTADOR_PASSWORD");
   const offerName = `TESTE-E2E-OFERTA-${Date.now()}`;
@@ -79,8 +79,8 @@ test("admin cria oferta e captador visualiza oferta ativa", async ({ browser, pa
   await ensureCaptadorUser("captador@gmail.com", captadorPassword);
   await loginViaUI(captadorPage, "captador@gmail.com", captadorPassword);
   await captadorPage.goto("/captador/ofertas");
-  await expect(captadorPage.getByRole("heading", { name: "Ofertas" })).toBeVisible();
-  await expect(captadorPage.locator("article").filter({ hasText: editedOfferName }).first()).toBeVisible();
+  await expect(captadorPage).toHaveURL(/\/captador\/dashboard/);
+  await expect(captadorPage.getByRole("link", { name: "Ofertas" })).toHaveCount(0);
   await captadorPage.close();
 
   const editedCard = page.locator("article").filter({ hasText: editedOfferName }).first();

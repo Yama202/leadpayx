@@ -54,14 +54,14 @@ test("A) admin cria, edita e exclui oferta", async ({ page }) => {
   await expect(page.locator("article").filter({ hasText: editedOfferName })).toHaveCount(0);
 });
 
-test("B) captador visualiza oferta ativa", async ({ page }) => {
+test("B) captador não acessa ofertas e é redirecionado para dashboard", async ({ page }) => {
   const state = readE2EState();
 
   await loginViaUI(page, state.users.captador.email, state.users.captador.password);
   await page.goto("/captador/ofertas");
 
-  await expect(page.getByRole("heading", { name: "Ofertas" })).toBeVisible();
-  await expect(page.getByText(state.seededOfferName)).toBeVisible();
+  await expect(page).toHaveURL(/\/captador\/dashboard/);
+  await expect(page.getByRole("link", { name: "Ofertas" })).toHaveCount(0);
 });
 
 test("C) captador e operador solicitam pagamento e admin vê pendências", async ({ browser }) => {
@@ -224,11 +224,13 @@ test("G) admin exclui usuário com bloqueio seguro e sucesso quando elegível", 
   const blockedCard = page.locator("article").filter({ hasText: blockedEmail }).first();
   await blockedCard.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
   await blockedCard.getByRole("button", { name: "Excluir captador" }).click();
+  await expect(page).toHaveURL(/\/admin\/captadores\?profile_error=/);
   await expect(page.getByText("Exclusão bloqueada")).toBeVisible();
 
   const deletableCard = page.locator("article").filter({ hasText: deletableEmail }).first();
   await deletableCard.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
   await deletableCard.getByRole("button", { name: "Excluir captador" }).click();
+  await expect(page).toHaveURL(/\/admin\/captadores\?profile_success=/);
   await expect(page.getByText("Usuário excluído com sucesso.")).toBeVisible();
 
   await admin.from("accounts").delete().eq("captador_id", blockedUser.data.user.id);

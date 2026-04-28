@@ -7,7 +7,6 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
   captador: [
     { href: "/captador/dashboard", label: "Início" },
     { href: "/captador/enviar-conta", label: "Enviar" },
-    { href: "/captador/ofertas", label: "Ofertas" },
     { href: "/captador/indicacoes", label: "Indicações" },
     { href: "/captador/minhas-contas", label: "Contas" },
     { href: "/captador/pagamentos", label: "Pagamentos" },

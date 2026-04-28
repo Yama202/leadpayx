@@ -471,94 +471,120 @@ function buildAdminRedirect(path: "/admin/captadores" | "/admin/operadores", key
   return `${path}?${key}=${encodeURIComponent(message)}`;
 }
 
+function isNextRedirectError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const digest = (error as { digest?: unknown }).digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+}
+
 export async function adminDeleteManagedUserAction(formData: FormData): Promise<void> {
-  const actor = await requireRole(["admin"]);
-  const parsed = adminUserDeleteSchema.safeParse(formDataToObject(formData));
+  const fallbackPath = normalizeAdminReturnPath(String(formData.get("returnPath") ?? ""));
+  try {
+    const actor = await requireRole(["admin"]);
+    const parsed = adminUserDeleteSchema.safeParse(formDataToObject(formData));
 
-  if (!parsed.success) {
-    const fallbackPath = normalizeAdminReturnPath(String(formData.get("returnPath") ?? ""));
-    redirect(buildAdminRedirect(fallbackPath, "profile_error", "Confirmação inválida para excluir usuário."));
-  }
+    if (!parsed.success) {
+      redirect(buildAdminRedirect(fallbackPath, "profile_error", "Confirmação inválida para excluir usuário."));
+    }
 
-  const { profileId, role, returnPath } = parsed.data;
-  const safeReturnPath = normalizeAdminReturnPath(returnPath);
+    const { profileId, role, returnPath } = parsed.data;
+    const safeReturnPath = normalizeAdminReturnPath(returnPath);
 
-  if (profileId === actor.id) {
-    redirect(buildAdminRedirect(safeReturnPath, "profile_error", "Você não pode excluir seu próprio usuário."));
-  }
+    if (profileId === actor.id) {
+      redirect(buildAdminRedirect(safeReturnPath, "profile_error", "Você não pode excluir seu próprio usuário."));
+    }
 
-  const supabase = await createClient();
-  const { data: targetProfile, error: targetError } = await supabase
-    .from("profiles")
-    .select("id,role,email")
-    .eq("id", profileId)
-    .maybeSingle<{ id: string; role: string; email: string | null }>();
+    const supabase = await createClient();
+    const { data: targetProfile, error: targetError } = await supabase
+      .from("profiles")
+      .select("id,role,email")
+      .eq("id", profileId)
+      .maybeSingle<{ id: string; role: string; email: string | null }>();
 
-  if (targetError || !targetProfile) {
-    redirect(buildAdminRedirect(safeReturnPath, "profile_error", "Usuário não encontrado."));
-  }
+    if (targetError || !targetProfile) {
+      redirect(buildAdminRedirect(safeReturnPath, "profile_error", "Usuário não encontrado."));
+    }
 
-  if (targetProfile.role !== role) {
+    if (targetProfile.role !== role) {
+      redirect(
+        buildAdminRedirect(
+          safeReturnPath,
+          "profile_error",
+          "Somente captador ou operador pode ser excluído por este fluxo.",
+        ),
+      );
+    }
+
+    const [activeAccounts, pendingPayouts, activeAssignments] = await Promise.all([
+      supabase
+        .from("accounts")
+        .select("id", { count: "exact", head: true })
+        .or(`captador_id.eq.${profileId},operador_id.eq.${profileId}`)
+        .in("status", ["pending", "assigned", "in_progress"]),
+      supabase
+        .from("payouts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", profileId)
+        .eq("status", "pending"),
+      role === "operator"
+        ? supabase
+            .from("operator_assignments")
+            .select("id", { count: "exact", head: true })
+            .eq("operador_id", profileId)
+            .in("status", ["assigned", "in_progress"])
+        : Promise.resolve({ error: null, count: 0 } as { error: null; count: number }),
+    ]);
+
+    const activeCount = Number(activeAccounts.count ?? 0);
+    const payoutCount = Number(pendingPayouts.count ?? 0);
+    const assignmentCount = Number(activeAssignments.count ?? 0);
+
+    if (activeCount > 0 || payoutCount > 0 || assignmentCount > 0) {
+      redirect(
+        buildAdminRedirect(
+          safeReturnPath,
+          "profile_error",
+          "Exclusão bloqueada: finalize contas/pagamentos pendentes antes de remover o usuário.",
+        ),
+      );
+    }
+
+    const adminClient = createAdminClient();
+    const { error: deleteError } = await adminClient.auth.admin.deleteUser(profileId);
+
+    if (deleteError) {
+      redirect(
+        buildAdminRedirect(
+          safeReturnPath,
+          "profile_error",
+          "Não foi possível excluir o usuário com segurança. Verifique as configurações do servidor.",
+        ),
+      );
+    }
+
+    await createAuditLog("profile.admin_deleted", "profile", profileId, {
+      deleted_role: role,
+      deleted_email: targetProfile.email,
+      deleted_by: actor.id,
+    });
+
+    revalidatePath("/admin/captadores");
+    revalidatePath("/admin/operadores");
+    revalidatePath("/admin/dashboard");
+    redirect(buildAdminRedirect(safeReturnPath, "profile_success", "Usuário excluído com sucesso."));
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+    console.error("adminDeleteManagedUserAction unexpected error", error);
     redirect(
       buildAdminRedirect(
-        safeReturnPath,
+        fallbackPath,
         "profile_error",
-        "Somente captador ou operador pode ser excluído por este fluxo.",
+        "Não foi possível concluir a exclusão agora. Verifique as configurações do servidor e tente novamente.",
       ),
     );
   }
-
-  const [activeAccounts, pendingPayouts, activeAssignments] = await Promise.all([
-    supabase
-      .from("accounts")
-      .select("id", { count: "exact", head: true })
-      .or(`captador_id.eq.${profileId},operador_id.eq.${profileId}`)
-      .in("status", ["pending", "assigned", "in_progress"]),
-    supabase
-      .from("payouts")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", profileId)
-      .eq("status", "pending"),
-    role === "operator"
-      ? supabase
-          .from("operator_assignments")
-          .select("id", { count: "exact", head: true })
-          .eq("operador_id", profileId)
-          .in("status", ["assigned", "in_progress"])
-      : Promise.resolve({ error: null, count: 0 } as { error: null; count: number }),
-  ]);
-
-  const activeCount = Number(activeAccounts.count ?? 0);
-  const payoutCount = Number(pendingPayouts.count ?? 0);
-  const assignmentCount = Number(activeAssignments.count ?? 0);
-
-  if (activeCount > 0 || payoutCount > 0 || assignmentCount > 0) {
-    redirect(
-      buildAdminRedirect(
-        safeReturnPath,
-        "profile_error",
-        "Exclusão bloqueada: finalize contas/pagamentos pendentes antes de remover o usuário.",
-      ),
-    );
-  }
-
-  const adminClient = createAdminClient();
-  const { error: deleteError } = await adminClient.auth.admin.deleteUser(profileId);
-
-  if (deleteError) {
-    redirect(buildAdminRedirect(safeReturnPath, "profile_error", "Não foi possível excluir o usuário com segurança."));
-  }
-
-  await createAuditLog("profile.admin_deleted", "profile", profileId, {
-    deleted_role: role,
-    deleted_email: targetProfile.email,
-    deleted_by: actor.id,
-  });
-
-  revalidatePath("/admin/captadores");
-  revalidatePath("/admin/operadores");
-  revalidatePath("/admin/dashboard");
-  redirect(buildAdminRedirect(safeReturnPath, "profile_success", "Usuário excluído com sucesso."));
 }
 
 export async function setAdminRoleAction(
@@ -952,7 +978,7 @@ export async function upsertPromotionOfferAction(
   );
 
   revalidatePath("/admin/ofertas");
-  revalidatePath("/captador/ofertas");
+  revalidatePath("/captador/dashboard");
   revalidatePath("/operador/ofertas");
   return { ok: true, message: "Oferta salva e disponível conforme status configurado." };
 }
@@ -982,7 +1008,7 @@ export async function updatePromotionOfferStatusAction(formData: FormData): Prom
   });
 
   revalidatePath("/admin/ofertas");
-  revalidatePath("/captador/ofertas");
+  revalidatePath("/captador/dashboard");
   revalidatePath("/operador/ofertas");
   redirect("/admin/ofertas?offer_success=Status da oferta atualizado.");
 }
@@ -1009,7 +1035,7 @@ export async function deletePromotionOfferAction(formData: FormData): Promise<vo
   }
 
   revalidatePath("/admin/ofertas");
-  revalidatePath("/captador/ofertas");
+  revalidatePath("/captador/dashboard");
   revalidatePath("/operador/ofertas");
   redirect("/admin/ofertas?offer_success=Oferta excluída.");
 }
