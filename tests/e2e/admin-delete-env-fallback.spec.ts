@@ -44,9 +44,11 @@ test("admin delete fallback returns friendly profile_error when server env is mi
   await loginViaUI(page, state.users.admin.email, state.users.admin.password);
   await page.goto("/admin/captadores");
 
-  const targetCard = page.locator("article").filter({ hasText: fallbackEmail }).first();
-  await targetCard.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
-  await targetCard.getByRole("button", { name: "Excluir captador" }).click();
+  const targetRow = page.locator("details").filter({ hasText: fallbackEmail }).first();
+  await targetRow.locator("> summary").click();
+  await targetRow.getByText(/Zona de exclusão/).click();
+  await targetRow.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
+  await targetRow.getByRole("button", { name: "Excluir captador" }).click();
 
   await expect(page).toHaveURL(/\/admin\/captadores\?profile_error=/);
   await expect(

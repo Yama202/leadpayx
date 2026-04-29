@@ -230,15 +230,23 @@ test("G) admin exclui usuário com bloqueio seguro e sucesso quando elegível", 
   await loginViaUI(page, state.users.admin.email, state.users.admin.password);
   await page.goto("/admin/captadores");
 
-  const blockedCard = page.locator("article").filter({ hasText: blockedEmail }).first();
-  await blockedCard.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
-  await blockedCard.getByRole("button", { name: "Excluir captador" }).click();
+  async function openCaptadorRowAndDanger(email: string) {
+    const row = page.locator("details").filter({ hasText: email }).first();
+    await row.locator("> summary").click();
+    await row.getByText(/Zona de exclusão/).click();
+  }
+
+  await openCaptadorRowAndDanger(blockedEmail);
+  const blockedRow = page.locator("details").filter({ hasText: blockedEmail }).first();
+  await blockedRow.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
+  await blockedRow.getByRole("button", { name: "Excluir captador" }).click();
   await expect(page).toHaveURL(/\/admin\/captadores\?profile_error=/);
   await expect(page.getByText("Exclusão bloqueada")).toBeVisible();
 
-  const deletableCard = page.locator("article").filter({ hasText: deletableEmail }).first();
-  await deletableCard.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
-  await deletableCard.getByRole("button", { name: "Excluir captador" }).click();
+  await openCaptadorRowAndDanger(deletableEmail);
+  const deletableRow = page.locator("details").filter({ hasText: deletableEmail }).first();
+  await deletableRow.getByPlaceholder("Digite EXCLUIR para confirmar").fill("EXCLUIR");
+  await deletableRow.getByRole("button", { name: "Excluir captador" }).click();
   await expect(page).toHaveURL(/\/admin\/captadores\?profile_success=/);
   await expect(page.getByText("Usuário excluído com sucesso.")).toBeVisible();
 
@@ -350,14 +358,15 @@ test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqu
   );
 
   await page.goto("/admin/captadores");
-  const captadorCard = page
-    .locator("article")
+  const captadorRow = page
+    .locator("details")
     .filter({ hasText: state.users.captador.email })
     .first();
-  await captadorCard.getByPlaceholder("WhatsApp com DDD").fill("(11) 97777-6666");
-  await captadorCard.getByRole("button", { name: "Salvar" }).click();
-  await captadorCard.getByLabel("Valor mín. (BRL)").fill(String(minDeposit));
-  await captadorCard.getByRole("button", { name: "Aplicar" }).click();
+  await captadorRow.locator("> summary").click();
+  await captadorRow.getByPlaceholder("WhatsApp com DDD").fill("(11) 97777-6666");
+  await captadorRow.getByRole("button", { name: "Salvar alterações" }).click();
+  await captadorRow.getByLabel("Valor mín. (BRL)").fill(String(minDeposit));
+  await captadorRow.getByRole("button", { name: "Aplicar" }).click();
   await admin.from("captador_submission_briefs").upsert(
     {
       captador_id: state.users.captador.id,

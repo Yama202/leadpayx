@@ -1,5 +1,7 @@
-import { ProfileAdminCard } from "@/components/admin/profile-admin-card";
+import { CaptadorAdminListItem } from "@/components/admin/captador-admin-list-item";
 import { CaptadoresSearchBar } from "@/components/admin/captadores-search-bar";
+import { RoleBasedLayout } from "@/components/layout/role-based-layout";
+import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
   quotePostgrestFilterValue,
@@ -21,6 +23,7 @@ export default async function AdminCaptadoresPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const profile = await requireRole(["admin"]);
   const params = await searchParams;
   const profileError = params.profile_error;
   const profileSuccess = params.profile_success;
@@ -72,62 +75,59 @@ export default async function AdminCaptadoresPage({
     count === 1 ? "1 captador encontrado" : `${count} captadores encontrados`;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black tracking-tight text-white">
-          Captadores
-        </h1>
-        <p className="max-w-2xl text-sm text-zinc-400">
-          Gerencie os perfis de captadores, edite informações e controle o
-          depósito exigido no envio.
-        </p>
-      </div>
-
-      <Suspense
-        fallback={
-          <div
-            aria-hidden
-            className="h-24 animate-pulse rounded-2xl border border-white/[0.08] bg-white/[0.04]"
+    <RoleBasedLayout
+      description="Lista densa: abra uma linha para editar perfil, depósito no envio ou exclusão. Busca por nome ou e-mail."
+      profile={profile}
+      title="Captadores"
+    >
+      <div className="mb-5 flex flex-col gap-3 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5">
+        <Suspense
+          fallback={
+            <div
+              aria-hidden
+              className="h-12 min-w-0 flex-1 animate-pulse rounded-2xl bg-white/[0.06]"
+            />
+          }
+        >
+          <CaptadoresSearchBar
+            initialQuery={searchTerm}
+            key={rawQuery.trim() || "__no-q__"}
           />
-        }
-      >
-        <CaptadoresSearchBar
-          initialQuery={searchTerm}
-          key={rawQuery.trim() || "__no-q__"}
-        />
-      </Suspense>
-
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-semibold text-zinc-300" role="status">
-          {countLabel}
+        </Suspense>
+        <p
+          className="shrink-0 text-center text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 sm:text-left"
+          role="status"
+        >
+          <span className="text-zinc-300">{countLabel}</span>
           {hasSearch ? (
-            <span className="ml-2 font-normal text-zinc-500">
-              (filtro: “{searchTerm}”)
-            </span>
+            <>
+              <span className="mx-1 text-zinc-600">·</span>
+              <span className="font-normal normal-case text-zinc-500">“{searchTerm}”</span>
+            </>
           ) : null}
         </p>
       </div>
 
       {profileError ? (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+        <div className="mb-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           {decodeURIComponent(profileError)}
         </div>
       ) : null}
 
       {profileSuccess ? (
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+        <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
           {decodeURIComponent(profileSuccess)}
         </div>
       ) : null}
 
       {captadoresError ? (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
           Erro ao carregar captadores: {captadoresError.message}
         </div>
       ) : null}
 
       {!captadoresError && count === 0 ? (
-        <div className="rounded-3xl border border-white/[0.08] bg-white/[0.03] p-10 text-center">
+        <div className="rounded-[2rem] border border-white/[0.08] bg-white/[0.03] p-10 text-center backdrop-blur-sm">
           <p className="text-lg font-bold text-white">
             {hasSearch
               ? "Nenhum captador encontrado para essa busca."
@@ -135,13 +135,13 @@ export default async function AdminCaptadoresPage({
           </p>
           <p className="mt-2 text-sm text-zinc-400">
             {hasSearch
-              ? "Tente outro nome ou e-mail, ou limpe o filtro para ver todos."
+              ? "Ajuste o termo ou limpe o filtro para ver todos os captadores."
               : "Assim que um usuário for promovido a captador, ele aparecerá aqui."}
           </p>
           {hasSearch ? (
             <div className="mt-6">
               <a
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-5 text-sm font-bold text-zinc-200 transition-colors duration-200 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A]"
+                className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-5 text-sm font-bold text-zinc-200 transition-colors duration-200 hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A]"
                 href="/admin/captadores"
               >
                 Limpar busca
@@ -150,9 +150,9 @@ export default async function AdminCaptadoresPage({
           ) : null}
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mx-auto flex max-w-4xl flex-col gap-2">
           {captadores?.map((captador) => (
-            <ProfileAdminCard
+            <CaptadorAdminListItem
               depositBrief={briefByCaptadorId.get(captador.id) ?? null}
               key={captador.id}
               profile={captador}
@@ -160,6 +160,6 @@ export default async function AdminCaptadoresPage({
           ))}
         </div>
       )}
-    </div>
+    </RoleBasedLayout>
   );
 }
