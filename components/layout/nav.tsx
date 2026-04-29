@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { BrandLogo } from "@/components/ui/brand";
 import type { UserRole } from "@/lib/types";
@@ -32,21 +35,47 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
   ],
 };
 
+function activeNavHref(pathname: string, items: { href: string }[]): string | null {
+  const sorted = [...items].sort((a, b) => b.href.length - a.href.length);
+  for (const item of sorted) {
+    if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
+      return item.href;
+    }
+  }
+  return null;
+}
+
 export function DesktopSidebar({ role }: { role: UserRole }) {
+  const pathname = usePathname() ?? "";
+  const items = navItems[role];
+  const current = activeNavHref(pathname, items);
+
   return (
     <aside className="ml-4 mt-4 hidden min-h-0 w-72 shrink-0 rounded-[2rem] border border-white/[0.08] bg-[#070909]/90 p-5 text-white shadow-2xl shadow-black/35 backdrop-blur-xl lg:mb-4 lg:flex lg:flex-col lg:self-stretch">
       <BrandLogo showTagline variant="horizontal" />
       <nav className="mt-8 min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-y-contain pr-1">
-        {navItems[role].map((item) => (
-          <Link
-            className="group flex min-h-11 items-center rounded-2xl border border-transparent px-4 text-sm font-bold text-zinc-400 transition-all duration-200 hover:translate-x-0.5 hover:border-white/[0.08] hover:bg-white/[0.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A]"
-            href={item.href}
-            key={item.href}
-          >
-            <span className="h-2 w-2 rounded-full bg-[#00E07A]/0 transition-colors duration-200 group-hover:bg-[#00E07A]/60" />
-            <span className="ml-3">{item.label}</span>
-          </Link>
-        ))}
+        {items.map((item) => {
+          const active = item.href === current;
+          return (
+            <Link
+              className={`group flex min-h-11 items-center rounded-2xl border px-4 text-sm font-bold transition-all duration-200 hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A] ${
+                active
+                  ? "border-white/[0.12] bg-white/[0.06] text-white"
+                  : "border-transparent text-zinc-400 hover:border-white/[0.08] hover:bg-white/[0.05] hover:text-white"
+              }`}
+              href={item.href}
+              key={item.href}
+              aria-current={active ? "page" : undefined}
+            >
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full transition-colors duration-200 ${
+                  active ? "bg-[#00E07A]" : "bg-[#00E07A]/0 group-hover:bg-[#00E07A]/60"
+                }`}
+              />
+              <span className="ml-3">{item.label}</span>
+            </Link>
+          );
+        })}
       </nav>
       <Link
         className="mt-5 flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 text-sm font-bold text-rose-100 transition-colors duration-200 hover:bg-rose-400/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"

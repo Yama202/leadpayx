@@ -20,7 +20,7 @@ export type InstitutionalSection = {
 export function PublicHeader({ registerHref = "/register" }: { registerHref?: string }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6">
-      <nav className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between rounded-[1.5rem] border border-white/10 bg-[#070909]/75 px-4 shadow-2xl shadow-black/30 backdrop-blur-xl sm:px-5">
+      <nav className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-2 rounded-[1.5rem] border border-white/10 bg-[#070909]/75 px-3 shadow-2xl shadow-black/30 backdrop-blur-xl sm:gap-3 sm:px-5">
         <Link aria-label="LeadPayX início" className="flex min-h-11 items-center gap-3" href="/">
           <BrandLogo variant="compact" />
         </Link>
@@ -37,15 +37,15 @@ export function PublicHeader({ registerHref = "/register" }: { registerHref?: st
           ))}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <Link
-            className="hidden min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white transition-colors duration-200 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex"
+            className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-bold text-white transition-colors duration-200 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:min-w-0 sm:px-4"
             href="/login"
           >
             Entrar
           </Link>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-[#00E07A] px-4 text-sm font-black uppercase tracking-[0.08em] text-[#031008] shadow-[0_0_34px_rgba(0,224,122,0.28)] transition-colors duration-200 hover:bg-[#16F28A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:px-5"
+            className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-[#00E07A] px-3 text-sm font-black uppercase tracking-[0.08em] text-[#031008] shadow-[0_0_34px_rgba(0,224,122,0.28)] transition-colors duration-200 hover:bg-[#16F28A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:px-5"
             href={registerHref}
           >
             Começar
