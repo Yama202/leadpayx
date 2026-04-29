@@ -839,6 +839,16 @@ export async function upsertCaptadorDepositBriefAction(formData: FormData): Prom
     { onConflict: "captador_id" },
   );
 
+  if (error) {
+    console.error("[upsertCaptadorDepositBriefAction] upsert failed", {
+      captadorId: parsed.data.captadorId,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+  }
+
   if (!error) {
     await createAuditLog("captador.deposit_brief_upserted", "profile", parsed.data.captadorId, {
       min_deposit_brl: parsed.data.minDepositBrl,
@@ -862,6 +872,16 @@ export async function clearCaptadorDepositBriefAction(formData: FormData): Promi
     .from("captador_submission_briefs")
     .delete()
     .eq("captador_id", parsed.data.captadorId);
+
+  if (error) {
+    console.error("[clearCaptadorDepositBriefAction] delete failed", {
+      captadorId: parsed.data.captadorId,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+  }
 
   if (!error) {
     await createAuditLog("captador.deposit_brief_cleared", "profile", parsed.data.captadorId, {});

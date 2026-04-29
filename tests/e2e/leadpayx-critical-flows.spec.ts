@@ -331,6 +331,7 @@ test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqu
   const admin = getAdminClient();
   const groupUrl = `https://chat.whatsapp.com/e2e-${state.runId}`;
   const minDeposit = 150;
+  const accountIdentifier = `[E2E-DEPOSIT-${state.runId}]`;
 
   await loginViaUI(page, state.users.admin.email, state.users.admin.password);
   await page.goto("/admin/configuracoes");
@@ -373,6 +374,8 @@ test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqu
   await expect(captadorPage.getByLabel("WhatsApp")).toHaveValue("5511977776666");
   await captadorPage.goto("/captador/dashboard");
   await expect(captadorPage.getByText("Canal oficial no WhatsApp")).toBeVisible();
+  await expect(captadorPage.getByText("Envio com depósito")).toBeVisible();
+  await expect(captadorPage.getByText("Valor mínimo já depositado exigido")).toBeVisible();
   const whatsappGroupCta = captadorPage.getByRole("link", { name: "Entrar no grupo do WhatsApp" });
   if ((await whatsappGroupCta.count()) > 0) {
     await expect(whatsappGroupCta).toHaveAttribute("href", groupUrl);
@@ -382,6 +385,19 @@ test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqu
 
   await captadorPage.goto("/captador/enviar-conta");
   await expect(captadorPage.getByText("Canal oficial no WhatsApp")).toBeVisible();
+  await expect(captadorPage.getByText("Envio com depósito")).toBeVisible();
+  await expect(captadorPage.getByLabel("Valor já depositado (BRL)")).toBeVisible();
+  await captadorPage.getByLabel("Identificador da conta/lead").fill(accountIdentifier);
+  await captadorPage.getByLabel("E-mail da conta (login do lead)").fill(`lead.${state.runId}@example.test`);
+  await captadorPage.getByLabel("Senha da conta").fill("SenhaForte123!");
+  await captadorPage.getByLabel("Valor já depositado (BRL)").fill("100");
+  await captadorPage.getByRole("button", { name: "Enviar para fila" }).click();
+  await expect(captadorPage.getByText("Envio bloqueado: o valor já depositado deve ser no mínimo")).toBeVisible();
+  await captadorPage.getByLabel("Valor já depositado (BRL)").fill(String(minDeposit));
+  await captadorPage.getByRole("button", { name: "Enviar para fila" }).click();
+  await expect(captadorPage.getByText("Conta enviada para a fila.")).toBeVisible();
+
+  await admin.from("accounts").delete().eq("account_identifier", accountIdentifier);
   await admin
     .from("captador_submission_briefs")
     .delete()
