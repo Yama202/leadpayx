@@ -290,6 +290,17 @@ export function formDataToObject(formData: FormData) {
   return Object.fromEntries(formData.entries());
 }
 
+/** Apenas campos string (ignora File) — use com multipart + Zod. */
+export function formDataStringFields(formData: FormData): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string") {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
 export function validationError(message: string, error: z.ZodError): ActionState {
   return {
     ok: false,

@@ -28,6 +28,7 @@ import {
   captadorDepositBriefSchema,
   captadorGlobalOfferSchema,
   captadorGlobalOfferToggleSchema,
+  formDataStringFields,
   formDataToObject,
   globalCommissionSettingsSchema,
   initialActionState,
@@ -91,13 +92,40 @@ export async function updateProfileAction(
   return { ok: true, message: "Perfil atualizado com segurança." };
 }
 
+function coerceAppSettingBoolean(value: unknown): boolean {
+  if (value === true) return true;
+  if (value === false || value == null) return false;
+  if (typeof value === "string") {
+    const s = value.trim().toLowerCase();
+    return s === "true" || s === "1";
+  }
+  return false;
+}
+
+function mapAccountInsertError(message: string, code?: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("account print is required") || m.includes("print is required")) {
+    return "Envie o print da conta (imagem ou PDF) para continuar.";
+  }
+  if (m.includes("row-level security") || code === "42501") {
+    return "Sem permissão para gravar a conta. Confirme que você está logado como captador ativo.";
+  }
+  if (m.includes("foreign key") || m.includes("violates foreign key") || code === "23503") {
+    return "Dados de referência inválidos (perfil ou link). Atualize a página ou contate o suporte.";
+  }
+  if (m.includes("duplicate") || code === "23505") {
+    return "Conflito ao registrar a conta. Atualize a página e tente novamente.";
+  }
+  return "Não foi possível enviar a conta.";
+}
+
 export async function submitAccountAction(
   stateOrFormData: ActionState | FormData = initialActionState,
   maybeFormData?: FormData,
 ): Promise<ActionState> {
   const formData = maybeFormData ?? (stateOrFormData as FormData);
   const profile = await requireRole(["captador"]);
-  const parsed = accountSchema.safeParse(formDataToObject(formData));
+  const parsed = accountSchema.safeParse(formDataStringFields(formData));
 
   if (!parsed.success) {
     return validationError("Revise a conta enviada.", parsed.error);
@@ -119,6 +147,13 @@ export async function submitAccountAction(
   }
 
   const supabase = await createClient();
+  const { data: printSetting } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "require_new_account_print")
+    .maybeSingle();
+  const requireNewAccountPrint = coerceAppSettingBoolean(printSetting?.value);
+
   const depositBrief = await getCaptadorSubmissionBrief(profile.id);
   const minDepositRequired = Number(depositBrief?.min_deposit_brl ?? 0);
   const declaredDeposit = parsed.data.declaredDepositBrl ?? null;
@@ -135,9 +170,18 @@ export async function submitAccountAction(
   }
   const accountId = crypto.randomUUID();
   const printFile = formData.get("accountPrint");
+  const hasPrintFile = printFile instanceof File && printFile.size > 0;
+
+  if (requireNewAccountPrint && !hasPrintFile) {
+    return {
+      ok: false,
+      message: "Envie o print da conta (imagem ou PDF) para continuar.",
+    };
+  }
+
   let accountPrintPath: string | null = null;
 
-  if (printFile instanceof File && printFile.size > 0) {
+  if (hasPrintFile && printFile instanceof File) {
     if (!printFile.type.startsWith("image/") && printFile.type !== "application/pdf") {
       return { ok: false, message: "Envie um print em imagem ou PDF." };
     }
@@ -153,6 +197,18 @@ export async function submitAccountAction(
       .upload(accountPrintPath, printFile, { upsert: false });
 
     if (uploadError) {
+      console.error("[submitAccountAction] storage upload", {
+        message: uploadError.message,
+        path: accountPrintPath,
+      });
+      const um = uploadError.message.toLowerCase();
+      if (um.includes("row-level security") || um.includes("policy") || um.includes("403")) {
+        return {
+          ok: false,
+          message:
+            "Não foi possível enviar o print: permissão negada no armazenamento. Confirme políticas do bucket account-prints.",
+        };
+      }
       return { ok: false, message: "Não foi possível enviar o print da conta." };
     }
   }
@@ -177,14 +233,14 @@ export async function submitAccountAction(
     if (accountPrintPath) {
       await supabase.storage.from("account-prints").remove([accountPrintPath]);
     }
-    const normalizedErrorMessage = error?.message?.toLowerCase() ?? "";
-    if (normalizedErrorMessage.includes("account print is required")) {
-      return {
-        ok: false,
-        message: "Envie o print da conta (imagem ou PDF) para continuar.",
-      };
-    }
-    return { ok: false, message: "Não foi possível enviar a conta." };
+    console.error("[submitAccountAction] accounts insert", {
+      message: error?.message,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+    });
+    const userMessage = mapAccountInsertError(error?.message ?? "", error?.code);
+    return { ok: false, message: userMessage };
   }
 
   await createAuditLog("account.submitted", "account", data.id, {
@@ -195,6 +251,7 @@ export async function submitAccountAction(
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/minhas-contas");
   revalidatePath("/captador/enviar-conta");
+  revalidatePath("/admin/contas");
 
   return { ok: true, message: "Conta enviada para a fila. Quando houver ciclo completo, um operador apto recebe o lote." };
 }
@@ -227,6 +284,18 @@ export async function pickNextBatchAction(): Promise<ActionState> {
     if (error.message?.includes("operator not eligible")) {
       return { ok: false, message: "Seu perfil ainda não está apto para receber novos lotes." };
     }
+    if (error.message?.includes("operator cannot change account ownership or source data")) {
+      console.error("[pickNextBatchAction] RPC blocked by account row policy", error.message);
+      return {
+        ok: false,
+        message:
+          "Atribuição bloqueada pela regra de segurança do banco. Aplique a migração mais recente (account_row_protect) ou contate o suporte.",
+      };
+    }
+    console.error("[pickNextBatchAction] assign_next_batch_to_operator", {
+      message: error.message,
+      code: error.code,
+    });
     return { ok: false, message: "Não foi possível pegar o próximo lote." };
   }
 

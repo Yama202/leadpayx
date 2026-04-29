@@ -3,6 +3,7 @@ import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { EmptyState } from "@/components/ui/cards";
 import { operationalCredentialsFromAccount } from "@/lib/account-operational";
 import { ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
+import { accountPrintSignedUrlMap } from "@/lib/account-print-signed-url";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Account } from "@/lib/types";
@@ -20,6 +21,9 @@ export default async function OperadorHistoricoPage() {
     .order("updated_at", { ascending: false })
     .returns<Account[]>();
 
+  const list = accounts ?? [];
+  const printUrls = await accountPrintSignedUrlMap(supabase, list);
+
   return (
     <RoleBasedLayout
       description="Histórico operacional sem acesso a Pix ou ganhos do captador."
@@ -27,10 +31,11 @@ export default async function OperadorHistoricoPage() {
       title="Histórico"
     >
       <div className="grid gap-4 lg:grid-cols-2">
-        {accounts?.length ? (
-          accounts.map((account) => (
+        {list.length ? (
+          list.map((account) => (
             <AccountCard
               account={account}
+              accountPrintSignedUrl={printUrls.get(account.id) ?? null}
               key={account.id}
               operationalCredentials={operationalCredentialsFromAccount(account)}
             />

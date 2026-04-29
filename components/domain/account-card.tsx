@@ -14,11 +14,14 @@ export function AccountCard({
   operatorActions = false,
   /** Quando definido (operador/admin no servidor), exibe e-mail e senha decifrados. */
   operationalCredentials,
+  /** URL assinada (curta duração) para o print — só preencha em contextos admin/operador no servidor. */
+  accountPrintSignedUrl,
   children,
 }: {
   account: Account;
   operatorActions?: boolean;
   operationalCredentials?: OperationalCredentials | null;
+  accountPrintSignedUrl?: string | null;
   children?: ReactNode;
 }) {
   return (
@@ -54,9 +57,19 @@ export function AccountCard({
         <p className="mt-4 text-sm leading-6 text-[#A1A1AA]">{account.account_notes}</p>
       ) : null}
       {account.account_print_path ? (
-        <p className="mt-3 break-all rounded-2xl bg-white/10 p-3 text-xs font-semibold text-slate-300">
-          Print: {account.account_print_path}
-        </p>
+        <div className="mt-3 rounded-2xl bg-white/10 p-3 text-xs font-semibold text-slate-300">
+          <p className="break-all">Print (caminho interno): {account.account_print_path}</p>
+          {accountPrintSignedUrl ? (
+            <a
+              className="mt-2 inline-flex min-h-10 items-center justify-center rounded-xl border border-[#00E07A]/40 bg-[#00E07A]/10 px-3 text-sm font-black text-[#16F28A] hover:bg-[#00E07A]/20"
+              href={accountPrintSignedUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Abrir print (link temporário)
+            </a>
+          ) : null}
+        </div>
       ) : null}
       {account.reassigned_at ? (
         <p className="mt-3 rounded-2xl bg-amber-400/10 p-3 text-xs font-bold text-amber-200">

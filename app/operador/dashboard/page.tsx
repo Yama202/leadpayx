@@ -8,6 +8,7 @@ import {
 } from "@/lib/actions/domain";
 import { operationalCredentialsFromAccount } from "@/lib/account-operational";
 import { ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
+import { accountPrintSignedUrlMap } from "@/lib/account-print-signed-url";
 import { requireRole } from "@/lib/auth";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
@@ -88,6 +89,8 @@ export default async function OperadorDashboardPage({
   const minimumBatch = Number(settingValues.operational_min_batch_size ?? 2);
   const isEligible = Boolean(eligible);
   const queueRows: CycleQueueRow[] = Array.isArray(cycleQueue) ? cycleQueue : [];
+  const assignedList = accounts ?? [];
+  const printUrls = await accountPrintSignedUrlMap(supabase, assignedList);
   const availableCycles = queueRows.map((cycle) => ({
     captadorId: cycle.captador_id,
     count: Number(cycle.pending_count ?? 0),
@@ -120,7 +123,7 @@ export default async function OperadorDashboardPage({
         </section>
       ) : null}
       <div className="grid gap-4 sm:grid-cols-4">
-        <DashboardCard label="Contas em mãos" value={String(accounts?.length ?? 0)} />
+        <DashboardCard label="Contas em mãos" value={String(assignedList.length)} />
         <DashboardCard label="Finalizadas" value={String(operatorCompleted)} />
         <DashboardCard label="Ganhos pendentes" value={`R$${operatorPending.toFixed(2)}`} />
         <DashboardCard
@@ -162,10 +165,11 @@ export default async function OperadorDashboardPage({
         </p>
       ) : null}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        {accounts?.length ? (
-          accounts.map((account) => (
+        {assignedList.length ? (
+          assignedList.map((account) => (
             <AccountCard
               account={account}
+              accountPrintSignedUrl={printUrls.get(account.id) ?? null}
               key={account.id}
               operationalCredentials={operationalCredentialsFromAccount(account)}
               operatorActions

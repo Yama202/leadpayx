@@ -180,6 +180,15 @@ test("F) operador vê fila operacional sem promoções e recebe ciclo de 2 conta
       .first(),
   ).toBeVisible();
 
+  const pickBtn = page.getByRole("button", { name: /Pegar lote de/ });
+  await expect(pickBtn).toBeEnabled({ timeout: 15_000 });
+  await pickBtn.click();
+  await expect(page.getByText(/Lote atribuído com 2 conta|Lote atribuído com 2 contas/i)).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText(idA)).toBeVisible();
+  await expect(page.getByText(idB)).toBeVisible();
+
   await admin.from("accounts").delete().in("account_identifier", [idA, idB]);
 });
 

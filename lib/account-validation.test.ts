@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { accountSchema, adminProfileUpdateSchema, profileSchema } from "./validation.ts";
+import {
+  accountSchema,
+  adminProfileUpdateSchema,
+  formDataStringFields,
+  profileSchema,
+} from "./validation.ts";
 
 test("accountSchema exige e-mail e senha da conta", () => {
   const ok = accountSchema.safeParse({
@@ -28,6 +33,17 @@ test("accountSchema exige e-mail e senha da conta", () => {
     leadAccountPassword: "1234567",
   });
   assert.equal(shortPw.success, false);
+});
+
+test("formDataStringFields ignora File para validação Zod multipart", () => {
+  const fd = new FormData();
+  fd.set("accountIdentifier", "id-xyz");
+  fd.set("leadAccountEmail", "a@b.co");
+  fd.set("leadAccountPassword", "1234567890");
+  fd.set("accountPrint", new File([new Uint8Array([1])], "x.png", { type: "image/png" }));
+  const fields = formDataStringFields(fd);
+  const parsed = accountSchema.safeParse(fields);
+  assert.equal(parsed.success, true);
 });
 
 test("accountSchema valida valor já depositado quando informado", () => {
