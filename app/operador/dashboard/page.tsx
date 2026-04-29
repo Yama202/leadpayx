@@ -1,7 +1,7 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { OperatorQueueAutoRefresh } from "@/components/domain/operator-queue-auto-refresh";
 import { OperatorPickBatchForm } from "@/components/domain/operator-pick-batch-form";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
-import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import {
   rejectAccountFormAction,
@@ -10,7 +10,6 @@ import { operationalCredentialsFromAccount } from "@/lib/account-operational";
 import { ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
 import { accountPrintSignedUrlMap } from "@/lib/account-print-signed-url";
 import { requireRole } from "@/lib/auth";
-import { getWhatsappGroupUrl } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, AppSetting } from "@/lib/types";
 import { Field, SubmitButton } from "@/components/ui/forms";
@@ -42,8 +41,6 @@ export default async function OperadorDashboardPage({
     { data: accounts },
     { data: earnings },
     { data: settings },
-    { data: eligible },
-    whatsappUrl,
     { data: cycleQueue },
   ] = await Promise.all([
     supabase
@@ -62,10 +59,8 @@ export default async function OperadorDashboardPage({
     supabase
       .from("app_settings")
       .select("key,value")
-      .in("key", ["operator_min_completed_accounts", "operational_min_batch_size"])
+      .in("key", ["operational_min_batch_size"])
       .returns<AppSetting[]>(),
-    supabase.rpc("is_operator_eligible", { target_operator_id: profile.id }),
-    getWhatsappGroupUrl(),
     supabase.rpc("get_operator_cycle_queue_summary").returns<CycleQueueRow[]>(),
   ]);
   const opErrorMessage =
@@ -85,9 +80,7 @@ export default async function OperadorDashboardPage({
       .reduce((sum, earning) => sum + Number(earning.amount), 0) ?? 0;
   const operatorCompleted =
     earnings?.filter((earning) => earning.type === "operator_account_completed").length ?? 0;
-  const minimumCompleted = Number(settingValues.operator_min_completed_accounts ?? 0);
   const minimumBatch = Number(settingValues.operational_min_batch_size ?? 2);
-  const isEligible = Boolean(eligible);
   const queueRows: CycleQueueRow[] = Array.isArray(cycleQueue) ? cycleQueue : [];
   const assignedList = accounts ?? [];
   const printUrls = await accountPrintSignedUrlMap(supabase, assignedList);
@@ -103,6 +96,7 @@ export default async function OperadorDashboardPage({
       profile={profile}
       title="Fila do operador"
     >
+      <OperatorQueueAutoRefresh />
       {opErrorMessage ? (
         <div
           className="mb-6 rounded-[2rem] border border-rose-400/30 bg-rose-500/10 p-4 text-sm font-semibold text-rose-100"
@@ -111,34 +105,19 @@ export default async function OperadorDashboardPage({
           {opErrorMessage}
         </div>
       ) : null}
-      {whatsappUrl ? (
-        <section className="mb-6 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
-          <p className="text-sm font-black text-white">Canal oficial</p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#A1A1AA]">
-            Use o grupo para comunicados gerais. Contas atribuídas, status e recusas continuam exclusivamente no painel.
-          </p>
-          <LinkButton className="mt-4 w-full sm:w-auto" href={whatsappUrl} target="_blank" rel="noreferrer" variant="secondary">
-            Entrar no grupo WhatsApp
-          </LinkButton>
-        </section>
-      ) : null}
       <div className="grid gap-4 sm:grid-cols-4">
         <DashboardCard label="Contas em mãos" value={String(assignedList.length)} />
         <DashboardCard label="Finalizadas" value={String(operatorCompleted)} />
         <DashboardCard label="Ganhos pendentes" value={`R$${operatorPending.toFixed(2)}`} />
-        <DashboardCard
-          hint={`Critério atual: ${minimumCompleted} conta(s) concluída(s).`}
-          label="Aptidão operacional"
-          value={isEligible ? "Apto" : "Pendente"}
-        />
+        <DashboardCard hint="Rotação automática a cada 5 minutos." label="Janela atual" value="Ativa" />
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_220px]">
         <DashboardCard
-          hint="Somente ciclos com 2 contas do mesmo captador entram na fila."
+          hint="A fila roda a cada 5 minutos entre operadores. O lote sempre tem 2 contas do mesmo captador."
           label="Lote operacional"
           value={`${minimumBatch} contas`}
         />
-        <OperatorPickBatchForm disabled={!isEligible} minimumBatch={minimumBatch} />
+        <OperatorPickBatchForm disabled={false} minimumBatch={minimumBatch} />
       </div>
       <section className="mt-4 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
@@ -156,14 +135,11 @@ export default async function OperadorDashboardPage({
             ))}
           </ul>
         ) : (
-          <p className="mt-3 text-sm text-zinc-400">Nenhum ciclo com 2 contas pendentes no momento.</p>
+          <p className="mt-3 text-sm text-zinc-400">
+            Nenhum ciclo liberado para sua janela atual. A tela atualiza automaticamente a cada 5 minutos.
+          </p>
         )}
       </section>
-      {!isEligible ? (
-        <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
-          Seu operador ainda não está apto para receber novos lotes. A aptidão é liberada automaticamente quando os critérios administrativos forem cumpridos.
-        </p>
-      ) : null}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {assignedList.length ? (
           assignedList.map((account) => (

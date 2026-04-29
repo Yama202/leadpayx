@@ -268,9 +268,18 @@ export async function assignNextBatchToOperator(
   const profile = await requireRole(["operator", "admin"]);
   const supabase = await createClient();
 
-  return supabase.rpc("assign_next_batch_to_operator", {
+  const primary = await supabase.rpc("assign_next_batch_to_operator", {
     target_operator_id: operatorId ?? profile.id,
     batch_size: batchSize,
+  });
+
+  if (primary.error?.code !== "42883") {
+    return primary;
+  }
+
+  // Compatibilidade com ambientes onde a RPC ainda expõe assinatura sem batch_size.
+  return supabase.rpc("assign_next_batch_to_operator", {
+    target_operator_id: operatorId ?? profile.id,
   });
 }
 
@@ -278,13 +287,27 @@ export async function pickNextBatchAction(): Promise<ActionState> {
   const { data, error } = await assignNextBatchToOperator();
 
   if (error) {
-    if (error.message?.includes("minimum operational batch not available")) {
+    const errorMessage = String(error.message ?? "");
+    if (errorMessage.includes("minimum operational batch not available")) {
       return { ok: false, message: "Ainda não há ciclo completo (2 contas) disponível para atribuição." };
     }
-    if (error.message?.includes("operator not eligible")) {
-      return { ok: false, message: "Seu perfil ainda não está apto para receber novos lotes." };
+    if (errorMessage.includes("operator not in current rotation slot")) {
+      return {
+        ok: false,
+        message:
+          "Neste momento o lote está reservado para outro operador. Aguarde a próxima janela de rotação (5 min).",
+      };
     }
-    if (error.message?.includes("operator cannot change account ownership or source data")) {
+    if (errorMessage.includes("operator unavailable")) {
+      return { ok: false, message: "Seu perfil de operador está indisponível no momento." };
+    }
+    if (errorMessage.includes("operator rotation unavailable")) {
+      return { ok: false, message: "Não há operadores ativos para a rotação neste momento." };
+    }
+    if (errorMessage.includes("assignment denied")) {
+      return { ok: false, message: "Permissão negada para pegar lote com este usuário." };
+    }
+    if (errorMessage.includes("operator cannot change account ownership or source data")) {
       console.error("[pickNextBatchAction] RPC blocked by account row policy", error.message);
       return {
         ok: false,
@@ -296,7 +319,10 @@ export async function pickNextBatchAction(): Promise<ActionState> {
       message: error.message,
       code: error.code,
     });
-    return { ok: false, message: "Não foi possível pegar o próximo lote." };
+    return {
+      ok: false,
+      message: `Não foi possível pegar o próximo lote (${error.code ?? "sem-codigo"}).`,
+    };
   }
 
   revalidatePath("/operador/dashboard");
@@ -624,7 +650,8 @@ export async function adminDeleteManagedUserAction(formData: FormData): Promise<
       );
     }
 
-    const [activeAccounts, pendingPayouts, activeAssignments] = await Promise.all([
+    const [activeAccounts, pendingPayouts, activeAssignments, historicalEarnings, historicalPayouts] =
+      await Promise.all([
       supabase
         .from("accounts")
         .select("id", { count: "exact", head: true })
@@ -642,14 +669,24 @@ export async function adminDeleteManagedUserAction(formData: FormData): Promise<
             .eq("operador_id", profileId)
             .in("status", ["assigned", "in_progress"])
         : Promise.resolve({ error: null, count: 0 } as { error: null; count: number }),
+      supabase.from("earnings").select("id", { count: "exact", head: true }).eq("user_id", profileId),
+      supabase.from("payouts").select("id", { count: "exact", head: true }).eq("user_id", profileId),
     ]);
 
-    if (activeAccounts.error || pendingPayouts.error || activeAssignments.error) {
+    if (
+      activeAccounts.error ||
+      pendingPayouts.error ||
+      activeAssignments.error ||
+      historicalEarnings.error ||
+      historicalPayouts.error
+    ) {
       console.error("adminDeleteManagedUserAction pending-check error", {
         profileId,
         activeAccountsError: activeAccounts.error?.message ?? null,
         pendingPayoutsError: pendingPayouts.error?.message ?? null,
         activeAssignmentsError: activeAssignments.error?.message ?? null,
+        historicalEarningsError: historicalEarnings.error?.message ?? null,
+        historicalPayoutsError: historicalPayouts.error?.message ?? null,
       });
       redirect(
         buildAdminRedirect(
@@ -663,6 +700,8 @@ export async function adminDeleteManagedUserAction(formData: FormData): Promise<
     const activeCount = Number(activeAccounts.count ?? 0);
     const payoutCount = Number(pendingPayouts.count ?? 0);
     const assignmentCount = Number(activeAssignments.count ?? 0);
+    const earningsCount = Number(historicalEarnings.count ?? 0);
+    const payoutsCount = Number(historicalPayouts.count ?? 0);
 
     if (activeCount > 0 || payoutCount > 0 || assignmentCount > 0) {
       redirect(
@@ -674,12 +713,22 @@ export async function adminDeleteManagedUserAction(formData: FormData): Promise<
       );
     }
 
+    if (earningsCount > 0 || payoutsCount > 0) {
+      redirect(
+        buildAdminRedirect(
+          safeReturnPath,
+          "profile_error",
+          "Exclusão bloqueada: o usuário já possui histórico financeiro (ganhos/pagamentos). Inative o perfil para preservar auditoria.",
+        ),
+      );
+    }
+
     if (role === "operator") {
       const { error: cleanupAssignmentsError } = await supabase
         .from("operator_assignments")
         .delete()
         .eq("operador_id", profileId)
-        .in("status", ["completed", "reassigned", "cancelled"]);
+        .in("status", ["completed", "rejected", "reassigned", "cancelled"]);
       if (cleanupAssignmentsError) {
         console.error("adminDeleteManagedUserAction cleanup operator assignments error", {
           profileId,
