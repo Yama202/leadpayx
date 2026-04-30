@@ -12,6 +12,7 @@ type SeededAccount = {
   account_identifier: string;
   status: string;
   operador_id: string | null;
+  operator_balance_destination?: string | null;
 };
 
 function getAdminClient() {
@@ -35,7 +36,7 @@ async function expectNoSeededAccountInHistory(page: Page, accountIds: string[]) 
 async function loadAccountsByIdentifiers(admin: ReturnType<typeof getAdminClient>, identifiers: string[]) {
   const { data, error } = await admin
     .from("accounts")
-    .select("id,account_identifier,status,operador_id")
+    .select("id,account_identifier,status,operador_id,operator_balance_destination")
     .in("account_identifier", identifiers)
     .order("created_at", { ascending: true })
     .returns<SeededAccount[]>();
@@ -163,9 +164,12 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
         await expect(card).toBeVisible();
 
         await card.getByRole("button", { name: "Começar com conta" }).click();
-        await expect(card.getByRole("button", { name: "Finalizar" })).toBeVisible();
+        await expect(card.getByRole("button", { name: "Finalizar operação" })).toBeVisible();
 
-        await card.getByRole("button", { name: "Finalizar" }).click();
+        await card
+          .getByLabel(/conta\/destino do saldo/i)
+          .fill("Saldo creditado na conta corrente 12345-6, Banco Exemplo, titular Lead Teste.");
+        await card.getByRole("button", { name: "Finalizar operação" }).click();
         await expect(page.locator("article").filter({ hasText: account.account_identifier })).toHaveCount(0);
 
         await page.goto("/operador/historico");
@@ -180,6 +184,7 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
         const dbRow = (await loadAccountsByIdentifiers(admin, [account.account_identifier]))[0];
         expect(dbRow.status).toBe("completed");
         expect(dbRow.operador_id).toBe(state.users.operator.id);
+        expect((dbRow.operator_balance_destination ?? "").length).toBeGreaterThanOrEqual(8);
       }
 
       await page.goto("/operador/dashboard");

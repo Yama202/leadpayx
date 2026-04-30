@@ -75,6 +75,21 @@ export default async function AdminDashboardPage({
   const financialRows = (financial.data ?? []) as FinancialSummary[];
   const rankingRows = (ranking.data ?? []) as CaptadorRanking[];
   const validatedRows = (validatedReferrals.data ?? []) as ValidatedReferralMetric[];
+  const validatedByCaptador = new Map(
+    validatedRows.map((row) => [row.captador_id, Number(row.total_validated)]),
+  );
+  const intelligentRanking = rankingRows
+    .map((row) => {
+      const validatedCount = validatedByCaptador.get(row.captador_id) ?? 0;
+      // Peso explícito de indicação validada para o score inteligente no painel admin.
+      const intelligentScore = Number(row.score) + validatedCount * 2;
+      return {
+        ...row,
+        validatedCount,
+        intelligentScore,
+      };
+    })
+    .sort((a, b) => b.intelligentScore - a.intelligentScore);
   const validatedTotal = validatedRows.reduce(
     (sum, row) => sum + Number(row.total_validated),
     0,
@@ -185,12 +200,12 @@ export default async function AdminDashboardPage({
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Score ponderado: volume 25%, conclusão 25%, ganhos 20%,
-            consistência 15% e baixa recusa 15%.
+            Score inteligente: base operacional (volume, conclusão, ganhos,
+            consistência e baixa recusa) + bônus por indicações validadas.
           </p>
         </div>
         <div className="mt-5 grid gap-3">
-          {rankingRows.slice(0, 5).map((row, index) => (
+          {intelligentRanking.slice(0, 5).map((row, index) => (
             <div
               className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/5 sm:grid-cols-[48px_1fr_120px]"
               key={row.captador_id}
@@ -205,15 +220,16 @@ export default async function AdminDashboardPage({
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {row.completed_accounts}/{row.accounts_submitted} concluídas ·{" "}
                   {toCurrency(row.generated_amount)} gerados ·{" "}
-                  {(Number(row.rejection_rate) * 100).toFixed(1)}% recusa
+                  {(Number(row.rejection_rate) * 100).toFixed(1)}% recusa ·{" "}
+                  {row.validatedCount} indicações validadas
                 </p>
               </div>
               <div className="rounded-2xl bg-emerald-50 p-3 text-center dark:bg-emerald-400/10">
                 <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                  Score
+                  Score inteligente
                 </p>
                 <p className="text-2xl font-black text-emerald-950 dark:text-emerald-100">
-                  {Number(row.score).toFixed(1)}
+                  {Number(row.intelligentScore).toFixed(1)}
                 </p>
               </div>
             </div>

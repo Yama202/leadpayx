@@ -66,11 +66,13 @@ export default async function OperadorDashboardPage({
   const opErrorMessage =
     params.op_error === "complete"
       ? "Não foi possível finalizar a conta (prazo, permissão ou estado inválido). Atualize a página e tente novamente."
-      : params.op_error === "start"
-        ? "Não foi possível iniciar a operação (SLA ou estado da conta). Atualize a página."
-        : params.op_error === "invalid"
-          ? "Requisição inválida. Atualize a página e tente novamente."
-          : null;
+      : params.op_error === "complete_balance"
+        ? "Ao finalizar, preencha onde foi aplicado o saldo (mínimo 8 caracteres) para o captador acompanhar."
+        : params.op_error === "start"
+          ? "Não foi possível iniciar a operação (SLA ou estado da conta). Atualize a página."
+          : params.op_error === "invalid"
+            ? "Requisição inválida. Atualize a página e tente novamente."
+            : null;
   const settingValues = Object.fromEntries(
     (settings ?? []).map((setting) => [setting.key, setting.value]),
   );
@@ -109,11 +111,11 @@ export default async function OperadorDashboardPage({
         <DashboardCard label="Contas em mãos" value={String(assignedList.length)} />
         <DashboardCard label="Finalizadas" value={String(operatorCompleted)} />
         <DashboardCard label="Ganhos pendentes" value={`R$${operatorPending.toFixed(2)}`} />
-        <DashboardCard hint="Rotação automática a cada 5 minutos." label="Janela atual" value="Ativa" />
+        <DashboardCard hint="Atribuição com trava por ciclo para evitar sobreposição." label="Concorrência" value="Protegida" />
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_220px]">
         <DashboardCard
-          hint="A fila roda a cada 5 minutos entre operadores. O lote sempre tem 2 contas do mesmo captador."
+          hint="Mais de um operador pode ver os mesmos ciclos. Ao pegar lote, o ciclo é travado para evitar duplicidade."
           label="Lote operacional"
           value={`${minimumBatch} contas`}
         />
@@ -136,7 +138,7 @@ export default async function OperadorDashboardPage({
           </ul>
         ) : (
           <p className="mt-3 text-sm text-zinc-400">
-            Nenhum ciclo liberado para sua janela atual. A tela atualiza automaticamente a cada 5 minutos.
+            Nenhum ciclo completo disponível agora. A tela atualiza automaticamente.
           </p>
         )}
       </section>

@@ -100,6 +100,15 @@ export const accountIdSchema = z.object({
 
 export const startAccountSchema = accountIdSchema;
 
+export const completeAccountSchema = z.object({
+  accountId: z.string().uuid(),
+  balanceDestination: z
+    .string()
+    .trim()
+    .min(8, "Descreva o destino do saldo com pelo menos 8 caracteres (conta, titular, banco etc.).")
+    .max(800, "Texto muito longo. Resuma em até 800 caracteres."),
+});
+
 export const payoutProcessSchema = z.object({
   payoutId: z.string().uuid(),
   notes: z.string().trim().max(500).optional(),
@@ -267,13 +276,25 @@ export const adminRoleActionSchema = z
     action: z.enum(["promote", "revoke"]),
     confirmation: z.string().trim().optional(),
   })
+  .transform((value) => ({
+    ...value,
+    confirmationNormalized: value.confirmation
+      ?.toUpperCase()
+      .replace(/\s+/g, " ")
+      .trim(),
+  }))
   .refine(
-    (value) => value.action === "promote" || value.confirmation === "REVOGAR ADMIN",
+    (value) => value.action === "promote" || value.confirmationNormalized === "REVOGAR ADMIN",
     {
       message: "Digite REVOGAR ADMIN para confirmar.",
       path: ["confirmation"],
     },
-  );
+  )
+  .transform((value) => {
+    const copy = { ...value };
+    delete copy.confirmationNormalized;
+    return copy;
+  });
 
 export type ActionState = {
   ok: boolean;

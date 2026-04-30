@@ -10,7 +10,7 @@ import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
 import { toCurrency } from "@/lib/payments";
 import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
-import { ACCOUNT_SELECT_CAPTADOR } from "@/lib/account-columns";
+import { ACCOUNT_SELECT_CAPTADOR, ACCOUNT_SELECT_CAPTADOR_FALLBACK } from "@/lib/account-columns";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, AppSetting } from "@/lib/types";
 
@@ -25,9 +25,7 @@ export const dynamic = "force-dynamic";
 export default async function CaptadorDashboardPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-
-  const [{ data: accounts }, { data: earnings }, { data: settings }, depositBrief, whatsappUrl] =
-    await Promise.all([
+  const [accountsPrimary, earningsRes, settingsRes, depositBrief, whatsappUrl] = await Promise.all([
     supabase
       .from("accounts")
       .select(ACCOUNT_SELECT_CAPTADOR)
@@ -57,6 +55,40 @@ export default async function CaptadorDashboardPage() {
     getCaptadorSubmissionBrief(profile.id),
     getWhatsappGroupUrl(),
   ]);
+  let accounts = accountsPrimary.data;
+
+  if (
+    accountsPrimary.error &&
+    (accountsPrimary.error.code === "PGRST204" || accountsPrimary.error.code === "42703")
+  ) {
+    const fallback = await supabase
+      .from("accounts")
+      .select(ACCOUNT_SELECT_CAPTADOR_FALLBACK)
+      .eq("captador_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(3)
+      .returns<Account[]>();
+
+    if (!fallback.error) {
+      accounts = fallback.data;
+      console.warn("[captador/dashboard] fallback select usado por schema parcial", {
+        message: accountsPrimary.error.message,
+        code: accountsPrimary.error.code,
+      });
+    } else {
+      console.error("[captador/dashboard] falha no select de contas", {
+        primary: { message: accountsPrimary.error.message, code: accountsPrimary.error.code },
+        fallback: { message: fallback.error.message, code: fallback.error.code },
+      });
+    }
+  } else if (accountsPrimary.error) {
+    console.error("[captador/dashboard] falha no select de contas", {
+      message: accountsPrimary.error.message,
+      code: accountsPrimary.error.code,
+    });
+  }
+  const earnings = earningsRes.data;
+  const settings = settingsRes.data;
   const referralSettings = getReferralSettings(settings);
 
   const pendingAmount =

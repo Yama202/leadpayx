@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   accountSchema,
+  adminRoleActionSchema,
   adminProfileUpdateSchema,
   formDataStringFields,
   profileSchema,
@@ -94,4 +95,13 @@ test("adminProfileUpdateSchema normaliza whatsapp para padrão com DDI 55", () =
   if (parsed.success) {
     assert.equal(parsed.data.whatsapp, "5511988887777");
   }
+});
+
+test("adminRoleActionSchema aceita confirmação de revogação com espaços e caixa mista", () => {
+  const parsed = adminRoleActionSchema.safeParse({
+    email: "admin@leadpayx.test",
+    action: "revoke",
+    confirmation: "  revogar   admin  ",
+  });
+  assert.equal(parsed.success, true);
 });

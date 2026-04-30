@@ -57,6 +57,8 @@ export type Account = {
   updated_at: string;
   /** Operador que concluiu a operação (imutável após finalização). */
   completed_by_operador_id?: string | null;
+  /** Informado pelo operador ao finalizar: destino/conta do saldo (visível ao captador). */
+  operator_balance_destination?: string | null;
 };
 
 export type Earning = {

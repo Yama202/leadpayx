@@ -19,7 +19,8 @@ export async function accountPrintSignedUrlMap(
         .from("account-prints")
         .createSignedUrl(account.account_print_path, ttlSeconds);
       if (error) {
-        console.error("[accountPrintSignedUrlMap]", account.id, error.message);
+        const logLevel = /object not found/i.test(error.message) ? "warn" : "error";
+        console[logLevel]("[accountPrintSignedUrlMap]", account.id, error.message);
         out.set(account.id, null);
         return;
       }

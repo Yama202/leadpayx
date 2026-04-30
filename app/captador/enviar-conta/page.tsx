@@ -26,7 +26,11 @@ export default async function EnviarContaPage() {
           <div className="mb-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
             <p className="font-black">Envio indisponível</p>
             <p className="mt-1 text-xs">
-              O servidor precisa de `ACCOUNTS_CREDENTIALS_SECRET` (mínimo 16 caracteres).
+              O servidor precisa de `ACCOUNTS_CREDENTIALS_SECRET` (mínimo 16 caracteres) para
+              proteger credenciais com criptografia.
+            </p>
+            <p className="mt-2 text-xs text-rose-100/90">
+              Enquanto essa configuração não existir, o formulário fica bloqueado por segurança.
             </p>
             <LinkButton className="mt-3 min-h-11" href="/admin/configuracoes" variant="secondary">
               Ir para configurações
@@ -37,7 +41,9 @@ export default async function EnviarContaPage() {
           <p className="font-black text-[#16F28A]">Credenciais</p>
           <p className="mt-1 text-xs text-[#A1A1AA]">Senha cifrada no servidor. Apenas neste formulário.</p>
         </div>
-        <SubmitAccountForm depositBriefMinBrl={brief ? Number(brief.min_deposit_brl) : null} />
+        {credentialsConfigured ? (
+          <SubmitAccountForm depositBriefMinBrl={brief ? Number(brief.min_deposit_brl) : null} />
+        ) : null}
       </div>
     </RoleBasedLayout>
   );

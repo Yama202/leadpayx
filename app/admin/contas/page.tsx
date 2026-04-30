@@ -1,4 +1,5 @@
 import type { PostgrestError } from "@supabase/supabase-js";
+import QRCode from "qrcode";
 
 import { AccountCard } from "@/components/domain/account-card";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
@@ -13,33 +14,84 @@ import type { Account } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminContasPage() {
+function normalizeSearchTerm(raw?: string) {
+  return raw?.trim().slice(0, 80) ?? "";
+}
+
+async function buildPixQrCodeMap(captadorPixEntries: Array<{ id: string; pix_key: string | null }>) {
+  const map = new Map<string, string>();
+  await Promise.all(
+    captadorPixEntries.map(async (entry) => {
+      const pix = entry.pix_key?.trim();
+      if (!pix) {
+        return;
+      }
+      try {
+        const dataUrl = await QRCode.toDataURL(pix, {
+          errorCorrectionLevel: "M",
+          margin: 1,
+          width: 220,
+        });
+        map.set(entry.id, dataUrl);
+      } catch (error) {
+        console.error("[admin/contas] falha ao gerar QR Pix", { captadorId: entry.id, error });
+      }
+    }),
+  );
+  return map;
+}
+
+export default async function AdminContasPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string }>;
+}) {
   const profile = await requireRole(["admin"]);
   const supabase = await createClient();
+  const params = searchParams ? await searchParams : undefined;
+  const searchTerm = normalizeSearchTerm(params?.q);
 
   let accounts: Account[] | null = null;
   let accountsError: PostgrestError | null = null;
   /** Schema sem coluna cifrada: lista carrega; credenciais só após migration. */
   let credentialsColumnUnavailable = false;
 
-  const primary = await supabase
+  let primaryQuery = supabase
     .from("accounts")
     .select(ACCOUNT_SELECT_WITH_SECRET)
     .order("created_at", { ascending: false })
-    .limit(100)
-    .returns<Account[]>();
+    .limit(100);
+
+  if (searchTerm) {
+    const like = `%${searchTerm}%`;
+    primaryQuery = primaryQuery.or(
+      `account_identifier.ilike.${like},lead_account_email.ilike.${like},account_notes.ilike.${like}`,
+    );
+  }
+
+  const primary = await primaryQuery.returns<Account[]>();
 
   if (primary.error?.code === "42703") {
-    const fallback = await supabase
+    let fallbackQuery = supabase
       .from("accounts")
       .select(ACCOUNT_SELECT_CAPTADOR)
       .order("created_at", { ascending: false })
-      .limit(100)
-      .returns<Account[]>();
+      .limit(100);
+
+    if (searchTerm) {
+      const like = `%${searchTerm}%`;
+      fallbackQuery = fallbackQuery.or(
+        `account_identifier.ilike.${like},lead_account_email.ilike.${like},account_notes.ilike.${like}`,
+      );
+    }
+
+    const fallback = await fallbackQuery.returns<Account[]>();
 
     if (fallback.error) {
       accountsError = fallback.error;
-      console.error("[admin/contas] accounts select (fallback after 42703)", {
+      const logLevel =
+        fallback.error.code === "42703" || fallback.error.code === "PGRST204" ? "warn" : "error";
+      console[logLevel]("[admin/contas] accounts select (fallback after 42703)", {
         primary: {
           message: primary.error.message,
           code: primary.error.code,
@@ -79,6 +131,17 @@ export default async function AdminContasPage() {
 
   const list = accounts ?? [];
   const printUrls = await accountPrintSignedUrlMap(supabase, list);
+  const captadorIds = [...new Set(list.map((account) => account.captador_id).filter(Boolean))];
+  const { data: captadorProfiles } = captadorIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id,pix_key")
+        .in("id", captadorIds)
+    : { data: [] };
+  const captadorPixMap = new Map(
+    (captadorProfiles ?? []).map((profile) => [profile.id, profile.pix_key ?? null]),
+  );
+  const captadorPixQrMap = await buildPixQrCodeMap(captadorProfiles ?? []);
 
   const errorBannerHint =
     accountsError != null
@@ -106,12 +169,30 @@ export default async function AdminContasPage() {
           ) para auditoria completa das credenciais.
         </p>
       ) : null}
+      <form className="mb-4" method="get">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            className="min-h-11 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-sm font-semibold text-white outline-none placeholder:text-zinc-500 focus:border-[#00E07A] focus:ring-4 focus:ring-[#00E07A]/10"
+            defaultValue={searchTerm}
+            name="q"
+            placeholder="Pesquisar por nome, e-mail ou identificador"
+          />
+          <button
+            className="min-h-11 rounded-2xl border border-white/[0.08] bg-white/[0.06] px-4 text-sm font-bold text-white transition-colors hover:bg-white/[0.12]"
+            type="submit"
+          >
+            Buscar
+          </button>
+        </div>
+      </form>
       <div className="grid gap-4 lg:grid-cols-2">
         {list.length ? (
           list.map((account) => (
             <AccountCard
               account={account}
               accountPrintSignedUrl={printUrls.get(account.id) ?? null}
+              captadorPixKey={captadorPixMap.get(account.captador_id) ?? null}
+              captadorPixQrDataUrl={captadorPixQrMap.get(account.captador_id) ?? null}
               key={account.id}
               operationalCredentials={operationalCredentialsFromAccount(account)}
             />

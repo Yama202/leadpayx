@@ -38,6 +38,7 @@ import {
   promotionOfferDeleteSchema,
   promotionOfferStatusSchema,
   rejectAccountSchema,
+  completeAccountSchema,
   registrationLinkSchema,
   registrationLinkDeleteSchema,
   registrationLinkStatusSchema,
@@ -288,31 +289,29 @@ export async function pickNextBatchAction(): Promise<ActionState> {
 
   if (error) {
     const errorMessage = String(error.message ?? "");
-    if (errorMessage.includes("minimum operational batch not available")) {
+    const normalizedError = errorMessage.toLowerCase();
+    if (normalizedError.includes("minimum operational batch not available")) {
       return { ok: false, message: "Ainda não há ciclo completo (2 contas) disponível para atribuição." };
     }
-    if (errorMessage.includes("operator not in current rotation slot")) {
-      return {
-        ok: false,
-        message:
-          "Neste momento o lote está reservado para outro operador. Aguarde a próxima janela de rotação (5 min).",
-      };
-    }
-    if (errorMessage.includes("operator unavailable")) {
+    if (normalizedError.includes("operator unavailable")) {
       return { ok: false, message: "Seu perfil de operador está indisponível no momento." };
     }
-    if (errorMessage.includes("operator rotation unavailable")) {
-      return { ok: false, message: "Não há operadores ativos para a rotação neste momento." };
-    }
-    if (errorMessage.includes("assignment denied")) {
+    if (normalizedError.includes("assignment denied")) {
       return { ok: false, message: "Permissão negada para pegar lote com este usuário." };
     }
-    if (errorMessage.includes("operator cannot change account ownership or source data")) {
+    if (normalizedError.includes("operator cannot change account ownership or source data")) {
       console.error("[pickNextBatchAction] RPC blocked by account row policy", error.message);
       return {
         ok: false,
         message:
           "Atribuição bloqueada pela regra de segurança do banco. Aplique a migração mais recente (account_row_protect) ou contate o suporte.",
+      };
+    }
+    if (normalizedError.includes("pgrst203") || normalizedError.includes("could not choose the best candidate function")) {
+      return {
+        ok: false,
+        message:
+          "Ambiguidade na RPC de atribuição. Aplique a migração de estabilidade do operador (assinatura única da função) e tente novamente.",
       };
     }
     console.error("[pickNextBatchAction] assign_next_batch_to_operator", {
@@ -321,7 +320,7 @@ export async function pickNextBatchAction(): Promise<ActionState> {
     });
     return {
       ok: false,
-      message: `Não foi possível pegar o próximo lote (${error.code ?? "sem-codigo"}).`,
+      message: `Não foi possível pegar o próximo lote (${error.code ?? "sem-codigo"}). Detalhe: ${errorMessage || "erro desconhecido"}.`,
     };
   }
 
@@ -345,9 +344,12 @@ export async function pickNextBatchStateAction(
   return pickNextBatchAction();
 }
 
-export async function completeAccount(accountId: string) {
+export async function completeAccount(accountId: string, balanceDestination: string) {
   const supabase = await createClient();
-  return supabase.rpc("complete_account", { target_account_id: accountId });
+  return supabase.rpc("complete_account", {
+    target_account_id: accountId,
+    balance_destination: balanceDestination,
+  });
 }
 
 export async function startAccount(accountId: string) {
@@ -374,19 +376,25 @@ export async function startAccountAction(formData: FormData): Promise<void> {
 
 export async function completeAccountAction(formData: FormData): Promise<void> {
   await requireRole(["operator"]);
-  const parsed = accountIdSchema.safeParse(formDataToObject(formData));
+  const parsed = completeAccountSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
-    redirect("/operador/dashboard?op_error=invalid");
+    redirect("/operador/dashboard?op_error=complete_balance");
   }
 
-  const { error } = await completeAccount(parsed.data.accountId);
+  const { error } = await completeAccount(parsed.data.accountId, parsed.data.balanceDestination);
   if (error) {
+    const msg = String(error.message ?? "").toLowerCase();
+    if (msg.includes("balance destination required")) {
+      redirect("/operador/dashboard?op_error=complete_balance");
+    }
     redirect("/operador/dashboard?op_error=complete");
   }
 
   revalidatePath("/operador/dashboard");
   revalidatePath("/operador/contas");
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
 }
 
 export async function rejectAccount(accountId: string, reason: string) {
@@ -494,10 +502,23 @@ export async function processPayoutAction(
   );
 
   if (error) {
+    const message = error.message?.toLowerCase() ?? "";
+    if (message.includes("invalid proof type")) {
+      return { ok: false, message: "Comprovante inválido. Envie imagem ou PDF." };
+    }
+    if (message.includes("proof too large")) {
+      return { ok: false, message: "Comprovante muito grande. Limite de 5MB." };
+    }
     return { ok: false, message: "Não foi possível processar o pagamento." };
   }
 
   revalidatePath("/admin/pagamentos");
+  revalidatePath("/admin/pagamentos/captadores");
+  revalidatePath("/admin/pagamentos/operadores");
+  revalidatePath("/captador/pagamentos");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/operador/pagamentos");
+  revalidatePath("/operador/dashboard");
   return { ok: true, message: "Pagamento marcado como processado." };
 }
 
@@ -526,6 +547,8 @@ export async function ensurePayoutAction(): Promise<ActionState> {
   revalidatePath("/captador/pagamentos");
   revalidatePath("/operador/pagamentos");
   revalidatePath("/admin/pagamentos");
+  revalidatePath("/admin/pagamentos/captadores");
+  revalidatePath("/admin/pagamentos/operadores");
   return { ok: true, message: "Pagamento pendente criado ou atualizado." };
 }
 
@@ -1096,6 +1119,8 @@ export async function upsertCaptadorGlobalOfferAction(
   }
 
   revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
+  revalidatePath("/captador/dashboard");
 
   return { ok: true, message: "Link global salvo." };
 }
@@ -1115,6 +1140,8 @@ export async function toggleCaptadorGlobalOfferActiveAction(formData: FormData):
     .eq("id", parsed.data.offerId);
 
   revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
+  revalidatePath("/captador/dashboard");
 }
 
 export async function upsertPromotionOfferAction(
@@ -1198,6 +1225,7 @@ export async function upsertPromotionOfferAction(
   );
 
   revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
   revalidatePath("/captador/dashboard");
   revalidatePath("/operador/ofertas");
   return { ok: true, message: "Oferta salva e disponível conforme status configurado." };
@@ -1228,6 +1256,7 @@ export async function updatePromotionOfferStatusAction(formData: FormData): Prom
   });
 
   revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
   revalidatePath("/captador/dashboard");
   revalidatePath("/operador/ofertas");
   redirect("/admin/ofertas?offer_success=Status da oferta atualizado.");
@@ -1255,6 +1284,7 @@ export async function deletePromotionOfferAction(formData: FormData): Promise<vo
   }
 
   revalidatePath("/admin/ofertas");
+  revalidatePath("/captador/ofertas");
   revalidatePath("/captador/dashboard");
   revalidatePath("/operador/ofertas");
   redirect("/admin/ofertas?offer_success=Oferta excluída.");

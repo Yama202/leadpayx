@@ -16,3 +16,9 @@ test("decryptAccountPassword retorna null para legado / inválido", async () => 
   assert.strictEqual(decryptAccountPassword(null), null);
   assert.strictEqual(decryptAccountPassword("plaintext"), null);
 });
+
+test("isEncryptionConfigured retorna false sem secret válida", async () => {
+  delete process.env.ACCOUNTS_CREDENTIALS_SECRET;
+  const { isEncryptionConfigured } = await import("./account-credentials-crypto.ts");
+  assert.strictEqual(isEncryptionConfigured(), false);
+});

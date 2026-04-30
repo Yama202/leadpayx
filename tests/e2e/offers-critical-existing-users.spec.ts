@@ -79,8 +79,9 @@ test("admin cria oferta e captador é redirecionado ao tentar acessar /captador/
   await ensureCaptadorUser("captador@gmail.com", captadorPassword);
   await loginViaUI(captadorPage, "captador@gmail.com", captadorPassword);
   await captadorPage.goto("/captador/ofertas");
-  await expect(captadorPage).toHaveURL(/\/captador\/dashboard/);
-  await expect(captadorPage.getByRole("link", { name: "Ofertas" })).toHaveCount(0);
+  await expect(captadorPage).toHaveURL(/\/captador\/ofertas/);
+  await expect(captadorPage.getByRole("heading", { name: "Ofertas" })).toBeVisible();
+  await expect(captadorPage.getByRole("link", { name: "Ofertas" })).toBeVisible();
   await captadorPage.close();
 
   const editedCard = page.locator("article").filter({ hasText: editedOfferName }).first();

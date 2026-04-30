@@ -54,14 +54,15 @@ test("A) admin cria, edita e exclui oferta", async ({ page }) => {
   await expect(page.locator("article").filter({ hasText: editedOfferName })).toHaveCount(0);
 });
 
-test("B) captador não acessa ofertas e é redirecionado para dashboard", async ({ page }) => {
+test("B) captador acessa ofertas publicadas pelo admin", async ({ page }) => {
   const state = readE2EState();
 
   await loginViaUI(page, state.users.captador.email, state.users.captador.password);
   await page.goto("/captador/ofertas");
 
-  await expect(page).toHaveURL(/\/captador\/dashboard/);
-  await expect(page.getByRole("link", { name: "Ofertas" })).toHaveCount(0);
+  await expect(page).toHaveURL(/\/captador\/ofertas/);
+  await expect(page.getByRole("heading", { name: "Ofertas" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ofertas" })).toBeVisible();
 });
 
 test("C) captador e operador solicitam pagamento e admin vê pendências", async ({ browser }) => {

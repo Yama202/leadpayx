@@ -15,11 +15,7 @@ export function SubmitAccountForm({ depositBriefMinBrl }: { depositBriefMinBrl?:
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <ActionForm
-      action={submitAccountAction}
-      encType="multipart/form-data"
-      initialState={initialActionState}
-    >
+    <ActionForm action={submitAccountAction} initialState={initialActionState}>
       {(state) => (
         <>
           {depositBriefMinBrl != null && depositBriefMinBrl > 0 ? (
