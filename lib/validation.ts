@@ -251,6 +251,43 @@ export const promotionOfferSchema = z.object({
     .optional()
     .transform((value) => value ?? ""),
   rewardAmount: z.coerce.number().positive("Informe um valor positivo."),
+  minDepositBrl: z
+    .union([z.string(), z.number(), z.undefined()])
+    .optional()
+    .transform((value) => {
+      if (value == null || value === "") return null;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : Number.NaN;
+    })
+    .refine((value) => value == null || value >= 0, {
+      message: "Depósito mínimo deve ser zero ou positivo.",
+    }),
+  maxDepositBrl: z
+    .union([z.string(), z.number(), z.undefined()])
+    .optional()
+    .transform((value) => {
+      if (value == null || value === "") return null;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : Number.NaN;
+    })
+    .refine((value) => value == null || value >= 0, {
+      message: "Depósito máximo deve ser zero ou positivo.",
+    }),
+  cycleDepositBrl: z
+    .union([z.string(), z.number(), z.undefined()])
+    .optional()
+    .transform((value) => {
+      if (value == null || value === "") return null;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : Number.NaN;
+    })
+    .refine((value) => value == null || value > 0, {
+      message: "Valor por ciclo deve ser maior que zero.",
+    }),
+  onlyNewAccounts: z
+    .string()
+    .optional()
+    .transform((value) => value === "on"),
   promotionUrl: z
     .string()
     .trim()
@@ -259,6 +296,14 @@ export const promotionOfferSchema = z.object({
   status: z.enum(["active", "inactive"]).default("active"),
   validUntil: z.string().or(z.literal("")).optional(),
   validUntilManual: z.string().trim().max(40).optional(),
+}).superRefine((value, ctx) => {
+  if (value.minDepositBrl != null && value.maxDepositBrl != null && value.maxDepositBrl < value.minDepositBrl) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["maxDepositBrl"],
+      message: "Depósito máximo deve ser maior ou igual ao mínimo.",
+    });
+  }
 });
 
 export const promotionOfferStatusSchema = z.object({

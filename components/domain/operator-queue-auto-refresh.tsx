@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
+const REFRESH_INTERVAL_MS = 15 * 1000;
 
 export function OperatorQueueAutoRefresh() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export function OperatorQueueAutoRefresh() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       router.refresh();
-    }, FIVE_MINUTES_MS);
+    }, REFRESH_INTERVAL_MS);
 
     return () => {
       window.clearInterval(timer);

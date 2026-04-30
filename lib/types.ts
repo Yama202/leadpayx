@@ -125,6 +125,10 @@ export type PromotionOffer = {
   name: string;
   description: string;
   reward_amount: number;
+  min_deposit_brl: number | null;
+  max_deposit_brl: number | null;
+  cycle_deposit_brl: number | null;
+  only_new_accounts: boolean;
   promotion_url: string;
   status: ProfileStatus;
   valid_until: string | null;

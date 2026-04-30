@@ -138,7 +138,9 @@ export default async function OperadorDashboardPage({
           </ul>
         ) : (
           <p className="mt-3 text-sm text-zinc-400">
-            Nenhum ciclo completo disponível agora. A tela atualiza automaticamente.
+            Nenhum ciclo completo disponível agora. Se já existem 2+ contas pendentes do mesmo
+            captador e ainda não aparece, aplique as migrations mais recentes do operador (fluxo
+            sem rotação).
           </p>
         )}
       </section>

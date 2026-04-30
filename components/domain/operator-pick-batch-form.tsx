@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { pickNextBatchStateAction } from "@/lib/actions/domain";
@@ -15,6 +16,14 @@ export function OperatorPickBatchForm({
   minimumBatch: number;
 }) {
   const [state, formAction] = useActionState(pickNextBatchStateAction, initialActionState);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!state.message) {
+      return;
+    }
+    router.refresh();
+  }, [router, state.message]);
 
   return (
     <form action={formAction} className="space-y-2">

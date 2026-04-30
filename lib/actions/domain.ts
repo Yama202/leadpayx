@@ -299,6 +299,20 @@ export async function pickNextBatchAction(): Promise<ActionState> {
     if (normalizedError.includes("assignment denied")) {
       return { ok: false, message: "Permissão negada para pegar lote com este usuário." };
     }
+    if (normalizedError.includes("operator not in current rotation slot")) {
+      return {
+        ok: false,
+        message:
+          "Seu operador não está na janela de rotação da RPC antiga. Aplique as migrations mais recentes do fluxo sem rotação e tente novamente.",
+      };
+    }
+    if (normalizedError.includes("operator rotation unavailable")) {
+      return {
+        ok: false,
+        message:
+          "A fila está bloqueada pela rotação legada. Aplique as migrations mais recentes do operador para liberar atribuição por ciclo.",
+      };
+    }
     if (normalizedError.includes("operator cannot change account ownership or source data")) {
       console.error("[pickNextBatchAction] RPC blocked by account row policy", error.message);
       return {
@@ -327,9 +341,16 @@ export async function pickNextBatchAction(): Promise<ActionState> {
   revalidatePath("/operador/dashboard");
   revalidatePath("/operador/contas");
   const assigned = Number(data ?? 0);
+  if (!Number.isFinite(assigned) || assigned <= 0) {
+    return {
+      ok: false,
+      message:
+        "Nenhuma conta foi atribuída neste ciclo. Se houver 2+ contas pendentes do mesmo captador, aplique as migrations recentes do operador (sem rotação).",
+    };
+  }
   return {
     ok: true,
-    message: assigned > 0 ? `Lote atribuído com ${assigned} conta(s).` : "Nenhum lote novo foi atribuído.",
+    message: `Lote atribuído com ${assigned} conta(s).`,
   };
 }
 
@@ -1191,6 +1212,10 @@ export async function upsertPromotionOfferAction(
     name: parsed.data.name,
     description,
     reward_amount: parsed.data.rewardAmount,
+    min_deposit_brl: parsed.data.minDepositBrl,
+    max_deposit_brl: parsed.data.maxDepositBrl,
+    cycle_deposit_brl: parsed.data.cycleDepositBrl,
+    only_new_accounts: parsed.data.onlyNewAccounts,
     promotion_url: parsed.data.promotionUrl,
     status: parsed.data.status,
     valid_until: validUntilInput,
@@ -1221,7 +1246,14 @@ export async function upsertPromotionOfferAction(
     parsed.data.offerId ? "promotion_offer.updated" : "promotion_offer.created",
     "promotion_offer",
     data.id,
-    { status: parsed.data.status, rewardAmount: parsed.data.rewardAmount },
+    {
+      status: parsed.data.status,
+      rewardAmount: parsed.data.rewardAmount,
+      cycleDepositBrl: parsed.data.cycleDepositBrl,
+      minDepositBrl: parsed.data.minDepositBrl,
+      maxDepositBrl: parsed.data.maxDepositBrl,
+      onlyNewAccounts: parsed.data.onlyNewAccounts,
+    },
   );
 
   revalidatePath("/admin/ofertas");

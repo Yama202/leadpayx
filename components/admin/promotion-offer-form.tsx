@@ -53,6 +53,43 @@ function OfferFields({ offer }: { offer?: PromotionOffer }) {
         />
       </label>
       <label className="block">
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Valor por ciclo (BRL)</span>
+        <input
+          className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+          defaultValue={offer?.cycle_deposit_brl ?? ""}
+          name="cycleDepositBrl"
+          placeholder="Ex.: 30.00"
+          step="0.01"
+          type="number"
+        />
+      </label>
+      <label className="block">
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+          Depósito mínimo (BRL)
+        </span>
+        <input
+          className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+          defaultValue={offer?.min_deposit_brl ?? ""}
+          name="minDepositBrl"
+          placeholder="Ex.: 20.00"
+          step="0.01"
+          type="number"
+        />
+      </label>
+      <label className="block">
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+          Depósito máximo (BRL)
+        </span>
+        <input
+          className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+          defaultValue={offer?.max_deposit_brl ?? ""}
+          name="maxDepositBrl"
+          placeholder="Ex.: 50.00"
+          step="0.01"
+          type="number"
+        />
+      </label>
+      <label className="block">
         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Status</span>
         <select
           className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
@@ -62,6 +99,22 @@ function OfferFields({ offer }: { offer?: PromotionOffer }) {
           <option value="active">Ativa</option>
           <option value="inactive">Inativa</option>
         </select>
+      </label>
+      <label className="block sm:col-span-2">
+        <input name="onlyNewAccounts" type="hidden" value="off" />
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Regras operacionais</span>
+        <span className="mt-2 flex min-h-12 items-center gap-3 rounded-2xl border border-emerald-300/40 bg-emerald-50/60 px-4 dark:border-emerald-400/20 dark:bg-emerald-400/10">
+          <input
+            className="size-4 accent-emerald-600"
+            defaultChecked={offer?.only_new_accounts ?? true}
+            name="onlyNewAccounts"
+            type="checkbox"
+            value="on"
+          />
+          <span className="text-sm font-black uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-200">
+            Sempre contas novas (grifado no card)
+          </span>
+        </span>
       </label>
       <label className="block sm:col-span-2">
         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Válida até (opcional)</span>

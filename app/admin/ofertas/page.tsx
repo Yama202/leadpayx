@@ -77,6 +77,34 @@ export default async function AdminOfertasPage({
                   currency: "BRL",
                 })}
               </p>
+              {offer.min_deposit_brl != null || offer.max_deposit_brl != null ? (
+                <p className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-bold text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-100">
+                  Depósito entre{" "}
+                  {Number(offer.min_deposit_brl ?? 0).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}{" "}
+                  e{" "}
+                  {Number(offer.max_deposit_brl ?? offer.min_deposit_brl ?? 0).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </p>
+              ) : null}
+              {offer.cycle_deposit_brl != null ? (
+                <p className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 dark:bg-violet-400/10 dark:text-violet-100">
+                  Ciclo:{" "}
+                  {Number(offer.cycle_deposit_brl).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </p>
+              ) : null}
+              {offer.only_new_accounts ? (
+                <p className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-100">
+                  Sempre contas novas
+                </p>
+              ) : null}
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Criada em {new Date(offer.created_at).toLocaleString("pt-BR")}
               </p>

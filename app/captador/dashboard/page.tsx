@@ -25,7 +25,8 @@ export const dynamic = "force-dynamic";
 export default async function CaptadorDashboardPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-  const [accountsPrimary, earningsRes, settingsRes, depositBrief, whatsappUrl] = await Promise.all([
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, depositBrief, whatsappUrl] =
+    await Promise.all([
     supabase
       .from("accounts")
       .select(ACCOUNT_SELECT_CAPTADOR)
@@ -33,6 +34,10 @@ export default async function CaptadorDashboardPage() {
       .order("created_at", { ascending: false })
       .limit(3)
       .returns<Account[]>(),
+    supabase
+      .from("accounts")
+      .select("id", { count: "exact", head: true })
+      .eq("captador_id", profile.id),
     supabase
       .from("earnings")
       .select("amount,status,type")
@@ -54,7 +59,7 @@ export default async function CaptadorDashboardPage() {
       .returns<AppSetting[]>(),
     getCaptadorSubmissionBrief(profile.id),
     getWhatsappGroupUrl(),
-  ]);
+    ]);
   let accounts = accountsPrimary.data;
 
   if (
@@ -105,6 +110,8 @@ export default async function CaptadorDashboardPage() {
       ?.filter((earning) => earning.status === "pending" && earning.type === "referral_bonus")
       .reduce((sum, earning) => sum + Number(earning.amount), 0) ?? 0;
 
+  const submittedAccountsCount = accountsCountRes.count ?? accounts?.length ?? 0;
+
   return (
     <RoleBasedLayout description="Contas, ganhos, links e Pix." profile={profile} title="Início">
       {depositBrief ? <CaptadorDepositBriefBanner minDepositBrl={Number(depositBrief.min_deposit_brl)} /> : null}
@@ -126,7 +133,7 @@ export default async function CaptadorDashboardPage() {
       </section>
       <CaptadorWhatsappGroupAlert whatsappUrl={whatsappUrl} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <DashboardCard label="Contas enviadas" value={String(accounts?.length ?? 0)} />
+        <DashboardCard label="Contas enviadas" value={String(submittedAccountsCount)} />
         <DashboardCard label="Ganhos pendentes" value={toCurrency(pendingAmount)} />
         <DashboardCard
           hint="Contas concluídas aprovadas pela operação."
