@@ -8,7 +8,7 @@ import {
   isEncryptionConfigured,
 } from "@/lib/account-credentials-crypto";
 import { requireProfile, requireRole } from "@/lib/auth";
-import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
+import { getActiveOffersMinDepositBrl } from "@/lib/captador-submission-brief";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
 import { roundBrlHalfUp } from "@/lib/global-commission";
 import {
@@ -18,7 +18,6 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
-  accountIdSchema,
   adminUserDeleteSchema,
   adminRoleActionSchema,
   adminProfileUpdateSchema,
@@ -38,7 +37,9 @@ import {
   promotionOfferDeleteSchema,
   promotionOfferStatusSchema,
   rejectAccountSchema,
+  rejectCycleSchema,
   completeAccountSchema,
+  completeCycleSchema,
   registrationLinkSchema,
   registrationLinkDeleteSchema,
   registrationLinkStatusSchema,
@@ -67,7 +68,7 @@ export async function updateProfileAction(
   maybeFormData?: FormData,
 ): Promise<ActionState> {
   const formData = maybeFormData ?? (stateOrFormData as FormData);
-  const profile = await requireRole(["captador"]);
+  const profile = await requireRole(["captador", "operator"]);
   const parsed = profileSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
@@ -75,21 +76,44 @@ export async function updateProfileAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const payload = {
+    name: parsed.data.name,
+    instagram: parsed.data.instagram || null,
+    cpf: parsed.data.cpf,
+    whatsapp: parsed.data.whatsapp,
+    pix_key: parsed.data.pixKey,
+  };
+  const { data, error } = await supabase
     .from("profiles")
-    .update({
-      name: parsed.data.name,
-      instagram: parsed.data.instagram || null,
-      whatsapp: parsed.data.whatsapp,
-      pix_key: parsed.data.pixKey,
-    })
-    .eq("id", profile.id);
+    .update(payload)
+    .eq("id", profile.id)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
+    const message = error.message?.toLowerCase() ?? "";
+    if (error.code === "23505" || message.includes("profiles_cpf_unique")) {
+      return { ok: false, message: "Este CPF já está cadastrado. Use outro CPF ou fale com o admin." };
+    }
     return { ok: false, message: "Não foi possível atualizar seu perfil." };
   }
 
+  // Fallback robusto para cenários de RLS/política com update silencioso (0 rows).
+  if (!data) {
+    const adminDb = createAdminClient();
+    const { error: fallbackError } = await adminDb.from("profiles").update(payload).eq("id", profile.id);
+
+    if (fallbackError) {
+      const message = fallbackError.message?.toLowerCase() ?? "";
+      if (fallbackError.code === "23505" || message.includes("profiles_cpf_unique")) {
+        return { ok: false, message: "Este CPF já está cadastrado. Use outro CPF ou fale com o admin." };
+      }
+      return { ok: false, message: "Não foi possível atualizar seu perfil." };
+    }
+  }
+
   revalidatePath("/captador/perfil");
+  revalidatePath("/operador/perfil");
   return { ok: true, message: "Perfil atualizado com segurança." };
 }
 
@@ -155,8 +179,7 @@ export async function submitAccountAction(
     .maybeSingle();
   const requireNewAccountPrint = coerceAppSettingBoolean(printSetting?.value);
 
-  const depositBrief = await getCaptadorSubmissionBrief(profile.id);
-  const minDepositRequired = Number(depositBrief?.min_deposit_brl ?? 0);
+  const minDepositRequired = Number((await getActiveOffersMinDepositBrl()) ?? 0);
   const declaredDeposit = parsed.data.declaredDepositBrl ?? null;
   if (minDepositRequired > 0) {
     if (declaredDeposit == null) {
@@ -418,6 +441,40 @@ export async function completeAccountAction(formData: FormData): Promise<void> {
   revalidatePath("/captador/dashboard");
 }
 
+export async function completeCycleAction(formData: FormData): Promise<void> {
+  await requireRole(["operator"]);
+  const parsed = completeCycleSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    redirect("/operador/dashboard?op_error=complete_balance");
+  }
+
+  const accountIds = parsed.data.accountIdsCsv
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+
+  if (!accountIds.length) {
+    redirect("/operador/dashboard?op_error=complete");
+  }
+
+  for (const accountId of accountIds) {
+    const { error } = await completeAccount(accountId, parsed.data.balanceDestination);
+    if (error) {
+      const msg = String(error.message ?? "").toLowerCase();
+      if (msg.includes("balance destination required")) {
+        redirect("/operador/dashboard?op_error=complete_balance");
+      }
+      redirect("/operador/dashboard?op_error=complete");
+    }
+  }
+
+  revalidatePath("/operador/dashboard");
+  revalidatePath("/operador/contas");
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
+}
+
 export async function rejectAccount(accountId: string, reason: string) {
   const supabase = await createClient();
   return supabase.rpc("reject_account", {
@@ -447,6 +504,47 @@ export async function rejectAccountAction(
   revalidatePath("/operador/dashboard");
   revalidatePath("/operador/contas");
   return { ok: true, message: "Conta recusada com motivo registrado." };
+}
+
+function mapRejectReason(reasonOption: "conta_sem_saldo" | "conta_nao_e_nova" | "outros", reasonOther?: string) {
+  if (reasonOption === "conta_sem_saldo") return "Conta sem saldo.";
+  if (reasonOption === "conta_nao_e_nova") return "Conta não é nova.";
+  return (reasonOther ?? "").trim();
+}
+
+export async function rejectCycleAction(formData: FormData): Promise<void> {
+  await requireRole(["operator"]);
+  const parsed = rejectCycleSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    redirect("/operador/dashboard?op_error=reject_reason");
+  }
+
+  const accountIds = parsed.data.accountIdsCsv
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+
+  if (!accountIds.length) {
+    redirect("/operador/dashboard?op_error=reject");
+  }
+
+  const reason = mapRejectReason(parsed.data.reasonOption, parsed.data.reasonOther);
+  if (!reason || reason.length < 8) {
+    redirect("/operador/dashboard?op_error=reject_reason");
+  }
+
+  for (const accountId of accountIds) {
+    const { error } = await rejectAccount(accountId, reason);
+    if (error) {
+      redirect("/operador/dashboard?op_error=reject");
+    }
+  }
+
+  revalidatePath("/operador/dashboard");
+  revalidatePath("/operador/contas");
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
 }
 
 export async function generateAccountEarning(accountId: string) {
@@ -544,12 +642,15 @@ export async function processPayoutAction(
 }
 
 function mapEnsurePayoutRpcError(message: string | undefined): string {
-  const m = message ?? "";
+  const m = (message ?? "").toLowerCase();
   if (m.includes("pix_key_required")) {
     return "Cadastre sua chave Pix em Perfil antes de solicitar pagamento.";
   }
   if (m.includes("no pending earnings")) {
     return "Não há saldo pendente disponível para pagamento.";
+  }
+  if (m.includes("payout creation denied") || m.includes("forbidden") || m.includes("not authenticated")) {
+    return "Sua sessão não tem permissão para solicitar pagamento. Saia e entre novamente.";
   }
   return "Não foi possível solicitar pagamento.";
 }
@@ -874,14 +975,16 @@ export async function setAdminRoleAction(
 }
 
 export async function updateAppSettingsAction(formData: FormData): Promise<void> {
-  await requireRole(["admin"]);
+  const admin = await requireRole(["admin"]);
   const parsed = appSettingsSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
+    redirect("/admin/configuracoes?settings_error=Revise os campos antes de salvar.");
     return;
   }
 
   const supabase = await createClient();
+  const adminDb = createAdminClient();
   const updates = [
     ["referral_bonus_base_brl", parsed.data.referralBonusBase],
     ["referral_bonus_increment_brl", parsed.data.referralBonusIncrement],
@@ -894,23 +997,74 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
     ["referral_utm_campaign", parsed.data.referralUtmCampaign],
     ["operator_min_completed_accounts", parsed.data.operatorMinCompletedAccounts],
     ["operational_min_batch_size", parsed.data.operationalMinBatchSize],
+    ["weekly_goal_target_accounts", parsed.data.weeklyGoalTargetAccounts],
+    ["weekly_goal_reward_brl", parsed.data.weeklyGoalRewardBrl],
+    ["weekly_goal_enabled", parsed.data.weeklyGoalEnabled],
     ["whatsapp_group_url", parsed.data.whatsappGroupUrl],
     ["require_new_account_print", parsed.data.requireNewAccountPrint],
   ] as const;
 
-  await Promise.all(
-    updates.map(([key, value]) =>
-      supabase.rpc("upsert_app_setting", {
-        setting_key: key,
-        setting_value: value,
-      }),
-    ),
-  );
+  for (const [key, value] of updates) {
+    const rpc = await supabase.rpc("upsert_app_setting", {
+      setting_key: key,
+      setting_value: value,
+    });
+
+    if (!rpc.error) continue;
+
+    // Fallback robusto: alguns ambientes ficam com whitelist desatualizada no RPC.
+    const fallback = await adminDb.from("app_settings").upsert(
+      {
+        key,
+        value,
+        updated_by: admin.id,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "key" },
+    );
+
+    if (fallback.error) {
+      redirect(
+        `/admin/configuracoes?settings_error=${encodeURIComponent(
+          `Nao foi possivel salvar a configuracao: ${key}.`,
+        )}`,
+      );
+      return;
+    }
+  }
 
   revalidatePath("/admin/configuracoes");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/captador/indicacoes");
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/pagamentos");
+  redirect("/admin/configuracoes?settings_success=Configuracoes salvas com sucesso.");
+}
+
+export async function claimWeeklyGoalBonusAction(): Promise<void> {
+  await requireRole(["captador"]);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("claim_weekly_goal_bonus");
+
+  if (error) {
+    const message = (error.message ?? "").toLowerCase();
+    if (message.includes("weekly_goal_disabled")) {
+      redirect("/captador/dashboard?goal=disabled");
+    }
+    if (message.includes("weekly_goal_already_claimed")) {
+      redirect("/captador/dashboard?goal=already");
+    }
+    if (message.includes("weekly_goal_not_reached")) {
+      redirect("/captador/dashboard?goal=not_reached");
+    }
+    redirect("/captador/dashboard?goal=error");
+  }
+
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/pagamentos");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/pagamentos/captadores");
+  redirect("/captador/dashboard?goal=claimed");
 }
 
 export async function upsertCaptadorDepositBriefAction(formData: FormData): Promise<void> {
@@ -1214,7 +1368,6 @@ export async function upsertPromotionOfferAction(
     reward_amount: parsed.data.rewardAmount,
     min_deposit_brl: parsed.data.minDepositBrl,
     max_deposit_brl: parsed.data.maxDepositBrl,
-    cycle_deposit_brl: parsed.data.cycleDepositBrl,
     only_new_accounts: parsed.data.onlyNewAccounts,
     promotion_url: parsed.data.promotionUrl,
     status: parsed.data.status,
@@ -1249,7 +1402,6 @@ export async function upsertPromotionOfferAction(
     {
       status: parsed.data.status,
       rewardAmount: parsed.data.rewardAmount,
-      cycleDepositBrl: parsed.data.cycleDepositBrl,
       minDepositBrl: parsed.data.minDepositBrl,
       maxDepositBrl: parsed.data.maxDepositBrl,
       onlyNewAccounts: parsed.data.onlyNewAccounts,

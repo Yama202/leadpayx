@@ -34,6 +34,26 @@ export function RegisterForm({ registrationCode }: { registrationCode?: string }
             type="password"
           />
           <Field
+            error={state.fieldErrors?.instagram}
+            label="Nome no Instagram"
+            name="instagram"
+            placeholder="@seuperfil"
+          />
+          <Field
+            error={state.fieldErrors?.cpf}
+            label="CPF"
+            name="cpf"
+            placeholder="000.000.000-00"
+            required
+          />
+          <Field
+            error={state.fieldErrors?.pixKey}
+            label="Chave Pix"
+            name="pixKey"
+            placeholder="CPF, e-mail, celular ou chave aleatória"
+            required
+          />
+          <Field
             defaultValue={registrationCode ?? ""}
             error={state.fieldErrors?.registrationCode}
             label="Código de indicação"

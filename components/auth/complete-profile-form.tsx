@@ -18,9 +18,16 @@ export function CompleteProfileForm({ registrationCode }: { registrationCode?: s
           />
           <Field
             error={state.fieldErrors?.instagram}
-            label="Instagram"
+            label="Nome no Instagram"
             name="instagram"
             placeholder="@seuperfil"
+          />
+          <Field
+            error={state.fieldErrors?.cpf}
+            label="CPF"
+            name="cpf"
+            placeholder="000.000.000-00"
+            required
           />
           <Field
             error={state.fieldErrors?.whatsapp}

@@ -26,6 +26,17 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Navegação/troca de tela sem sensação de atraso:
+   remove animações e transições visuais no app inteiro. */
+*,
+*::before,
+*::after {
+  animation-delay: 0ms !important;
+  animation-duration: 0ms !important;
+  transition-delay: 0ms !important;
+  transition-duration: 0ms !important;
+}
+
 ::selection {
   background: #00e07a;
   color: #031008;

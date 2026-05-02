@@ -1,5 +1,5 @@
 import { ProfileAdminEditor } from "@/components/admin/profile-admin-editor";
-import type { CaptadorSubmissionBrief, Profile } from "@/lib/types";
+import type { Profile } from "@/lib/types";
 
 function statusPill(status: string | null | undefined) {
   const active = status === "active";
@@ -16,29 +16,12 @@ function statusPill(status: string | null | undefined) {
   );
 }
 
-function depositPill(hasBrief: boolean) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide ${
-        hasBrief
-          ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/25"
-          : "bg-white/5 text-zinc-500 ring-1 ring-white/10"
-      }`}
-    >
-      {hasBrief ? "Depósito" : "Sem depósito"}
-    </span>
-  );
-}
-
 export function CaptadorAdminListItem({
   profile,
-  depositBrief,
 }: {
   profile: Profile;
-  depositBrief: CaptadorSubmissionBrief | null;
 }) {
   const displayName = profile.name?.trim() || profile.email || "Sem nome";
-  const hasDepositBrief = Boolean(depositBrief);
 
   return (
     <details
@@ -56,7 +39,6 @@ export function CaptadorAdminListItem({
           <div className="flex flex-wrap items-center gap-2 gap-y-1">
             <span className="truncate text-base font-black tracking-tight text-white">{displayName}</span>
             {statusPill(profile.status)}
-            {depositPill(hasDepositBrief)}
           </div>
           <p className="mt-0.5 truncate text-sm text-zinc-400">{profile.email}</p>
         </div>
@@ -76,7 +58,7 @@ export function CaptadorAdminListItem({
       </summary>
       <div className="border-t border-white/[0.08] bg-black/20 px-4 py-5 sm:px-5">
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
-          <ProfileAdminEditor dangerZone="collapsed" depositBrief={depositBrief} profile={profile} />
+          <ProfileAdminEditor dangerZone="collapsed" profile={profile} />
         </div>
       </div>
     </details>

@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
 
 import { DesktopSidebar, MobileBottomNav } from "@/components/layout/nav";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { BackButton } from "@/components/ui/back-button";
 import { BrandLogo } from "@/components/ui/brand";
 import { LinkButton } from "@/components/ui/button";
-import { roleHome } from "@/lib/constants";
 import type { Profile } from "@/lib/types";
 
 export function RoleBasedLayout({
@@ -38,11 +35,9 @@ export function RoleBasedLayout({
               </div>
               <div className="flex flex-wrap items-center justify-end gap-3">
                 <BrandLogo className="hidden lg:inline-flex" variant="compact" />
-                <BackButton fallbackHref={roleHome[profile.role]} />
                 <LinkButton href="/logout" variant="secondary">
                   Sair
                 </LinkButton>
-                <ThemeToggle />
               </div>
             </div>
           </header>

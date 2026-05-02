@@ -7,7 +7,6 @@ import {
   quotePostgrestFilterValue,
   sanitizeIlikeSearchTerm,
 } from "@/lib/search-utils";
-import type { CaptadorSubmissionBrief } from "@/lib/types";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -48,27 +47,6 @@ export default async function AdminCaptadoresPage({
   }
 
   const { data: captadores, error: captadoresError } = await captadoresQuery;
-
-  const captadorIds = (captadores ?? []).map((c) => c.id).filter(Boolean);
-
-  let briefs: CaptadorSubmissionBrief[] = [];
-
-  if (captadorIds.length > 0) {
-    const { data: briefRows, error: briefError } = await supabase
-      .from("captador_submission_briefs")
-      .select("captador_id, min_deposit_brl, updated_at, updated_by")
-      .in("captador_id", captadorIds);
-
-    if (briefError) {
-      console.error("captador_submission_briefs fetch failed:", briefError);
-    } else {
-      briefs = (briefRows ?? []) as CaptadorSubmissionBrief[];
-    }
-  }
-
-  const briefByCaptadorId = new Map<string, CaptadorSubmissionBrief>(
-    briefs.map((b) => [b.captador_id, b]),
-  );
 
   const count = captadores?.length ?? 0;
   const countLabel =
@@ -153,7 +131,6 @@ export default async function AdminCaptadoresPage({
         <div className="mx-auto flex max-w-4xl flex-col gap-2">
           {captadores?.map((captador) => (
             <CaptadorAdminListItem
-              depositBrief={briefByCaptadorId.get(captador.id) ?? null}
               key={captador.id}
               profile={captador}
             />

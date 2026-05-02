@@ -10,7 +10,13 @@ import { initialActionState } from "@/lib/validation";
 const fieldClass =
   "mt-2 min-h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base text-white outline-none transition-colors duration-200 placeholder:text-zinc-500 focus:border-[#00E07A] focus:ring-4 focus:ring-[#00E07A]/10";
 
-export function SubmitAccountForm({ depositBriefMinBrl }: { depositBriefMinBrl?: number | null }) {
+export function SubmitAccountForm({
+  depositBriefMinBrl,
+  rewardPerAccountBrl,
+}: {
+  depositBriefMinBrl?: number | null;
+  rewardPerAccountBrl?: number | null;
+}) {
   const id = useId();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -19,7 +25,10 @@ export function SubmitAccountForm({ depositBriefMinBrl }: { depositBriefMinBrl?:
       {(state) => (
         <>
           {depositBriefMinBrl != null && depositBriefMinBrl > 0 ? (
-            <CaptadorDepositBriefBanner minDepositBrl={depositBriefMinBrl} />
+            <CaptadorDepositBriefBanner
+              minDepositBrl={depositBriefMinBrl}
+              rewardPerAccountBrl={rewardPerAccountBrl}
+            />
           ) : null}
           <Field
             error={state.fieldErrors?.accountIdentifier}

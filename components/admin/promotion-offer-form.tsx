@@ -53,17 +53,6 @@ function OfferFields({ offer }: { offer?: PromotionOffer }) {
         />
       </label>
       <label className="block">
-        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Valor por ciclo (BRL)</span>
-        <input
-          className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
-          defaultValue={offer?.cycle_deposit_brl ?? ""}
-          name="cycleDepositBrl"
-          placeholder="Ex.: 30.00"
-          step="0.01"
-          type="number"
-        />
-      </label>
-      <label className="block">
         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
           Depósito mínimo (BRL)
         </span>

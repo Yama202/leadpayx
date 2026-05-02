@@ -15,6 +15,7 @@ export type Profile = {
   email: string | null;
   role: UserRole;
   instagram: string | null;
+  cpf: string | null;
   whatsapp: string | null;
   pix_key: string | null;
   referral_code: string;
@@ -179,4 +180,29 @@ export type CaptadorRanking = {
   generated_amount: number;
   active_days: number;
   score: number;
+};
+
+export type WeeklyGoalProgress = {
+  captador_id: string;
+  week_start: string;
+  week_end: string;
+  completed_accounts: number;
+  target_accounts: number;
+  reward_brl: number;
+  enabled: boolean;
+  eligible: boolean;
+  claimed: boolean;
+  claim_earning_id: string | null;
+};
+
+export type WeeklyGoalRanking = {
+  captador_id: string;
+  name: string | null;
+  email: string | null;
+  completed_accounts: number;
+  target_accounts: number;
+  reward_brl: number;
+  progress_percent: number;
+  eligible: boolean;
+  claimed: boolean;
 };

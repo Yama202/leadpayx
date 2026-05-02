@@ -6,7 +6,6 @@ import { completeAccountAction, startAccountAction } from "@/lib/actions/domain"
 import { OperationalCredentialsPanel } from "@/components/domain/operational-credentials-panel";
 import { StatusBadge } from "@/components/ui/cards";
 import { Button } from "@/components/ui/button";
-import { TextArea } from "@/components/ui/forms";
 import type { Account } from "@/lib/types";
 import { operatorCanProgressAccount } from "@/lib/account-operation";
 import { SlaIndicator } from "@/components/domain/sla-indicator";
@@ -22,6 +21,9 @@ export function AccountCard({
   captadorPixKey,
   /** QR Code (data URL) gerado no servidor com a chave Pix do captador. */
   captadorPixQrDataUrl,
+  operatorStartEnabled = true,
+  operatorDestinationOptions,
+  operatorCompletionEnabled = true,
   children,
 }: {
   account: Account;
@@ -30,6 +32,9 @@ export function AccountCard({
   accountPrintSignedUrl?: string | null;
   captadorPixKey?: string | null;
   captadorPixQrDataUrl?: string | null;
+  operatorStartEnabled?: boolean;
+  operatorDestinationOptions?: string[];
+  operatorCompletionEnabled?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -129,26 +134,43 @@ export function AccountCard({
       ) : null}
       {operatorActions && operatorCanProgressAccount(account.status) ? (
         <div className="mt-5 space-y-4">
-          <form action={startAccountAction} className="max-w-md">
-            <input name="accountId" type="hidden" value={account.id} />
-            <Button className="w-full" type="submit" variant="secondary">
-              Começar com conta
-            </Button>
-          </form>
-          <form
-            action={completeAccountAction}
-            className="space-y-3 rounded-2xl border border-white/[0.08] bg-black/25 p-4"
-          >
-            <input name="accountId" type="hidden" value={account.id} />
-            <TextArea
-              label="Informar ao captador: conta/destino do saldo"
-              name="balanceDestination"
-              placeholder="Ex.: banco, agência/conta ou Pix, titular, documento — o que o captador precisa saber."
-            />
-            <Button className="w-full sm:w-auto" type="submit">
-              Finalizar operação
-            </Button>
-          </form>
+          {operatorStartEnabled ? (
+            <form action={startAccountAction} className="max-w-md">
+              <input name="accountId" type="hidden" value={account.id} />
+              <Button className="w-full" type="submit" variant="secondary">
+                Começar com conta
+              </Button>
+            </form>
+          ) : null}
+          {operatorCompletionEnabled ? (
+            <form
+              action={completeAccountAction}
+              className="space-y-3 rounded-2xl border border-white/[0.08] bg-black/25 p-4"
+            >
+              <input name="accountId" type="hidden" value={account.id} />
+              <label className="block">
+                <span className="text-sm font-bold text-zinc-200">Para onde foi o saldo?</span>
+                <select
+                  className="mt-2 min-h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base text-white outline-none transition-colors duration-200 focus:border-[#00E07A] focus:ring-4 focus:ring-[#00E07A]/10"
+                  defaultValue=""
+                  name="balanceDestination"
+                  required
+                >
+                  <option className="bg-slate-900 text-zinc-200" disabled value="">
+                    Selecione a conta (e-mail)
+                  </option>
+                  {(operatorDestinationOptions ?? []).map((email) => (
+                    <option className="bg-slate-900 text-zinc-100" key={email} value={email}>
+                      {email}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button className="w-full sm:w-auto" type="submit">
+                Finalizar operação
+              </Button>
+            </form>
+          ) : null}
         </div>
       ) : null}
       {children ? <div className="mt-5">{children}</div> : null}

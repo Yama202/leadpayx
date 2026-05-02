@@ -1,3 +1,4 @@
+import { ManualRouterRefreshButton } from "@/components/domain/manual-router-refresh-button";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { DashboardCard, EmptyState, StatusBadge } from "@/components/ui/cards";
 import { PayoutRequestForm } from "@/components/domain/payout-request-form";
@@ -34,7 +35,7 @@ export default async function OperadorPagamentosPage() {
     earnings
       ?.filter((earning) => earning.status === "paid")
       .reduce((sum, earning) => sum + Number(earning.amount), 0) ?? 0;
-  const proofUrls = await getPaymentProofUrls(payouts ?? []);
+  const proofUrls = await getPaymentProofUrls(payouts ?? [], supabase);
 
   return (
     <RoleBasedLayout
@@ -42,6 +43,9 @@ export default async function OperadorPagamentosPage() {
       profile={profile}
       title="Pagamentos"
     >
+      <div className="mb-4 flex justify-end">
+        <ManualRouterRefreshButton label="Atualizar extrato" variant="ghost" />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <DashboardCard label="Disponível" value={toCurrency(pendingAmount)} />
         <DashboardCard label="Já pago" value={toCurrency(paidAmount)} />

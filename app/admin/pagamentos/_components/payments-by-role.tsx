@@ -1,3 +1,7 @@
+import Image from "next/image";
+import QRCode from "qrcode";
+
+import { CopyTextButton } from "@/components/admin/copy-text-button";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { DashboardCard, StatusBadge } from "@/components/ui/cards";
 import { Field, SubmitButton } from "@/components/ui/forms";
@@ -10,6 +14,32 @@ import { createClient } from "@/lib/supabase/server";
 import type { FinancialSummary, Payout } from "@/lib/types";
 
 type PaymentRole = "captador" | "operator";
+
+async function buildPixQrCodeMap(
+  payoutProfiles: Array<{ id: string; pix_key: string | null }>,
+) {
+  const map = new Map<string, string>();
+  await Promise.all(
+    payoutProfiles.map(async (entry) => {
+      const pix = entry.pix_key?.trim();
+      if (!pix) return;
+      try {
+        const dataUrl = await QRCode.toDataURL(pix, {
+          errorCorrectionLevel: "M",
+          margin: 1,
+          width: 220,
+        });
+        map.set(entry.id, dataUrl);
+      } catch (error) {
+        console.error("[admin/pagamentos] falha ao gerar QR Pix", {
+          userId: entry.id,
+          error,
+        });
+      }
+    }),
+  );
+  return map;
+}
 
 export async function PaymentsByRoleView({
   role,
@@ -41,7 +71,10 @@ export async function PaymentsByRoleView({
   const payoutProfileMap = new Map(
     (payoutProfiles ?? []).map((item) => [item.id, item]),
   );
-  const proofUrls = await getPaymentProofUrls(payoutRows);
+  const [payoutPixQrMap, proofUrls] = await Promise.all([
+    buildPixQrCodeMap(payoutProfiles ?? []),
+    getPaymentProofUrls(payoutRows, supabase),
+  ]);
   const financialRowsAll = (financialRpc.data ?? []) as FinancialSummary[];
   const financialRows = financialRowsAll.filter((row) => row.role === role);
   const financialError = financialRpc.error?.message ?? null;
@@ -175,29 +208,67 @@ export async function PaymentsByRoleView({
               · {payoutProfileMap.get(payout.user_id)?.role ?? "perfil"} ·{" "}
               {new Date(payout.created_at).toLocaleString("pt-BR")}
             </p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-              Pix: {maskPixKeyForAdmin(payoutProfileMap.get(payout.user_id)?.pix_key)}
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                Pix: {maskPixKeyForAdmin(payoutProfileMap.get(payout.user_id)?.pix_key)}
+              </p>
+              {payoutProfileMap.get(payout.user_id)?.pix_key ? (
+                <CopyTextButton
+                  copiedLabel="Pix copiado"
+                  idleLabel="Copiar Pix"
+                  text={payoutProfileMap.get(payout.user_id)?.pix_key ?? ""}
+                />
+              ) : null}
+            </div>
+            {payoutPixQrMap.get(payout.user_id) ? (
+              <div className="mt-3">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                  QR Pix para pagamento
+                </p>
+                <div className="mt-2 inline-flex rounded-xl bg-white p-2">
+                  <Image
+                    alt="QR Pix do recebedor"
+                    className="h-28 w-28 rounded-lg"
+                    height={112}
+                    src={payoutPixQrMap.get(payout.user_id) as string}
+                    unoptimized
+                    width={112}
+                  />
+                </div>
+              </div>
+            ) : null}
             {payout.status === "pending" ? (
               <div className="mt-5">
-                <form action={processPayoutFormAction} className="space-y-5">
+                <form action={processPayoutFormAction} className="space-y-4">
                   <input name="payoutId" type="hidden" value={payout.id} />
-                  <Field
-                    label="Notas"
-                    name="notes"
-                    placeholder="Referência interna do pagamento"
-                  />
-                  <label className="block">
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                      Comprovante
-                    </span>
-                    <input
-                      className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
-                      name="proof"
-                      type="file"
-                    />
-                  </label>
-                  <SubmitButton>Confirmar pagamento</SubmitButton>
+                  <SubmitButton>Pagar agora</SubmitButton>
+                  <details className="rounded-2xl border border-slate-200 px-4 py-3 dark:border-white/10">
+                    <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                      Opcional: anexar comprovante e nota
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      <label className="block">
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                          Nota interna
+                        </span>
+                        <input
+                          className="mt-2 min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+                          name="notes"
+                          placeholder="Referência interna do pagamento"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                          Comprovante
+                        </span>
+                        <input
+                          className="mt-2 min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+                          name="proof"
+                          type="file"
+                        />
+                      </label>
+                    </div>
+                  </details>
                 </form>
               </div>
             ) : (

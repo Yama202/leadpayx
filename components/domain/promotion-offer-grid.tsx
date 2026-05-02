@@ -124,21 +124,6 @@ export function PromotionOfferGrid({
               })}
             </p>
           ) : null}
-          {offer.cycle_deposit_brl != null ? (
-            <p
-              className={
-                isOperator
-                  ? "relative mt-3 rounded-xl border border-violet-300/20 bg-violet-400/10 px-4 py-2 text-xs font-semibold text-violet-100"
-                  : "relative mt-3 rounded-2xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 dark:border-violet-300/20 dark:bg-violet-400/10 dark:text-violet-100"
-              }
-            >
-              Valor por ciclo (mesmo em cada conta):{" "}
-              {Number(offer.cycle_deposit_brl).toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
-            </p>
-          ) : null}
           {offer.only_new_accounts ? (
             <p
               className={
@@ -217,6 +202,18 @@ export function PromotionOfferGrid({
               }
               url={offer.promotion_url}
             />
+            {!isOperator ? (
+              <LinkButton
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `Confira esta oferta: ${offer.name}\n${offer.promotion_url}`,
+                )}`}
+                rel="noreferrer"
+                target="_blank"
+                variant="secondary"
+              >
+                Enviar para outras pessoas
+              </LinkButton>
+            ) : null}
           </div>
         </article>
       ))}

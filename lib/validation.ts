@@ -9,6 +9,22 @@ export const loginSchema = z.object({
 
 export const registerSchema = loginSchema.extend({
   name: z.string().min(2, "Informe seu nome completo.").max(120),
+  instagram: z.string().trim().max(80).optional(),
+  cpf: z
+    .string()
+    .trim()
+    .min(1, "Informe seu CPF.")
+    .transform(normalizeCpf)
+    .refine(isValidCpf, { message: "Informe um CPF válido." }),
+  pixKey: z
+    .string()
+    .trim()
+    .min(3, "Informe uma chave Pix válida.")
+    .max(160)
+    .refine(isValidPixKey, {
+      message:
+        "Chave Pix: use e-mail, telefone (com DDD), CPF, CNPJ, chave aleatória ou EVP (UUID).",
+    }),
   registrationCode: z
     .string()
     .trim()
@@ -25,6 +41,29 @@ function normalizeBrazilianWhatsapp(value: string) {
   return withCountryCode;
 }
 
+function normalizeCpf(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function isValidCpf(cpf: string): boolean {
+  if (!/^\d{11}$/.test(cpf)) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  const calcCheckDigit = (base: string, factor: number) => {
+    let sum = 0;
+    for (const digit of base) {
+      sum += Number(digit) * factor;
+      factor -= 1;
+    }
+    const mod = sum % 11;
+    return mod < 2 ? 0 : 11 - mod;
+  };
+
+  const d1 = calcCheckDigit(cpf.slice(0, 9), 10);
+  const d2 = calcCheckDigit(cpf.slice(0, 10), 11);
+  return d1 === Number(cpf[9]) && d2 === Number(cpf[10]);
+}
+
 const whatsappSchema = z
   .string()
   .trim()
@@ -37,6 +76,12 @@ const whatsappSchema = z
 export const profileSchema = z.object({
   name: z.string().min(2, "Informe seu nome.").max(120),
   instagram: z.string().trim().max(80).optional(),
+  cpf: z
+    .string()
+    .trim()
+    .min(1, "Informe seu CPF.")
+    .transform(normalizeCpf)
+    .refine(isValidCpf, { message: "Informe um CPF válido." }),
   whatsapp: whatsappSchema,
   pixKey: z
     .string()
@@ -105,9 +150,38 @@ export const completeAccountSchema = z.object({
   balanceDestination: z
     .string()
     .trim()
-    .min(8, "Descreva o destino do saldo com pelo menos 8 caracteres (conta, titular, banco etc.).")
-    .max(800, "Texto muito longo. Resuma em até 800 caracteres."),
+    .email("Selecione um e-mail de destino válido para finalizar."),
 });
+
+export const completeCycleSchema = z.object({
+  accountIdsCsv: z
+    .string()
+    .trim()
+    .min(1, "Nenhuma conta disponível para finalizar."),
+  balanceDestination: z
+    .string()
+    .trim()
+    .email("Selecione um e-mail de destino válido para finalizar."),
+});
+
+export const rejectCycleSchema = z
+  .object({
+    accountIdsCsv: z
+      .string()
+      .trim()
+      .min(1, "Nenhuma conta disponível para recusar."),
+    reasonOption: z.enum(["conta_sem_saldo", "conta_nao_e_nova", "outros"]),
+    reasonOther: z.string().trim().max(500).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.reasonOption === "outros" && (!value.reasonOther || value.reasonOther.length < 8)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["reasonOther"],
+        message: "Descreva o motivo da recusa (mínimo 8 caracteres).",
+      });
+    }
+  });
 
 export const payoutProcessSchema = z.object({
   payoutId: z.string().uuid(),
@@ -164,6 +238,12 @@ export const appSettingsSchema = z.object({
   referralUtmCampaign: z.string().trim().min(2).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   operatorMinCompletedAccounts: z.coerce.number().int().min(0),
   operationalMinBatchSize: z.coerce.number().int().min(1).max(2),
+  weeklyGoalTargetAccounts: z.coerce.number().int().min(1),
+  weeklyGoalRewardBrl: z.coerce.number().positive(),
+  weeklyGoalEnabled: z
+    .string()
+    .optional()
+    .transform((value) => value === "on"),
   whatsappGroupUrl: z
     .string()
     .trim()
@@ -272,17 +352,6 @@ export const promotionOfferSchema = z.object({
     })
     .refine((value) => value == null || value >= 0, {
       message: "Depósito máximo deve ser zero ou positivo.",
-    }),
-  cycleDepositBrl: z
-    .union([z.string(), z.number(), z.undefined()])
-    .optional()
-    .transform((value) => {
-      if (value == null || value === "") return null;
-      const parsed = Number(value);
-      return Number.isFinite(parsed) ? parsed : Number.NaN;
-    })
-    .refine((value) => value == null || value > 0, {
-      message: "Valor por ciclo deve ser maior que zero.",
     }),
   onlyNewAccounts: z
     .string()

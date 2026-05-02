@@ -1,18 +1,20 @@
 import { AccountCard } from "@/components/domain/account-card";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
+import { ManualRouterRefreshButton } from "@/components/domain/manual-router-refresh-button";
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
 import { ReferralBox } from "@/components/domain/referral-box";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
+import { claimWeeklyGoalBonusAction } from "@/lib/actions/domain";
 import { requireRole } from "@/lib/auth";
-import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
+import { getActiveOffersMinDepositBrl } from "@/lib/captador-submission-brief";
 import { toCurrency } from "@/lib/payments";
 import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { ACCOUNT_SELECT_CAPTADOR, ACCOUNT_SELECT_CAPTADOR_FALLBACK } from "@/lib/account-columns";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, AppSetting } from "@/lib/types";
+import type { Account, AppSetting, WeeklyGoalProgress } from "@/lib/types";
 
 type DashboardEarning = {
   amount: number | string;
@@ -22,10 +24,15 @@ type DashboardEarning = {
 
 export const dynamic = "force-dynamic";
 
-export default async function CaptadorDashboardPage() {
+export default async function CaptadorDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ goal?: string }>;
+}) {
+  const params = await searchParams;
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, depositBrief, whatsappUrl] =
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, minDepositBrl, whatsappUrl, weeklyGoalProgressRes] =
     await Promise.all([
     supabase
       .from("accounts")
@@ -57,8 +64,11 @@ export default async function CaptadorDashboardPage() {
         "referral_utm_campaign",
       ])
       .returns<AppSetting[]>(),
-    getCaptadorSubmissionBrief(profile.id),
+    getActiveOffersMinDepositBrl(),
     getWhatsappGroupUrl(),
+    supabase
+      .rpc("get_weekly_goal_progress", { target_captador_id: profile.id })
+      .single<WeeklyGoalProgress>(),
     ]);
   let accounts = accountsPrimary.data;
 
@@ -111,10 +121,28 @@ export default async function CaptadorDashboardPage() {
       .reduce((sum, earning) => sum + Number(earning.amount), 0) ?? 0;
 
   const submittedAccountsCount = accountsCountRes.count ?? accounts?.length ?? 0;
+  const weeklyGoalProgress = weeklyGoalProgressRes.data;
+  const goalStatusText =
+    params.goal === "claimed"
+      ? "Prêmio semanal solicitado com sucesso."
+      : params.goal === "already"
+        ? "Você já solicitou o prêmio desta semana."
+        : params.goal === "not_reached"
+          ? "Meta da semana ainda não foi alcançada."
+          : params.goal === "disabled"
+            ? "Campanha semanal está desativada no momento."
+            : params.goal === "error"
+              ? "Não foi possível solicitar o prêmio agora."
+              : null;
 
   return (
     <RoleBasedLayout description="Contas, ganhos, links e Pix." profile={profile} title="Início">
-      {depositBrief ? <CaptadorDepositBriefBanner minDepositBrl={Number(depositBrief.min_deposit_brl)} /> : null}
+      <div className="mb-4 flex justify-end">
+        <ManualRouterRefreshButton label="Atualizar início" variant="ghost" />
+      </div>
+      {minDepositBrl != null && minDepositBrl > 0 ? (
+        <CaptadorDepositBriefBanner minDepositBrl={minDepositBrl} />
+      ) : null}
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { t: "Enviar", s: "Nova conta" },
@@ -132,6 +160,48 @@ export default async function CaptadorDashboardPage() {
         ))}
       </section>
       <CaptadorWhatsappGroupAlert whatsappUrl={whatsappUrl} />
+      {weeklyGoalProgress ? (
+        <section className="mb-4 rounded-3xl border border-emerald-400/20 bg-emerald-500/5 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">
+                Meta semanal
+              </p>
+              <p className="mt-1 text-sm text-zinc-300">
+                {weeklyGoalProgress.completed_accounts}/{weeklyGoalProgress.target_accounts} contas concluídas · prêmio{" "}
+                {toCurrency(Number(weeklyGoalProgress.reward_brl))}
+              </p>
+            </div>
+            {weeklyGoalProgress.enabled && weeklyGoalProgress.eligible && !weeklyGoalProgress.claimed ? (
+              <form action={claimWeeklyGoalBonusAction}>
+                <button className="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-500 px-4 text-sm font-black text-emerald-950 hover:bg-emerald-400">
+                  Meta alcançada: solicitar prêmio
+                </button>
+              </form>
+            ) : (
+              <p className="text-xs font-semibold text-zinc-400">
+                {weeklyGoalProgress.claimed
+                  ? "Prêmio desta semana já solicitado."
+                  : weeklyGoalProgress.enabled
+                    ? "Continue para bater a meta da semana."
+                    : "Campanha semanal desativada no momento."}
+              </p>
+            )}
+          </div>
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+            <div
+              className="h-full rounded-full bg-emerald-500"
+              style={{
+                width: `${Math.min(
+                  (weeklyGoalProgress.completed_accounts / Math.max(weeklyGoalProgress.target_accounts, 1)) * 100,
+                  100,
+                )}%`,
+              }}
+            />
+          </div>
+          {goalStatusText ? <p className="mt-2 text-xs text-zinc-300">{goalStatusText}</p> : null}
+        </section>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <DashboardCard label="Contas enviadas" value={String(submittedAccountsCount)} />
         <DashboardCard label="Ganhos pendentes" value={toCurrency(pendingAmount)} />

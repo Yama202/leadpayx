@@ -14,9 +14,17 @@ export function CaptadorProfileForm({ profile }: { profile: Profile }) {
           <Field
             defaultValue={profile.instagram ?? ""}
             error={state.fieldErrors?.instagram}
-            label="Instagram"
+            label="Nome no Instagram"
             name="instagram"
             placeholder="@seuperfil"
+          />
+          <Field
+            defaultValue={profile.cpf ?? ""}
+            error={state.fieldErrors?.cpf}
+            label="CPF"
+            name="cpf"
+            placeholder="000.000.000-00"
+            required
           />
           <Field
             defaultValue={profile.whatsapp ?? ""}

@@ -61,7 +61,7 @@ export default async function PagamentosCaptadorPage() {
     earnings
       ?.filter((earning) => earning.status === "paid")
       .reduce((sum, earning) => sum + Number(earning.amount), 0) ?? 0;
-  const proofUrls = await getPaymentProofUrls(payouts ?? []);
+  const proofUrls = await getPaymentProofUrls(payouts ?? [], supabase);
   const earningLabels: Record<Earning["type"], string> = {
     account_completed: "Conta concluída",
     operator_account_completed: "Operação concluída",

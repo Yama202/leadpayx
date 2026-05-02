@@ -10,28 +10,35 @@ import type { AppSetting } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminConfiguracoesPage() {
+export default async function AdminConfiguracoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ settings_success?: string; settings_error?: string }>;
+}) {
+  const params = await searchParams;
   const profile = await requireRole(["admin"]);
   const supabase = await createClient();
-  const { data: settings } = await supabase
-    .from("app_settings")
-    .select("key,value,updated_at,updated_by")
-    .order("key")
-    .returns<AppSetting[]>();
-  const { data: auditLogs } = await supabase
-    .from("audit_logs")
-    .select("id,user_id,metadata,created_at")
-    .eq("action", "settings.updated")
-    .order("created_at", { ascending: false })
-    .limit(8)
-    .returns<
-      {
-        id: string;
-        user_id: string | null;
-        metadata: { key?: string; previous?: unknown; next?: unknown };
-        created_at: string;
-      }[]
-    >();
+  const [{ data: settings }, { data: auditLogs }] = await Promise.all([
+    supabase
+      .from("app_settings")
+      .select("key,value,updated_at,updated_by")
+      .order("key")
+      .returns<AppSetting[]>(),
+    supabase
+      .from("audit_logs")
+      .select("id,user_id,metadata,created_at")
+      .eq("action", "settings.updated")
+      .order("created_at", { ascending: false })
+      .limit(8)
+      .returns<
+        {
+          id: string;
+          user_id: string | null;
+          metadata: { key?: string; previous?: unknown; next?: unknown };
+          created_at: string;
+        }[]
+      >(),
+  ]);
   const values = Object.fromEntries(
     (settings ?? []).map((setting) => [setting.key, setting.value]),
   );
@@ -43,6 +50,16 @@ export default async function AdminConfiguracoesPage() {
       profile={profile}
       title="Configurações"
     >
+      {params?.settings_error ? (
+        <p className="mb-4 rounded-2xl border border-rose-300/40 bg-rose-500/10 p-3 text-sm font-semibold text-rose-100">
+          {params.settings_error}
+        </p>
+      ) : null}
+      {params?.settings_success ? (
+        <p className="mb-4 rounded-2xl border border-emerald-300/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-100">
+          {params.settings_success}
+        </p>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <form
           action={updateAppSettingsAction}
@@ -154,6 +171,41 @@ export default async function AdminConfiguracoesPage() {
         <label className="block">
           <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Mínimo operacional por lote</span>
           <input className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white" defaultValue={String(values.operational_min_batch_size ?? 2)} max={2} min={1} name="operationalMinBatchSize" type="number" />
+        </label>
+        <div className="sm:col-span-2 mt-2">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#16F28A]">Meta semanal (captadores)</p>
+          <p className="mt-1 text-xs text-[#A1A1AA]">
+            Quando ativo, captador que bate a meta da semana libera botão de resgate do prêmio.
+          </p>
+        </div>
+        <label className="block">
+          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Meta de contas concluídas (semana)</span>
+          <input
+            className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+            defaultValue={String(values.weekly_goal_target_accounts ?? 10)}
+            min={1}
+            name="weeklyGoalTargetAccounts"
+            type="number"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Prêmio ao bater meta (R$)</span>
+          <input
+            className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+            defaultValue={String(values.weekly_goal_reward_brl ?? 100)}
+            min={0.01}
+            name="weeklyGoalRewardBrl"
+            step="0.01"
+            type="number"
+          />
+        </label>
+        <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-200 sm:col-span-2">
+          <input
+            defaultChecked={values.weekly_goal_enabled === true}
+            name="weeklyGoalEnabled"
+            type="checkbox"
+          />
+          Meta semanal ativa
         </label>
         <label className="block sm:col-span-2">
           <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Link do grupo WhatsApp</span>

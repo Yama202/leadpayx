@@ -45,6 +45,14 @@ function getSignupErrorMessage(error: { message?: string; status?: number }) {
   return "Não foi possível criar o acesso. Revise os dados e tente novamente.";
 }
 
+function getProfileUpsertErrorMessage(error: { message?: string; code?: string }) {
+  const message = error.message?.toLowerCase() ?? "";
+  if (error.code === "23505" || message.includes("profiles_cpf_unique")) {
+    return "Este CPF já está cadastrado. Use outro CPF ou fale com o admin.";
+  }
+  return "Não foi possível salvar os dados cadastrais do perfil.";
+}
+
 type RegistrationCodeValidation = {
   valid: boolean;
   kind: string | null;
@@ -110,7 +118,7 @@ export async function registerAction(
     return validationError("Revise os dados do cadastro.", parsed.error);
   }
 
-  const { email, password, name, registrationCode } = parsed.data;
+  const { email, password, name, registrationCode, instagram, cpf, pixKey } = parsed.data;
   const supabase = await createClient();
 
   if (registrationCode) {
@@ -141,6 +149,9 @@ export async function registerAction(
     options: {
       data: {
         name,
+        instagram: instagram || null,
+        cpf,
+        pix_key: pixKey,
         registration_code: registrationCode || null,
       },
     },
@@ -156,8 +167,50 @@ export async function registerAction(
     return { ok: false, message: getSignupErrorMessage(error) };
   }
 
-  if (data.session) {
-    redirect("/complete-profile");
+  if (data.session && data.user) {
+    const { data: profileInsert, error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: data.user.id,
+        name,
+        email,
+        instagram: instagram || null,
+        cpf,
+        pix_key: pixKey,
+        role: "captador",
+        status: "active",
+        referral_code: crypto.randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase(),
+      })
+      .select("*")
+      .single<Profile>();
+
+    if (profileError || !profileInsert) {
+      return { ok: false, message: getProfileUpsertErrorMessage(profileError ?? {}) };
+    }
+
+    if (registrationCode && !profileInsert.referred_by) {
+      const { data: bindData, error: bindError } = await supabase.rpc("bind_referral_code_once", {
+        submitted_code: registrationCode,
+      });
+      const bindResult = Array.isArray(bindData)
+        ? (bindData[0] as ReferralBindResult | undefined)
+        : (bindData as ReferralBindResult | null);
+
+      if (bindError || !bindResult || ["invalid", "self_referral", "disabled"].includes(bindResult.status)) {
+        return {
+          ok: false,
+          message:
+            bindResult?.status === "disabled"
+              ? "A campanha de indicação está pausada no momento."
+              : "Código de indicação inválido, expirado ou indisponível.",
+          fieldErrors: {
+            registrationCode: ["Confira o código ou deixe o campo em branco para continuar."],
+          },
+        };
+      }
+    }
+
+    redirect(roleHome[profileInsert.role]);
   }
 
   redirect("/login?created=1");
@@ -240,6 +293,7 @@ export async function completeProfileAction(
         .update({
           name: parsed.data.name,
           instagram: parsed.data.instagram || null,
+          cpf: parsed.data.cpf,
           whatsapp: parsed.data.whatsapp,
           pix_key: parsed.data.pixKey,
         })
@@ -253,6 +307,7 @@ export async function completeProfileAction(
           name: parsed.data.name,
           email,
           instagram: parsed.data.instagram || null,
+          cpf: parsed.data.cpf,
           whatsapp: parsed.data.whatsapp,
           pix_key: parsed.data.pixKey,
           role: "captador",
@@ -263,7 +318,7 @@ export async function completeProfileAction(
         .single<Profile>();
 
   if (error || !profile) {
-    return { ok: false, message: "Não foi possível completar seu perfil." };
+    return { ok: false, message: getProfileUpsertErrorMessage(error ?? {}) };
   }
 
   if (parsed.data.registrationCode && !profile.referred_by) {

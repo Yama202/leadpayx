@@ -28,7 +28,7 @@ export default async function AdminOfertasPage({
 
   return (
     <RoleBasedLayout
-      description="Ofertas globais ativas para todos os captadores."
+      description="Ofertas globais ativas para todos os captadores. A exigência de depósito no envio é definida aqui."
       profile={profile}
       title="Ofertas"
     >
@@ -44,6 +44,10 @@ export default async function AdminOfertasPage({
       ) : null}
       <section className="mb-6 rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#16F28A]">Nova oferta</p>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Para exigir depósito no envio do captador, preencha o campo <strong>Depósito mínimo (BRL)</strong>.
+          Esse valor é o que o captador deve manter igual nas 2 contas do envio.
+        </p>
         <PromotionOfferForm className="mt-4" submitLabel="Criar" />
       </section>
 
@@ -86,15 +90,6 @@ export default async function AdminOfertasPage({
                   })}{" "}
                   e{" "}
                   {Number(offer.max_deposit_brl ?? offer.min_deposit_brl ?? 0).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
-                </p>
-              ) : null}
-              {offer.cycle_deposit_brl != null ? (
-                <p className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 dark:bg-violet-400/10 dark:text-violet-100">
-                  Ciclo:{" "}
-                  {Number(offer.cycle_deposit_brl).toLocaleString("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                   })}
