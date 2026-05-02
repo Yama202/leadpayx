@@ -9,6 +9,7 @@ import type { UserRole } from "@/lib/types";
 const navItems: Record<UserRole, { href: string; label: string }[]> = {
   captador: [
     { href: "/captador/dashboard", label: "Início" },
+    { href: "/captador/avisos", label: "Avisos" },
     { href: "/captador/enviar-conta", label: "Enviar" },
     { href: "/captador/indicacoes", label: "Indicações" },
     { href: "/captador/minhas-contas", label: "Contas" },

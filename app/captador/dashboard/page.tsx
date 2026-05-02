@@ -1,4 +1,5 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { CaptadorNotificationsSection } from "@/components/domain/captador-notifications-section";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
 import { ReferralBox } from "@/components/domain/referral-box";
@@ -12,7 +13,7 @@ import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referral
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { ACCOUNT_SELECT_CAPTADOR, ACCOUNT_SELECT_CAPTADOR_FALLBACK } from "@/lib/account-columns";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, AppSetting } from "@/lib/types";
+import type { Account, AppSetting, UserNotification } from "@/lib/types";
 
 type DashboardEarning = {
   amount: number | string;
@@ -25,7 +26,7 @@ export const dynamic = "force-dynamic";
 export default async function CaptadorDashboardPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, depositBrief, whatsappUrl] =
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, depositBrief, whatsappUrl, notificationsRes] =
     await Promise.all([
     supabase
       .from("accounts")
@@ -59,6 +60,13 @@ export default async function CaptadorDashboardPage() {
       .returns<AppSetting[]>(),
     getCaptadorSubmissionBrief(profile.id),
     getWhatsappGroupUrl(),
+    supabase
+      .from("user_notifications")
+      .select("id,user_id,kind,title,body,metadata,read_at,created_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(6)
+      .returns<UserNotification[]>(),
     ]);
   let accounts = accountsPrimary.data;
 
@@ -111,10 +119,12 @@ export default async function CaptadorDashboardPage() {
       .reduce((sum, earning) => sum + Number(earning.amount), 0) ?? 0;
 
   const submittedAccountsCount = accountsCountRes.count ?? accounts?.length ?? 0;
+  const notificationsPreview = notificationsRes.data ?? [];
 
   return (
     <RoleBasedLayout description="Contas, ganhos, links e Pix." profile={profile} title="Início">
       {depositBrief ? <CaptadorDepositBriefBanner minDepositBrl={Number(depositBrief.min_deposit_brl)} /> : null}
+      <CaptadorNotificationsSection compact notifications={notificationsPreview} />
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { t: "Enviar", s: "Nova conta" },

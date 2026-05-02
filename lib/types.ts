@@ -73,6 +73,21 @@ export type Earning = {
   paid_at: string | null;
 };
 
+export type UserNotification = {
+  id: string;
+  user_id: string;
+  kind: "account_approved";
+  title: string;
+  body: string;
+  metadata: {
+    account_id?: string;
+    commission_brl?: number;
+    account_identifier?: string;
+  };
+  read_at: string | null;
+  created_at: string;
+};
+
 export type Payout = {
   id: string;
   user_id: string;

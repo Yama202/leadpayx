@@ -416,6 +416,24 @@ export async function completeAccountAction(formData: FormData): Promise<void> {
   revalidatePath("/operador/contas");
   revalidatePath("/captador/minhas-contas");
   revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/avisos");
+}
+
+export async function markAllCaptadorNotificationsReadAction(): Promise<void> {
+  const profile = await requireRole(["captador"]);
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("user_notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", profile.id)
+    .is("read_at", null);
+
+  if (error) {
+    console.error("[markAllCaptadorNotificationsReadAction]", error.message);
+  }
+
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/avisos");
 }
 
 export async function rejectAccount(accountId: string, reason: string) {
