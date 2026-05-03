@@ -94,10 +94,44 @@ export async function purgePrefixTestAccountsAction(
     console.error("[purgePrefixTestAccountsAction] rpc failed", {
       code: error.code,
       message: error.message,
+      details: error.details,
+      hint: error.hint,
     });
-    const msg = `${error.message ?? ""}`.toLowerCase();
+    const msg = `${error.message ?? ""} ${error.details ?? ""} ${error.hint ?? ""}`.toLowerCase();
     if (msg.includes("admin required")) {
-      return { ok: false, message: "Sessão inválida. Entre novamente como administrador." };
+      return {
+        ok: false,
+        message: "Permissão recusada: o Supabase não viu-te como administrador nesta sessão. Sai e volta a entrar com uma conta admin no mesmo projeto (URL) das variáveis da Vercel.",
+      };
+    }
+    if (
+      error.code === "PGRST202" ||
+      msg.includes("could not find the function") ||
+      msg.includes("admin_purge_prefix_test_accounts")
+    ) {
+      return {
+        ok: false,
+        message:
+          'A função SQL admin_purge_prefix_test_accounts não existe neste projeto Supabase (ou o schema ainda não foi atualizado). No Supabase Dashboard → SQL, executa o ficheiro supabase/migrations/20260503200000_admin_purge_prefix_test_accounts.sql. Confirma que NEXT_PUBLIC_SUPABASE_URL na Vercel aponta para este mesmo projeto.',
+      };
+    }
+    if (
+      msg.includes("foreign key") ||
+      msg.includes("violates foreign key constraint") ||
+      msg.includes("23503")
+    ) {
+      return {
+        ok: false,
+        message:
+          "A base recusou apagar porque ainda há tabelas ligadas a estas contas. Copia o texto do erro do log do servidor ou da consola Postgres e atualiza o script de migração; ou contacta suporte técnico.",
+      };
+    }
+    if (msg.includes("invalid input syntax for type uuid") || msg.includes("22p02")) {
+      return {
+        ok: false,
+        message:
+          "Erro ao processar dados ligados às contas (ex.: UUID inválido em notificações). Faz redeploy depois da última migração de limpeza (versão que valida IDs) ou corrige linhas órfãs no SQL Editor.",
+      };
     }
     return { ok: false, message: "Não foi possível executar a limpeza. Tente novamente." };
   }
