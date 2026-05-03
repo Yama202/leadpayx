@@ -16,13 +16,12 @@ export type CaptadorCompletionPushPayload = {
   };
 };
 
-const APP_URL_FALLBACK = "https://leadpayx.com.br";
-
-function buildDefaultOpenUrl(accountId: string): string {
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    APP_URL_FALLBACK.replace(/\/$/, "");
-  return `${base}/captador/minhas-contas?id=${encodeURIComponent(accountId)}`;
+/**
+ * Caminho relativo para o clic na notificação (ver `public/push-sw.js`).
+ * O SW junta ao `origin` do worker; URLs absolutas antigas faziam falhar `startsWith("/")`.
+ */
+function buildCaptadorNotificationPath(accountId: string): string {
+  return `/captador/minhas-contas?id=${encodeURIComponent(accountId)}`;
 }
 
 /**
@@ -77,7 +76,7 @@ export async function buildCaptadorCompletionPushPayload(accountId: string, capt
       accountId,
       commissionBrl: resolved,
       accountIdentifier: label,
-      url: buildDefaultOpenUrl(accountId),
+      url: buildCaptadorNotificationPath(accountId),
     },
   };
 }

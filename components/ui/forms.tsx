@@ -18,6 +18,7 @@ export function Field({
   defaultValue,
   error,
   step,
+  autoComplete,
 }: {
   label: string;
   name: string;
@@ -28,12 +29,14 @@ export function Field({
   defaultValue?: string;
   error?: string[];
   step?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="block">
       <span className="text-sm font-bold text-zinc-200">{label}</span>
       <input
         className="mt-2 min-h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base text-white outline-none transition-colors duration-200 placeholder:text-zinc-500 focus:border-[#00E07A] focus:ring-4 focus:ring-[#00E07A]/10"
+        autoComplete={autoComplete}
         defaultValue={defaultValue}
         name={name}
         placeholder={placeholder}

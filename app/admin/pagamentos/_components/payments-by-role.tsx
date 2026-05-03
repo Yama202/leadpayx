@@ -1,11 +1,11 @@
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { DashboardCard, StatusBadge } from "@/components/ui/cards";
 import { Field, SubmitButton } from "@/components/ui/forms";
+import { AdminPixKeyActions } from "./admin-pix-key-actions";
 import { processPayoutFormAction } from "@/lib/actions/domain";
 import { requireRole } from "@/lib/auth";
 import { parsePeriod, toCurrency } from "@/lib/payments";
 import { getPaymentProofUrls } from "@/lib/payments.server";
-import { maskPixKeyForAdmin } from "@/lib/pix-key";
 import { createClient } from "@/lib/supabase/server";
 import type { FinancialSummary, Payout } from "@/lib/types";
 
@@ -175,9 +175,7 @@ export async function PaymentsByRoleView({
               · {payoutProfileMap.get(payout.user_id)?.role ?? "perfil"} ·{" "}
               {new Date(payout.created_at).toLocaleString("pt-BR")}
             </p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-              Pix: {maskPixKeyForAdmin(payoutProfileMap.get(payout.user_id)?.pix_key)}
-            </p>
+            <AdminPixKeyActions pixKey={payoutProfileMap.get(payout.user_id)?.pix_key ?? null} />
             {payout.status === "pending" ? (
               <div className="mt-5">
                 <form action={processPayoutFormAction} className="space-y-5">

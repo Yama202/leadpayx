@@ -29,12 +29,33 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
+/**
+ * @param {string | undefined} raw
+ * @returns {string}
+ */
+function resolveNotificationTargetUrl(raw) {
+  const fallback = self.location.origin + "/captador/dashboard";
+  if (typeof raw !== "string" || !raw.trim()) {
+    return fallback;
+  }
+  const t = raw.trim();
+  try {
+    if (t.startsWith("/")) {
+      return self.location.origin + t;
+    }
+    const u = new URL(t);
+    if (u.origin === self.location.origin) {
+      return u.href;
+    }
+  } catch {
+    /* noop */
+  }
+  return fallback;
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url =
-    typeof event.notification?.data?.url === "string" && event.notification.data.url.startsWith("/")
-      ? `${self.location.origin}${event.notification.data.url}`
-      : self.location.origin + "/captador/dashboard";
+  const url = resolveNotificationTargetUrl(event.notification?.data?.url);
 
   event.waitUntil(self.clients.openWindow(url));
 });

@@ -1,5 +1,5 @@
 import type { PostgrestError } from "@supabase/supabase-js";
-import QRCode from "qrcode";
+import { redirect } from "next/navigation";
 
 import { AccountCard } from "@/components/domain/account-card";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
@@ -14,53 +14,88 @@ import type { Account } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 8;
+/** Limite alto para evitar `page=` abusivo na URL */
+const MAX_PAGE = 5000;
+
 function normalizeSearchTerm(raw?: string) {
   return raw?.trim().slice(0, 80) ?? "";
 }
 
+function parsePage(raw: string | undefined): number {
+  const n = Number.parseInt(raw ?? "", 10);
+  if (!Number.isFinite(n) || n < 1) {
+    return 1;
+  }
+  return Math.min(n, MAX_PAGE);
+}
+
+function contasPaginationHref(page: number, q: string) {
+  const params = new URLSearchParams();
+  if (q) {
+    params.set("q", q);
+  }
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+  const qs = params.toString();
+  return qs ? `/admin/contas?${qs}` : "/admin/contas";
+}
+
+const PIX_QR_BATCH = 8;
+
 async function buildPixQrCodeMap(captadorPixEntries: Array<{ id: string; pix_key: string | null }>) {
   const map = new Map<string, string>();
-  await Promise.all(
-    captadorPixEntries.map(async (entry) => {
-      const pix = entry.pix_key?.trim();
-      if (!pix) {
-        return;
-      }
-      try {
-        const dataUrl = await QRCode.toDataURL(pix, {
-          errorCorrectionLevel: "M",
-          margin: 1,
-          width: 220,
-        });
-        map.set(entry.id, dataUrl);
-      } catch (error) {
-        console.error("[admin/contas] falha ao gerar QR Pix", { captadorId: entry.id, error });
-      }
-    }),
-  );
+  const QRCode = (await import("qrcode")).default;
+  for (let i = 0; i < captadorPixEntries.length; i += PIX_QR_BATCH) {
+    const slice = captadorPixEntries.slice(i, i + PIX_QR_BATCH);
+    await Promise.all(
+      slice.map(async (entry) => {
+        const pix = entry.pix_key?.trim();
+        if (!pix) {
+          return;
+        }
+        try {
+          const dataUrl = await QRCode.toDataURL(pix, {
+            errorCorrectionLevel: "M",
+            margin: 1,
+            width: 220,
+          });
+          map.set(entry.id, dataUrl);
+        } catch (error) {
+          console.error("[admin/contas] falha ao gerar QR Pix", { captadorId: entry.id, error });
+        }
+      }),
+    );
+  }
   return map;
 }
 
 export default async function AdminContasPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ q?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string }>;
 }) {
   const profile = await requireRole(["admin"]);
   const supabase = await createClient();
   const params = searchParams ? await searchParams : undefined;
   const searchTerm = normalizeSearchTerm(params?.q);
+  const pageParam = parsePage(params?.page);
+  let totalMatching = 0;
 
   let accounts: Account[] | null = null;
   let accountsError: PostgrestError | null = null;
   /** Schema sem coluna cifrada: lista carrega; credenciais só após migration. */
   let credentialsColumnUnavailable = false;
 
+  const primaryOffset = (pageParam - 1) * PAGE_SIZE;
+  const primaryEnd = primaryOffset + PAGE_SIZE - 1;
+
   let primaryQuery = supabase
     .from("accounts")
-    .select(ACCOUNT_SELECT_WITH_SECRET)
+    .select(ACCOUNT_SELECT_WITH_SECRET, { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(100);
+    .range(primaryOffset, primaryEnd);
 
   if (searchTerm) {
     const like = `%${searchTerm}%`;
@@ -69,14 +104,14 @@ export default async function AdminContasPage({
     );
   }
 
-  const primary = await primaryQuery.returns<Account[]>();
+  const primary = await primaryQuery;
 
   if (primary.error?.code === "42703") {
     let fallbackQuery = supabase
       .from("accounts")
-      .select(ACCOUNT_SELECT_CAPTADOR)
+      .select(ACCOUNT_SELECT_CAPTADOR, { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(100);
+      .range(primaryOffset, primaryEnd);
 
     if (searchTerm) {
       const like = `%${searchTerm}%`;
@@ -85,7 +120,7 @@ export default async function AdminContasPage({
       );
     }
 
-    const fallback = await fallbackQuery.returns<Account[]>();
+    const fallback = await fallbackQuery;
 
     if (fallback.error) {
       accountsError = fallback.error;
@@ -108,7 +143,8 @@ export default async function AdminContasPage({
         selectHintFallback: publicPostgrestSelectHint(fallback.error),
       });
     } else {
-      accounts = fallback.data;
+      accounts = (fallback.data ?? []) as Account[];
+      totalMatching = fallback.count ?? accounts.length;
       credentialsColumnUnavailable = true;
       console.warn("[admin/contas] accounts select: used CAPTADOR-only fallback after 42703", {
         message: primary.error.message,
@@ -117,8 +153,9 @@ export default async function AdminContasPage({
       });
     }
   } else {
-    accounts = primary.data;
+    accounts = (primary.data ?? []) as Account[];
     accountsError = primary.error;
+    totalMatching = primary.count ?? accounts.length;
     if (primary.error) {
       console.error("[admin/contas] accounts select", {
         message: primary.error.message,
@@ -130,6 +167,16 @@ export default async function AdminContasPage({
   }
 
   const list = accounts ?? [];
+
+  const computedTotalPages = totalMatching > 0 ? Math.ceil(totalMatching / PAGE_SIZE) : 0;
+  const showPaginationBar = Boolean(!accountsError && totalMatching > 0);
+  const canPrev = showPaginationBar && pageParam > 1;
+  const canNext = showPaginationBar && pageParam < computedTotalPages;
+
+  if (accountsError === null && computedTotalPages > 0 && pageParam > computedTotalPages) {
+    redirect(contasPaginationHref(computedTotalPages, searchTerm));
+  }
+
   const captadorIds = [...new Set(list.map((account) => account.captador_id).filter(Boolean))] as string[];
 
   const [printUrls, profilesRes] = await Promise.all([
@@ -185,6 +232,45 @@ export default async function AdminContasPage({
           </button>
         </div>
       </form>
+      {showPaginationBar ? (
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <p className="text-sm text-zinc-400">
+            Mostrando{" "}
+            <span className="font-bold text-white">
+              {(pageParam - 1) * PAGE_SIZE + 1}–{Math.min(pageParam * PAGE_SIZE, totalMatching)}
+            </span>{" "}
+            de <span className="font-bold text-white">{totalMatching}</span>
+            {" · "}
+            Página {pageParam} de {computedTotalPages}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {canPrev ? (
+              <a
+                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.06] px-4 text-sm font-bold text-white transition-colors hover:bg-white/[0.12]"
+                href={contasPaginationHref(pageParam - 1, searchTerm)}
+              >
+                Página anterior
+              </a>
+            ) : (
+              <span className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-2xl border border-white/[0.06] px-4 text-sm font-semibold text-zinc-600">
+                Página anterior
+              </span>
+            )}
+            {canNext ? (
+              <a
+                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#00E07A]/40 bg-[#00E07A]/15 px-4 text-sm font-bold text-[#16F28A] transition-colors hover:bg-[#00E07A]/25"
+                href={contasPaginationHref(pageParam + 1, searchTerm)}
+              >
+                Próxima página
+              </a>
+            ) : (
+              <span className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-2xl border border-white/[0.06] px-4 text-sm font-semibold text-zinc-600">
+                Próxima página
+              </span>
+            )}
+          </div>
+        </div>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         {list.length ? (
           list.map((account) => (

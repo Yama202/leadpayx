@@ -31,7 +31,8 @@ export function SlaIndicator({
   if (remaining <= 0) {
     return (
       <p className="mt-4 rounded-2xl bg-rose-50 p-3 text-sm font-bold text-rose-700 dark:bg-rose-400/10 dark:text-rose-200">
-        SLA expirado. Esta conta entrará em reatribuição automática.
+        SLA expirado. O ciclo deste grupo será redistribuído para outro operador ao atualizar esta
+        página ou pelo agendamento do servidor.
       </p>
     );
   }

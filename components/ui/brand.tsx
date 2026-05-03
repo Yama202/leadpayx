@@ -23,6 +23,7 @@ export function BrandLogo({
           className="h-full w-full object-contain"
           height={64}
           priority
+          sizes="44px"
           src="/brand/logo-mark.png"
           width={64}
         />
@@ -40,6 +41,7 @@ export function BrandLogo({
         className="rounded-lg object-contain"
         height={iconSize}
         priority
+        sizes={`${iconSize}px`}
         src="/brand/logo-mark.png"
         width={iconSize}
       />
@@ -50,6 +52,7 @@ export function BrandLogo({
             className="h-auto w-[170px] max-w-full object-contain"
             height={48}
             priority
+            sizes="(max-width:640px) 140px, 240px"
             src="/brand/logo-wordmark.png"
             width={240}
           />

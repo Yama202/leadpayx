@@ -202,6 +202,11 @@ export const adminUserDeleteSchema = z.object({
     }),
 });
 
+/** Senha em server env: LEADPAY_PREFIX_TEST_PURGE_SECRET — nunca no cliente. */
+export const prefixTestPurgeSchema = z.object({
+  purgePassword: z.string().min(1, "Informe a senha de confirmação."),
+});
+
 const brlCommissionField = z.coerce
   .number()
   .min(0, "Informe um valor zero ou positivo.")

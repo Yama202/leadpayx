@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PrefixTestAccountsPurgePanel } from "@/components/admin/prefix-test-accounts-purge";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { Button } from "@/components/ui/button";
 import { updateAppSettingsAction } from "@/lib/actions/domain";
@@ -214,6 +215,10 @@ export default async function AdminConfiguracoesPage() {
             )}
           </div>
         </aside>
+
+        <div className="xl:col-span-2">
+          <PrefixTestAccountsPurgePanel />
+        </div>
       </div>
     </RoleBasedLayout>
   );

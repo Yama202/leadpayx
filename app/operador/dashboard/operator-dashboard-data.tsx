@@ -30,6 +30,9 @@ export async function OperadorDashboardData({
   opError: string | undefined;
 }) {
   const supabase = await createClient();
+  // Redistribui SLA expirado (ciclo completo vai para outro operador quando aplicável).
+  await supabase.rpc("reassign_expired_operator_accounts");
+
   const [{ data: accounts }, { data: earnings }, { data: settings }, { data: cycleQueue }] =
     await Promise.all([
       supabase

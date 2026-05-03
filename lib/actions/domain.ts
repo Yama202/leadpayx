@@ -1122,22 +1122,29 @@ export async function updateGlobalCommissionsAction(
       hint: error.hint,
     });
 
-    const msg = (error.message ?? "").toLowerCase();
+    const msg = `${error.message ?? ""} ${error.details ?? ""} ${error.hint ?? ""}`.toLowerCase();
     if (msg.includes("admin required")) {
       return {
         ok: false,
         message: "Permissão negada ou sessão expirada. Entre novamente como administrador.",
       };
     }
+    if (msg.includes("setting key denied")) {
+      return {
+        ok: false,
+        message:
+          "O Postgres está com upsert_app_setting desatualizada (rejeita chaves de comissão). No SQL Editor do mesmo projeto da Vercel, execute o bloco CREATE OR REPLACE FUNCTION public.upsert_app_setting … do arquivo supabase/migrations/20260430240000_referral_base_increment_leva.sql.",
+      };
+    }
     if (
-      msg.includes("setting key denied") ||
-      msg.includes("function public.upsert_global_commissions") ||
-      msg.includes("upsert_global_commissions")
+      error.code === "PGRST202" ||
+      msg.includes("could not find the function") ||
+      msg.includes("could not find the function public.upsert_global_commissions")
     ) {
       return {
         ok: false,
         message:
-          "Servidor precisa estar atualizado: aplique as migrações mais recentes do Supabase neste projeto e tente de novo.",
+          "A função upsert_global_commissions não existe neste projeto Supabase (ou o PostgREST ainda não a expõe). Rode o SQL de supabase/migrations/20260503180000_upsert_global_commissions_rpc.sql e confirme que NEXT_PUBLIC_SUPABASE_URL na Vercel é o mesmo projeto.",
       };
     }
 

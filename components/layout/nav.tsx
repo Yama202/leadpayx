@@ -65,6 +65,7 @@ export function DesktopSidebar({ role }: { role: UserRole }) {
                   : "border-transparent text-zinc-400 hover:border-white/[0.08] hover:bg-white/[0.05] hover:text-white"
               }`}
               href={item.href}
+              prefetch={false}
               key={item.href}
               aria-current={active ? "page" : undefined}
             >
@@ -81,6 +82,7 @@ export function DesktopSidebar({ role }: { role: UserRole }) {
       <Link
         className="mt-5 flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 text-sm font-bold text-rose-100 transition-colors duration-200 hover:bg-rose-400/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"
         href="/logout"
+        prefetch={false}
       >
         Sair
       </Link>
@@ -97,6 +99,7 @@ export function MobileBottomNav({ role }: { role: UserRole }) {
         <Link
           className="flex min-h-12 items-center justify-center rounded-2xl px-2 text-center text-xs font-bold text-zinc-300 transition-colors duration-200 hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A]"
           href={item.href}
+          prefetch={false}
           key={item.href}
         >
           {item.label}
