@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { CaptadorNotificationsSection } from "@/components/domain/captador-notifications-section";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { requireRole } from "@/lib/auth";
@@ -24,6 +26,13 @@ export default async function CaptadorAvisosPage() {
       profile={profile}
       title="Avisos"
     >
+      <p className="mb-4 text-xs text-zinc-500">
+        Prefere alertas no celular? Ative em{" "}
+        <Link className="font-semibold text-[#16F28A] hover:underline" href="/captador/dashboard">
+          Início
+        </Link>{" "}
+        (secção &quot;Ativar notificações&quot;).
+      </p>
       <CaptadorNotificationsSection compact={false} notifications={notifications} />
     </RoleBasedLayout>
   );

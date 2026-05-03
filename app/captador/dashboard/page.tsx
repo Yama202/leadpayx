@@ -1,4 +1,5 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { CaptadorPushSettings } from "@/components/domain/captador-push-settings";
 import { CaptadorNotificationsSection } from "@/components/domain/captador-notifications-section";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
@@ -26,7 +27,7 @@ export const dynamic = "force-dynamic";
 export default async function CaptadorDashboardPage() {
   const profile = await requireRole(["captador"]);
   const supabase = await createClient();
-  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, depositBrief, whatsappUrl, notificationsRes] =
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, depositBrief, whatsappUrl, notificationsRes, pushCountRes] =
     await Promise.all([
     supabase
       .from("accounts")
@@ -67,6 +68,10 @@ export default async function CaptadorDashboardPage() {
       .order("created_at", { ascending: false })
       .limit(6)
       .returns<UserNotification[]>(),
+    supabase
+      .from("captador_web_push_subscriptions")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", profile.id),
     ]);
   let accounts = accountsPrimary.data;
 
@@ -120,10 +125,22 @@ export default async function CaptadorDashboardPage() {
 
   const submittedAccountsCount = accountsCountRes.count ?? accounts?.length ?? 0;
   const notificationsPreview = notificationsRes.data ?? [];
+  if (pushCountRes.error) {
+    console.error("[captador/dashboard] contagens push falharam", {
+      message: pushCountRes.error.message,
+      code: pushCountRes.error.code,
+    });
+  }
+  const pushSubscriptionCount = pushCountRes.count ?? 0;
+  const pushPublicKey =
+    typeof process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY === "string"
+      ? process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
+      : null;
 
   return (
     <RoleBasedLayout description="Contas, ganhos, links e Pix." profile={profile} title="Início">
       {depositBrief ? <CaptadorDepositBriefBanner minDepositBrl={Number(depositBrief.min_deposit_brl)} /> : null}
+      <CaptadorPushSettings subscriptionCountServer={pushSubscriptionCount} vapidPublicKey={pushPublicKey} />
       <CaptadorNotificationsSection compact notifications={notificationsPreview} />
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[

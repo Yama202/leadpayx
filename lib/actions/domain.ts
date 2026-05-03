@@ -396,7 +396,7 @@ export async function startAccountAction(formData: FormData): Promise<void> {
 }
 
 export async function completeAccountAction(formData: FormData): Promise<void> {
-  await requireRole(["operator"]);
+  const operatorProfile = await requireRole(["operator"]);
   const parsed = completeAccountSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
@@ -410,6 +410,16 @@ export async function completeAccountAction(formData: FormData): Promise<void> {
       redirect("/operador/dashboard?op_error=complete_balance");
     }
     redirect("/operador/dashboard?op_error=complete");
+  }
+
+  try {
+    const { notifyCaptadorOnAccountCompletionPush } = await import("@/lib/web-push/send-completion");
+    await notifyCaptadorOnAccountCompletionPush({
+      actorUserId: operatorProfile.id,
+      accountId: parsed.data.accountId,
+    });
+  } catch (pushErr) {
+    console.error("[completeAccountAction] push pós-finalização", pushErr);
   }
 
   revalidatePath("/operador/dashboard");
