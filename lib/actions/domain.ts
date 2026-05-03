@@ -1106,21 +1106,42 @@ export async function updateGlobalCommissionsAction(
   const captador = roundBrlHalfUp(parsed.data.captadorCommissionPerAccount);
   const operador = roundBrlHalfUp(parsed.data.operatorCommissionPerAccount);
   const supabase = await createClient();
-  const payload = [
-    ["captador_commission_per_account", captador],
-    ["operator_commission_per_account", operador],
-    ["commission_amount_brl", captador],
-    ["operator_commission_amount_brl", operador],
-  ] as const;
 
-  for (const [setting_key, value] of payload) {
-    const { error } = await supabase.rpc("upsert_app_setting", {
-      setting_key,
-      setting_value: value,
+  const { error } = await supabase.rpc("upsert_global_commissions", {
+    p_captador_brl: captador,
+    p_operator_brl: operador,
+  });
+
+  if (error) {
+    console.error("[updateGlobalCommissionsAction] rpc failed", {
+      captador,
+      operador,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
     });
-    if (error) {
-      return { ok: false, message: "Não foi possível salvar as comissões. Tente novamente." };
+
+    const msg = (error.message ?? "").toLowerCase();
+    if (msg.includes("admin required")) {
+      return {
+        ok: false,
+        message: "Permissão negada ou sessão expirada. Entre novamente como administrador.",
+      };
     }
+    if (
+      msg.includes("setting key denied") ||
+      msg.includes("function public.upsert_global_commissions") ||
+      msg.includes("upsert_global_commissions")
+    ) {
+      return {
+        ok: false,
+        message:
+          "Servidor precisa estar atualizado: aplique as migrações mais recentes do Supabase neste projeto e tente de novo.",
+      };
+    }
+
+    return { ok: false, message: "Não foi possível salvar as comissões. Tente novamente." };
   }
 
   revalidatePath("/admin/comissoes");
