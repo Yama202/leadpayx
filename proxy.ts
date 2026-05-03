@@ -41,7 +41,11 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getClaims();
+  /**
+   * Renova cookies de sessão sem duplicar `getClaims()` por pedido (ver `docs/auth-session-refresh.md`).
+   * Autorização continua só em `lib/auth.ts` → `getClaims()` + perfil.
+   */
+  await supabase.auth.getSession();
 
   return response;
 }
