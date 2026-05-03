@@ -103,7 +103,17 @@ export async function OperadorDashboardData({
           label="Lote operacional"
           value={`${minimumBatch} contas`}
         />
-        <OperatorPickBatchForm disabled={false} minimumBatch={minimumBatch} />
+        <div className="flex flex-col gap-2">
+          <OperatorPickBatchForm
+            disabled={assignedList.length > 0}
+            minimumBatch={minimumBatch}
+          />
+          {assignedList.length > 0 ? (
+            <p className="text-xs leading-snug text-zinc-500">
+              Conclua ou recuse o ciclo atual antes de reservar um novo lote.
+            </p>
+          ) : null}
+        </div>
       </div>
       <section className="mt-4 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">

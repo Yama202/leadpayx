@@ -15,12 +15,12 @@ Descrição dos fluxos principais do LeadPayX, alinhada ao grafo (**GRAPH_REPORT
 ## Fluxo do operador
 
 1. **Fila** — `OperatorQueueAutoRefresh`, `OperatorPickBatchForm` (Community **1**).
-2. **Pegar lote** — `pickNextBatchAction`, variantes de estado (`pickNextBatchStateAction`, …).
-3. **Trabalhar conta** — `startAccountAction` quando aplicável; estados `assigned` / `in_progress`.
-4. **Painel único de ciclo** — Na dashboard, **`OperatorWorkPanel`** concentra iniciar trabalho, **finalizar** (`completeAccountAction`) e **recusar** (`rejectAccountAction`), sem formulários duplicados nos cartões.
-5. **Destino do saldo ao concluir** — Textos fixos alinhados ao domínio em **`lib/operator-balance-destinations.ts`** (valor enviado no form como `balanceDestination`).
-6. **Recusa** — Motivos pré-definidos + texto livre opcional; validação em **`rejectAccountSchema`** (`lib/validation.ts`).
-7. **Recusa ou conclusão (servidor)** — `rejectAccountFormAction` → `rejectAccountAction`; `completeAccountAction` com regras de saldo/destino conforme migrations e push ao captador quando aplicável.
+2. **Pegar ciclo** — `pickNextBatchAction` (botão “Pegar ciclo novo”) só quando não há contas atribuídas ao operador; caso contrário deve **finalizar ou recusar** o ciclo atual primeiro.
+3. **Trabalhar o lote** — Contas chegam em `assigned` (ou `in_progress`); não há passo separado “começar conta” na UI — o ciclo é tratado como um bloco.
+4. **Painel único de ciclo** — **`OperatorWorkPanel`**: **`completeOperatorCycleAction`** finaliza **todas** as contas do lote de uma vez (1ª conta → texto destino principal, 2ª → alternativo); **`rejectAccountAction`** recusa **uma** conta por vez (selector quando há duas).
+5. **Destinos de saldo** — Constantes em **`lib/operator-balance-destinations.ts`**; com uma só conta no lote o operador escolhe principal ou alternativo no form.
+6. **Recusa** — Motivos pré-definidos + texto livre opcional; **`rejectAccountSchema`** (`lib/validation.ts`).
+7. **RPC** — `complete_account` por conta (chamada em sequência pelo ciclo); push ao captador após cada conclusão.
 8. **Regras de negócio** — **`operatorCanProgressAccount`** e **`isTerminalAccountStatus`** (Community **14**) alinham UI e servidor com a máquina de estados em `accounts`.
 
 Erros de fluxo podem redirecionar com query `op_error` (ex.: `complete`, `start`, `complete_balance`) para mensagens na dashboard do operador.

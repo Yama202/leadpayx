@@ -12,6 +12,10 @@ import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
 import { roundBrlHalfUp } from "@/lib/global-commission";
 import {
+  OPERATOR_BALANCE_DESTINATION_ALTERNATE,
+  OPERATOR_BALANCE_DESTINATION_PRIMARY,
+} from "@/lib/operator-balance-destinations";
+import {
   logSetAdminRoleRpcError,
   mapSetAdminRoleRpcToUserMessage,
 } from "@/lib/set-admin-role-error";
@@ -39,6 +43,7 @@ import {
   promotionOfferStatusSchema,
   rejectAccountSchema,
   completeAccountSchema,
+  completeOperatorCycleSchema,
   registrationLinkSchema,
   registrationLinkDeleteSchema,
   registrationLinkStatusSchema,
@@ -420,6 +425,76 @@ export async function completeAccountAction(formData: FormData): Promise<void> {
     });
   } catch (pushErr) {
     console.error("[completeAccountAction] push pós-finalização", pushErr);
+  }
+
+  revalidatePath("/operador/dashboard");
+  revalidatePath("/operador/contas");
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/avisos");
+}
+
+export async function completeOperatorCycleAction(formData: FormData): Promise<void> {
+  const operatorProfile = await requireRole(["operator"]);
+  const parsed = completeOperatorCycleSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    redirect("/operador/dashboard?op_error=complete_balance");
+  }
+
+  const { orderedAccountIds, balanceDestination } = parsed.data;
+  const supabase = await createClient();
+
+  const { data: rows, error: loadErr } = await supabase
+    .from("accounts")
+    .select("id,status,operador_id")
+    .in("id", orderedAccountIds);
+
+  const rowById = new Map((rows ?? []).map((row) => [row.id, row]));
+
+  if (loadErr || rowById.size !== orderedAccountIds.length) {
+    redirect("/operador/dashboard?op_error=complete");
+  }
+
+  for (const accountId of orderedAccountIds) {
+    const row = rowById.get(accountId);
+    if (!row) {
+      redirect("/operador/dashboard?op_error=complete");
+    }
+    if (row.operador_id !== operatorProfile.id) {
+      redirect("/operador/dashboard?op_error=complete");
+    }
+    if (row.status !== "assigned" && row.status !== "in_progress") {
+      redirect("/operador/dashboard?op_error=complete");
+    }
+  }
+
+  const destinations: string[] =
+    orderedAccountIds.length === 1
+      ? [balanceDestination!]
+      : [OPERATOR_BALANCE_DESTINATION_PRIMARY, OPERATOR_BALANCE_DESTINATION_ALTERNATE];
+
+  for (let i = 0; i < orderedAccountIds.length; i += 1) {
+    const accountId = orderedAccountIds[i]!;
+    const dest = destinations[i]!;
+    const { error } = await completeAccount(accountId, dest);
+    if (error) {
+      const msg = String(error.message ?? "").toLowerCase();
+      if (msg.includes("balance destination required")) {
+        redirect("/operador/dashboard?op_error=complete_balance");
+      }
+      redirect("/operador/dashboard?op_error=complete");
+    }
+
+    try {
+      const { notifyCaptadorOnAccountCompletionPush } = await import("@/lib/web-push/send-completion");
+      await notifyCaptadorOnAccountCompletionPush({
+        actorUserId: operatorProfile.id,
+        accountId,
+      });
+    } catch (pushErr) {
+      console.error("[completeOperatorCycleAction] push pós-finalização", pushErr);
+    }
   }
 
   revalidatePath("/operador/dashboard");

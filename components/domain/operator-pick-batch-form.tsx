@@ -51,10 +51,10 @@ function SubmitPickBatchButton({
       {pending ? (
         <>
           <Spinner className="shrink-0" />
-          <span>A carregar lote…</span>
+          <span>A reservar ciclo…</span>
         </>
       ) : (
-        `Pegar lote de ${minimumBatch}`
+        `Pegar ciclo novo (${minimumBatch})`
       )}
     </Button>
   );

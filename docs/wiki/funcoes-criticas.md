@@ -48,9 +48,9 @@ Referência aos **hubs** do **GRAPH_REPORT.md** com semantics confirmadas no có
 
 ## `OperatorWorkPanel` + destinos de saldo
 
-- **UI:** `components/domain/operator-work-panel.tsx` — ciclo único (conta ativa no painel: iniciar / finalizar com destino de saldo / recusar com presets).
-- **Labels de destino:** `lib/operator-balance-destinations.ts` — única fonte de texto para opções de `balanceDestination` na conclusão.
-- **Validação recusa:** `rejectAccountSchema` em `lib/validation.ts` (`reasonPreset`, `otherReason`).
+- **UI:** `components/domain/operator-work-panel.tsx` — **Finalizar ciclo** (`completeOperatorCycleAction`): com 2 contas, conclui ambas num envio (1ª → texto principal, 2ª → alternativo); com 1 conta, o operador escolhe principal/alternativo; **recusar** (`rejectAccountAction`) por conta.
+- **Labels de destino:** `lib/operator-balance-destinations.ts`.
+- **Validação:** `completeOperatorCycleSchema` e `rejectAccountSchema` em `lib/validation.ts`.
 
 ## `SubmitButton` / feedback de formulário
 

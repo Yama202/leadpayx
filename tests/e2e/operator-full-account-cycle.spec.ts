@@ -137,7 +137,7 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
       await page.goto("/operador/dashboard");
       await page.evaluate(() => {
         const forms = Array.from(document.querySelectorAll("form"));
-        const target = forms.find((form) => form.textContent?.includes("Pegar lote de 2"));
+        const target = forms.find((form) => form.textContent?.includes("Pegar ciclo novo"));
         if (!target) {
           throw new Error("pick-batch-form-not-found");
         }
@@ -149,7 +149,7 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
         (row) => row.status === "assigned" && row.operador_id === state.users.operator.id,
       );
       if (assignedNow.length !== ACCOUNTS_PER_BATCH) {
-        const feedback = await page.locator("form").filter({ hasText: "Pegar lote de 2" }).innerText();
+        const feedback = await page.locator("form").filter({ hasText: "Pegar ciclo novo" }).innerText();
         throw new Error(
           `Batch ${batch + 1} sem atribuição de 2 contas. assignedNow=${assignedNow.length}. feedback=${feedback}`,
         );
@@ -159,36 +159,33 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
         `Batch ${batch + 1} deveria ter exatamente ${ACCOUNTS_PER_BATCH} contas atribuídas`,
       ).toBe(ACCOUNTS_PER_BATCH);
 
-      const panel = page.getByRole("region", { name: /Operação na conta selecionada/i });
+      const panel = page.getByRole("region", { name: /Ciclo operacional atual/i });
 
       for (const account of assignedNow) {
-        const card = page.locator("article").filter({ hasText: account.account_identifier }).first();
-        await expect(card).toBeVisible();
-
-        const multiPickHeading = panel.getByText("Qual conta você está operando agora?");
-        if (await multiPickHeading.isVisible()) {
-          await panel.locator("label").filter({ hasText: account.account_identifier }).getByRole("radio").check();
-        }
-        await panel.getByRole("button", { name: "Começar com conta" }).click();
-        await expect(panel.getByRole("button", { name: "Finalizar operação" })).toBeVisible();
-
-        await panel.getByRole("radio", { name: /Destino principal/i }).check();
-        await panel.getByRole("button", { name: "Finalizar operação" }).click();
-        await expect(page.locator("article").filter({ hasText: account.account_identifier })).toHaveCount(0);
-
-        await page.goto("/operador/historico");
         await expect(page.locator("article").filter({ hasText: account.account_identifier })).toHaveCount(1);
-        await secondaryPage.goto("/operador/historico");
-        await expect(
-          secondaryPage.locator("article").filter({ hasText: account.account_identifier }),
-        ).toHaveCount(0);
+      }
 
+      await panel.getByRole("button", { name: "Finalizar ciclo" }).click();
+
+      for (const account of assignedNow) {
+        await expect(page.locator("article").filter({ hasText: account.account_identifier })).toHaveCount(0);
         processed.add(account.account_identifier);
 
         const dbRow = (await loadAccountsByIdentifiers(admin, [account.account_identifier]))[0];
         expect(dbRow.status).toBe("completed");
         expect(dbRow.operador_id).toBe(state.users.operator.id);
         expect((dbRow.operator_balance_destination ?? "").length).toBeGreaterThanOrEqual(8);
+      }
+
+      await page.goto("/operador/historico");
+      for (const account of assignedNow) {
+        await expect(page.locator("article").filter({ hasText: account.account_identifier })).toHaveCount(1);
+      }
+      await secondaryPage.goto("/operador/historico");
+      for (const account of assignedNow) {
+        await expect(
+          secondaryPage.locator("article").filter({ hasText: account.account_identifier }),
+        ).toHaveCount(0);
       }
 
       await page.goto("/operador/dashboard");

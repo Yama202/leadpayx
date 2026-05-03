@@ -1,12 +1,11 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useId, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
-  completeAccountAction,
+  completeOperatorCycleAction,
   rejectAccountAction,
-  startAccountAction,
 } from "@/lib/actions/domain";
 import { operatorCanProgressAccount } from "@/lib/account-operation";
 import {
@@ -46,8 +45,17 @@ function DangerSubmitButton({ children }: { children: string }) {
 }
 
 export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
-  const firstId = accounts[0]?.id ?? "";
-  const [selectedId, setSelectedId] = useState(firstId);
+  const ordered = useMemo(() => {
+    return [...accounts].sort((a, b) => {
+      const ta = a.assigned_at ? new Date(a.assigned_at).getTime() : 0;
+      const tb = b.assigned_at ? new Date(b.assigned_at).getTime() : 0;
+      if (ta !== tb) {
+        return ta - tb;
+      }
+      return a.id.localeCompare(b.id);
+    });
+  }, [accounts]);
+
   const [rejectPreset, setRejectPreset] = useState<"not_new_account" | "no_balance" | "other">(
     "not_new_account",
   );
@@ -56,135 +64,137 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
     initialActionState as ActionState,
   );
   const baseId = useId();
-  const resolvedId = accounts.some((a) => a.id === selectedId) ? selectedId : firstId;
-  const selected = accounts.find((a) => a.id === resolvedId);
-  const canAct = selected ? operatorCanProgressAccount(selected.status) : false;
-  const showStart = selected?.status === "assigned";
-  const showFinalize = selected?.status === "in_progress";
+  const canReject = ordered.some((a) => operatorCanProgressAccount(a.status));
   const reasonLegendId = `${baseId}-reject-legend`;
 
-  if (!accounts.length || !selected) {
+  const orderedIdsCsv = useMemo(() => ordered.map((a) => a.id).join(","), [ordered]);
+
+  const canFinalizeCycle = ordered.every((a) => operatorCanProgressAccount(a.status));
+
+  if (!ordered.length) {
     return null;
   }
 
   return (
     <section
-      aria-label="Operação na conta selecionada"
+      aria-label="Ciclo operacional atual"
       className="mt-6 rounded-[2rem] border border-[#00E07A]/25 bg-[#00E07A]/[0.06] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl"
       role="region"
     >
       <h2 className="text-base font-black tracking-tight text-white">Ciclo de operação</h2>
       <p className="mt-1 text-sm text-zinc-400">
-        Inicie, finalize com o destino do saldo ou recuse — sempre para a conta ativa abaixo (uma
-        ação primária de cada vez).
+        {ordered.length > 1
+          ? "Finalize o ciclo completo (duas contas) com um único envio: a primeira na ordem de atribuição usa o destino principal e a segunda o alternativo. Recusas continuam por conta."
+          : "Finalize com o destino do saldo ou recuse — uma ação primária de cada vez."}
+
       </p>
 
-      {accounts.length > 1 ? (
-        <fieldset className="mt-5">
-          <legend className="text-sm font-bold text-zinc-200">Qual conta você está operando agora?</legend>
-          <div className="mt-3 space-y-2" role="radiogroup" aria-label="Conta em operação">
-            {accounts.map((acc) => {
-              const inputId = `${baseId}-acc-${acc.id}`;
-              return (
-                <label
-                  className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 has-[:checked]:border-[#00E07A]/50 has-[:checked]:bg-[#00E07A]/10"
-                  key={acc.id}
-                >
-                  <input
-                    checked={resolvedId === acc.id}
-                    className="h-4 w-4 accent-[#00E07A]"
-                    id={inputId}
-                    name="operatorWorkAccountPick"
-                    onChange={() => {
-                      setSelectedId(acc.id);
-                    }}
-                    type="radio"
-                  />
-                  <span className="flex flex-col">
-                    <span className="font-mono text-sm font-bold text-white">{acc.account_identifier}</span>
-                    <span className="text-xs text-zinc-500">
-                      {acc.status === "assigned"
-                        ? "Aguardando início"
-                        : acc.status === "in_progress"
-                          ? "Em andamento"
-                          : acc.status}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
+      {ordered.length > 1 ? (
+        <ul className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+          <li className="font-semibold text-zinc-300">Ordem do ciclo (atribuição)</li>
+          {ordered.map((acc, idx) => (
+            <li className="flex flex-wrap items-baseline gap-2 text-zinc-400" key={acc.id}>
+              <span className="font-mono font-bold text-white">{acc.account_identifier}</span>
+              <span className="text-xs">
+                {idx === 0 ? "→ destino principal ao finalizar ciclo" : "→ destino alternativo ao finalizar ciclo"}
+              </span>
+            </li>
+          ))}
+        </ul>
       ) : null}
 
       <div className="mt-6 space-y-6">
-        {showStart ? (
-          <form action={startAccountAction} className="max-w-md">
-            <input name="accountId" type="hidden" value={resolvedId} />
-            <SubmitButton pendingLabel="A iniciar…" variant="secondary">
-              Começar com conta
-            </SubmitButton>
-          </form>
-        ) : null}
-
-        {showFinalize ? (
-          <form action={completeAccountAction} className="space-y-4">
-            <input name="accountId" type="hidden" value={resolvedId} />
-            <fieldset>
-              <legend className="text-sm font-bold text-zinc-200">
-                Informar ao captador: destino do saldo
-              </legend>
-              <p className="mt-1 text-xs text-zinc-500">
-                Um clique define o destino. O captador verá o texto correspondente na conta finalizada.
+        {canFinalizeCycle ? (
+          <form action={completeOperatorCycleAction} className="space-y-4">
+            <input name="orderedAccountIds" type="hidden" value={orderedIdsCsv} />
+            {ordered.length === 1 ? (
+              <fieldset>
+                <legend className="text-sm font-bold text-zinc-200">
+                  Informar ao captador: destino do saldo
+                </legend>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Um clique define o texto que o captador verá na conta finalizada.
+                </p>
+                <div
+                  className="mt-3 grid gap-3 sm:grid-cols-2"
+                  role="radiogroup"
+                  aria-label="Destino do saldo informado ao captador"
+                >
+                  <label className="cursor-pointer rounded-2xl border border-white/10 bg-black/25 p-4 transition-colors has-[:checked]:border-[#00E07A] has-[:checked]:bg-[#00E07A]/10">
+                    <input
+                      aria-label="Destino principal"
+                      className="sr-only"
+                      name="balanceDestination"
+                      required
+                      type="radio"
+                      value={OPERATOR_BALANCE_DESTINATION_PRIMARY}
+                    />
+                    <span className="block text-sm font-black text-white">Destino principal</span>
+                    <span className="mt-1 block text-xs leading-snug text-zinc-400">
+                      Fluxo padrão / primeira linha
+                    </span>
+                  </label>
+                  <label className="cursor-pointer rounded-2xl border border-white/10 bg-black/25 p-4 transition-colors has-[:checked]:border-[#00E07A] has-[:checked]:bg-[#00E07A]/10">
+                    <input
+                      aria-label="Destino alternativo"
+                      className="sr-only"
+                      name="balanceDestination"
+                      type="radio"
+                      value={OPERATOR_BALANCE_DESTINATION_ALTERNATE}
+                    />
+                    <span className="block text-sm font-black text-white">Destino alternativo</span>
+                    <span className="mt-1 block text-xs leading-snug text-zinc-400">
+                      Fluxo secundário
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+            ) : (
+              <p className="text-sm text-zinc-400">
+                Ao confirmar, as duas contas acima serão concluídas:{" "}
+                <span className="text-zinc-300">principal</span> na primeira e{" "}
+                <span className="text-zinc-300">alternativo</span> na segunda.
               </p>
-              <div
-                className="mt-3 grid gap-3 sm:grid-cols-2"
-                role="radiogroup"
-                aria-label="Destino do saldo informado ao captador"
-              >
-                <label className="cursor-pointer rounded-2xl border border-white/10 bg-black/25 p-4 transition-colors has-[:checked]:border-[#00E07A] has-[:checked]:bg-[#00E07A]/10">
-                  <input
-                    aria-label="Destino principal — primeira conta ou fluxo padrão"
-                    className="sr-only"
-                    name="balanceDestination"
-                    required
-                    type="radio"
-                    value={OPERATOR_BALANCE_DESTINATION_PRIMARY}
-                  />
-                  <span className="block text-sm font-black text-white">Destino principal</span>
-                  <span className="mt-1 block text-xs leading-snug text-zinc-400">
-                    Primeira conta / fluxo padrão
-                  </span>
-                </label>
-                <label className="cursor-pointer rounded-2xl border border-white/10 bg-black/25 p-4 transition-colors has-[:checked]:border-[#00E07A] has-[:checked]:bg-[#00E07A]/10">
-                  <input
-                    aria-label="Destino alternativo — segunda conta ou fluxo secundário"
-                    className="sr-only"
-                    name="balanceDestination"
-                    type="radio"
-                    value={OPERATOR_BALANCE_DESTINATION_ALTERNATE}
-                  />
-                  <span className="block text-sm font-black text-white">Destino alternativo</span>
-                  <span className="mt-1 block text-xs leading-snug text-zinc-400">
-                    Segunda conta / fluxo secundário
-                  </span>
-                </label>
-              </div>
-            </fieldset>
-            <SubmitButton pendingLabel="A finalizar…">Finalizar operação</SubmitButton>
+            )}
+            <SubmitButton pendingLabel="A finalizar ciclo…">Finalizar ciclo</SubmitButton>
           </form>
         ) : null}
 
-        {!showFinalize && selected.status === "assigned" ? (
-          <p className="text-sm text-zinc-500">
-            Depois de iniciar, você informará o destino do saldo e finalizará neste mesmo painel.
-          </p>
-        ) : null}
-
-        {canAct ? (
-          <form action={rejectFormAction} className="space-y-4 rounded-2xl border border-white/[0.08] bg-black/20 p-4">
-            <input name="accountId" type="hidden" value={resolvedId} />
+        {canReject ? (
+          <form
+            action={rejectFormAction}
+            className="space-y-4 rounded-2xl border border-white/[0.08] bg-black/20 p-4"
+            key={orderedIdsCsv}
+          >
+            {ordered.length === 1 ? <input name="accountId" type="hidden" value={ordered[0]!.id} /> : null}
             <div className="text-sm font-bold text-zinc-200">Recusar conta</div>
+            {ordered.length > 1 ? (
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-semibold text-zinc-400">Qual conta recusar?</legend>
+                <div className="space-y-2" role="radiogroup" aria-label="Conta a recusar">
+                  {ordered.map((acc, idx) => {
+                    const inputId = `${baseId}-rej-${acc.id}`;
+                    return (
+                      <label
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 has-[:checked]:border-rose-400/40"
+                        key={acc.id}
+                      >
+                        <input
+                          className="accent-rose-400"
+                          defaultChecked={idx === 0}
+                          id={inputId}
+                          name="accountId"
+                          required
+                          type="radio"
+                          value={acc.id}
+                        />
+                        <span className="font-mono text-sm text-zinc-200">{acc.account_identifier}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            ) : null}
             <fieldset>
               <legend className="sr-only" id={reasonLegendId}>
                 Motivo da recusa

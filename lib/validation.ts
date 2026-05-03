@@ -132,6 +132,45 @@ export const completeAccountSchema = z.object({
     .max(800, "Texto muito longo. Resuma em até 800 caracteres."),
 });
 
+const destinationString = z
+  .string()
+  .trim()
+  .min(8, "Descreva o destino do saldo com pelo menos 8 caracteres (conta, titular, banco etc.).")
+  .max(800, "Texto muito longo. Resuma em até 800 caracteres.");
+
+/** Finaliza todas as contas do lote (ordem = assigned_at). Com 1 conta, exige `balanceDestination` no form. */
+export const completeOperatorCycleSchema = z
+  .object({
+    orderedAccountIds: z
+      .string()
+      .min(1, "Ciclo inválido.")
+      .transform((s) =>
+        s
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean),
+      )
+      .pipe(
+        z
+          .array(z.string().uuid())
+          .min(1, "Nenhuma conta no ciclo.")
+          .max(2, "Ciclo com mais de duas contas — atualize a página."),
+      ),
+    balanceDestination: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      destinationString.optional(),
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (data.orderedAccountIds.length === 1 && !data.balanceDestination) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione o destino do saldo para finalizar a conta.",
+        path: ["balanceDestination"],
+      });
+    }
+  });
+
 export const payoutProcessSchema = z.object({
   payoutId: z.string().uuid(),
   notes: z.string().trim().max(500).optional(),
