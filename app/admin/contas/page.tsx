@@ -130,18 +130,18 @@ export default async function AdminContasPage({
   }
 
   const list = accounts ?? [];
-  const printUrls = await accountPrintSignedUrlMap(supabase, list);
-  const captadorIds = [...new Set(list.map((account) => account.captador_id).filter(Boolean))];
-  const { data: captadorProfiles } = captadorIds.length
-    ? await supabase
-        .from("profiles")
-        .select("id,pix_key")
-        .in("id", captadorIds)
-    : { data: [] };
-  const captadorPixMap = new Map(
-    (captadorProfiles ?? []).map((profile) => [profile.id, profile.pix_key ?? null]),
-  );
-  const captadorPixQrMap = await buildPixQrCodeMap(captadorProfiles ?? []);
+  const captadorIds = [...new Set(list.map((account) => account.captador_id).filter(Boolean))] as string[];
+
+  const [printUrls, profilesRes] = await Promise.all([
+    accountPrintSignedUrlMap(supabase, list),
+    captadorIds.length
+      ? supabase.from("profiles").select("id,pix_key").in("id", captadorIds)
+      : Promise.resolve({ data: [] as { id: string; pix_key: string | null }[], error: null }),
+  ]);
+
+  const captadorProfiles = profilesRes.data ?? [];
+  const captadorPixMap = new Map(captadorProfiles.map((p) => [p.id, p.pix_key ?? null]));
+  const captadorPixQrMap = await buildPixQrCodeMap(captadorProfiles);
 
   const errorBannerHint =
     accountsError != null
