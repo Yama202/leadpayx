@@ -1,0 +1,35 @@
+# Community 3
+
+Total de nos: 29
+
+## Nos
+
+- [[auth.ts-a57e13|auth.ts]]
+- [[AuthCard()-275432|AuthCard()]]
+- [[buildRegisterHref()-f2de94|buildRegisterHref()]]
+- [[ComoFuncionaPage()-ad9cf1|ComoFuncionaPage()]]
+- [[CompleteProfileForm()-303458|CompleteProfileForm()]]
+- [[CompleteProfilePage()-38d7a7|CompleteProfilePage()]]
+- [[FaqPage()-b8c6b0|FaqPage()]]
+- [[firstString()-7b865c|firstString()]]
+- [[GanhosPage()-0b4b27|GanhosPage()]]
+- [[getAuthenticatedUserId()-c4e659|getAuthenticatedUserId()]]
+- [[getCurrentProfile()-d12f4a|getCurrentProfile()]]
+- [[getWhatsappGroupUrl()-1fd856|getWhatsappGroupUrl()]]
+- [[hasSupabaseAuthCookie()-151ef9|hasSupabaseAuthCookie()]]
+- [[IndicacoesPage()-d31001|IndicacoesPage()]]
+- [[LoginPage()-fe4406|LoginPage()]]
+- [[normalizeReferralCode()-4b0ee4|normalizeReferralCode()]]
+- [[page.tsx-c8c25e|page.tsx]]
+- [[page.tsx-6580a9|page.tsx]]
+- [[page.tsx-f4c326|page.tsx]]
+- [[page.tsx-5ab325|page.tsx]]
+- [[page.tsx-2b059b|page.tsx]]
+- [[page.tsx-e64749|page.tsx]]
+- [[page.tsx-28ac8f|page.tsx]]
+- [[page.tsx-a83886|page.tsx]]
+- [[redirectAuthenticatedUser()-7690a4|redirectAuthenticatedUser()]]
+- [[register-href.test.ts-1c3d60|register-href.test.ts]]
+- [[register-href.ts-9994c0|register-href.ts]]
+- [[RegisterPage()-99ab9d|RegisterPage()]]
+- [[settings.ts-fe15d3|settings.ts]]

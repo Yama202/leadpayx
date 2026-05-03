@@ -1,0 +1,70 @@
+# requireRole()
+
+**Community:** [[Community unknown]]
+
+**Tipo:** `code`
+
+**Arquivo:** `lib/auth.ts`
+
+## Relacoes
+
+- `imports` -> [[page.tsx-db49c6|page.tsx]]
+- `imports` -> [[page.tsx-5a8899|page.tsx]]
+- `imports` -> [[page.tsx-393e80|page.tsx]]
+- `imports` -> [[page.tsx-0f706b|page.tsx]]
+- `calls` -> [[OperadorOfertasPage()-28bbdc|OperadorOfertasPage()]]
+- `imports` -> [[payments-by-role.tsx-e47d64|payments-by-role.tsx]]
+- `imports` -> [[page.tsx-794604|page.tsx]]
+- `imports` -> [[page.tsx-c685e2|page.tsx]]
+- `calls` -> [[AdminComissoesPage()-016a25|AdminComissoesPage()]]
+- `imports` -> [[page.tsx-3dc7b1|page.tsx]]
+- `imports` -> [[page.tsx-6985b8|page.tsx]]
+- `imports` -> [[page.tsx-5d1ed9|page.tsx]]
+- `imports` -> [[page.tsx-7cdd8e|page.tsx]]
+- `imports` -> [[page.tsx-0fca42|page.tsx]]
+- `imports` -> [[page.tsx-23bffc|page.tsx]]
+- `imports` -> [[page.tsx-dec3f6|page.tsx]]
+- `imports` -> [[page.tsx-c1ef65|page.tsx]]
+- `calls` -> [[CaptadorAvisosPage()-d72f82|CaptadorAvisosPage()]]
+- `imports` -> [[page.tsx-a9e0be|page.tsx]]
+- `imports` -> [[page.tsx-3dae1b|page.tsx]]
+- `imports` -> [[page.tsx-966f82|page.tsx]]
+- `calls` -> [[PerfilPage()-a9ebb2|PerfilPage()]]
+- `imports` -> [[page.tsx-56a15d|page.tsx]]
+- `imports` -> [[page.tsx-eb92e3|page.tsx]]
+- `imports` -> [[page.tsx-d80cef|page.tsx]]
+- `imports` -> [[page.tsx-752550|page.tsx]]
+- `contains` -> [[auth.ts-a57e13|auth.ts]]
+- `calls` -> [[requireProfile()-9be129|requireProfile()]]
+- `imports` -> [[domain.ts-daba4d|domain.ts]]
+- `imports` -> [[captador-push.ts-3b6205|captador-push.ts]]
+- `calls` -> [[updateProfileAction()-06b17b|updateProfileAction()]]
+- `calls` -> [[submitAccountAction()-6e43bb|submitAccountAction()]]
+- `calls` -> [[assignNextBatchToOperator()-d9e0ba|assignNextBatchToOperator()]]
+- `calls` -> [[startAccountAction()-d64e16|startAccountAction()]]
+- `calls` -> [[completeAccountAction()-6d0f49|completeAccountAction()]]
+- `calls` -> [[markAllCaptadorNotificationsReadAction()-ff2c42|markAllCaptadorNotificationsReadAction()]]
+- `calls` -> [[rejectAccountAction()-ec20c3|rejectAccountAction()]]
+- `calls` -> [[markPayoutAsProcessed()-ec9926|markPayoutAsProcessed()]]
+- `calls` -> [[reassignExpiredOperatorAccounts()-b1eb2e|reassignExpiredOperatorAccounts()]]
+- `calls` -> [[adminUpdateProfileAction()-389861|adminUpdateProfileAction()]]
+- `calls` -> [[adminDeleteManagedUserAction()-16326d|adminDeleteManagedUserAction()]]
+- `calls` -> [[setAdminRoleAction()-827c1f|setAdminRoleAction()]]
+- `calls` -> [[updateAppSettingsAction()-0fab46|updateAppSettingsAction()]]
+- `calls` -> [[upsertCaptadorDepositBriefAction()-6940f3|upsertCaptadorDepositBriefAction()]]
+- `calls` -> [[clearCaptadorDepositBriefAction()-50c481|clearCaptadorDepositBriefAction()]]
+- `calls` -> [[updateGlobalCommissionsAction()-9d43fd|updateGlobalCommissionsAction()]]
+- `calls` -> [[createRegistrationLinkAction()-8ad49c|createRegistrationLinkAction()]]
+- `calls` -> [[updateRegistrationLinkStatusAction()-8146ce|updateRegistrationLinkStatusAction()]]
+- `calls` -> [[deleteRegistrationLinkAction()-eeed23|deleteRegistrationLinkAction()]]
+- `calls` -> [[upsertCaptadorGlobalOfferAction()-ac4eb5|upsertCaptadorGlobalOfferAction()]]
+- `calls` -> [[toggleCaptadorGlobalOfferActiveAction()-9eafda|toggleCaptadorGlobalOfferActiveAction()]]
+- `calls` -> [[upsertPromotionOfferAction()-6fb7c4|upsertPromotionOfferAction()]]
+- `calls` -> [[updatePromotionOfferStatusAction()-22aaf5|updatePromotionOfferStatusAction()]]
+- `calls` -> [[deletePromotionOfferAction()-bc596f|deletePromotionOfferAction()]]
+- `calls` -> [[registerCaptadorPushSubscriptionAction()-6d6ace|registerCaptadorPushSubscriptionAction()]]
+- `calls` -> [[removeCaptadorPushSubscriptionAction()-e939cd|removeCaptadorPushSubscriptionAction()]]
+
+## Uso
+
+Use esta nota para navegar visualmente pelo grafo do projeto no Obsidian.

@@ -1,0 +1,842 @@
+{
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/postcss.config.mjs": {
+    "mtime": 1777269526.7082975,
+    "hash": "239f3ebf717465dc636818a1a619398d"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/next-env.d.ts": {
+    "mtime": 1777478546.9687634,
+    "hash": "2a74d3909800ca5467fa83b0ab4a4890"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/proxy.ts": {
+    "mtime": 1777782874.8342934,
+    "hash": "da7d61f556d67a3d2459d51264a2833a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/playwright.config.ts": {
+    "mtime": 1777392597.6513157,
+    "hash": "315ced4aea4512dba0f848ebaa8dd8ae"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/eslint.config.mjs": {
+    "mtime": 1777269526.707537,
+    "hash": "dfa1f5f6a7037bf39dc510f30b180002"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/next.config.ts": {
+    "mtime": 1777282075.478964,
+    "hash": "d5ed9b03ba40a99384505d18ea8882d9"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/layout.tsx": {
+    "mtime": 1777717030.9591303,
+    "hash": "a77edcbfb00004b15fb5929f7780584d"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/manifest.ts": {
+    "mtime": 1777754115.8508818,
+    "hash": "16b5cbb5b100328643bda10ba89f9b6d"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/page.tsx": {
+    "mtime": 1777320642.4443557,
+    "hash": "e61240140303e4ce6cb767a51e82d64b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/como-funciona/page.tsx": {
+    "mtime": 1777320641.6411088,
+    "hash": "38e9d6618ad402ef6455ffdcdf9c0de6"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/faq/page.tsx": {
+    "mtime": 1777320645.967714,
+    "hash": "3a815ec538ace8b1762d3687b9944c30"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/loading.tsx": {
+    "mtime": 1777782771.7271826,
+    "hash": "8b6edd2b60432e212c1a8a8e7ca99136"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/pagamentos/page.tsx": {
+    "mtime": 1777717030.9608486,
+    "hash": "ab5671e7440a564e937acf2dcce748c0"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/historico/page.tsx": {
+    "mtime": 1777717030.960301,
+    "hash": "bb4c9fbbc050dd33c733f1e40a3d732a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/dashboard/operator-dashboard-skeleton.tsx": {
+    "mtime": 1777782828.902878,
+    "hash": "dc4f62e082892b89f87d081a40591d50"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/dashboard/operator-dashboard-data.tsx": {
+    "mtime": 1777782839.6878614,
+    "hash": "dfd5f635d82b64aac0a43892708319b5"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/dashboard/page.tsx": {
+    "mtime": 1777782841.2574136,
+    "hash": "abdf3b13cb96bfa949170a23669bda02"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/ofertas/page.tsx": {
+    "mtime": 1777491128.3212214,
+    "hash": "753deb98cce5a085c6fe94d54bb141b2"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/operador/contas/page.tsx": {
+    "mtime": 1777274419.2947536,
+    "hash": "042bba9fd8899fa5f2e38df44f1a42fc"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/loading.tsx": {
+    "mtime": 1777782771.7272167,
+    "hash": "1992609e7201e506225b413ffc19197e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/pagamentos/page.tsx": {
+    "mtime": 1777565070.624804,
+    "hash": "3ef009773f0cfbf9b2fd2fe5f199933e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/pagamentos/captadores/page.tsx": {
+    "mtime": 1777564762.6216173,
+    "hash": "9d443176c69cb5ab8053031599237c88"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/pagamentos/operadores/page.tsx": {
+    "mtime": 1777564787.2517703,
+    "hash": "116d9350d69b3e4b7bb0abd2d2d61b08"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/pagamentos/_components/payments-by-role.tsx": {
+    "mtime": 1777717030.9558415,
+    "hash": "9332aceda29a6f37139c1a1f0f25a0a1"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/administradores/page.tsx": {
+    "mtime": 1777278500.6163385,
+    "hash": "c93b5949373ef35e2f0b4f5a6b67c2e8"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/comissoes/page.tsx": {
+    "mtime": 1777312864.5539365,
+    "hash": "ac433646a8fd1e0d4c78678bcc00b856"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/links-operacao/page.tsx": {
+    "mtime": 1777381505.686442,
+    "hash": "1e7712c61d3bfcf24af367ae46efb55c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/dashboard/admin-dashboard-data.tsx": {
+    "mtime": 1777782871.1602018,
+    "hash": "1bbc6fd81fa088a69deaa9761156cea8"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/dashboard/admin-dashboard-skeleton.tsx": {
+    "mtime": 1777782847.2463853,
+    "hash": "4f19227cc6cc0b3aa05c1ed97ec80f33"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/dashboard/page.tsx": {
+    "mtime": 1777782871.4708986,
+    "hash": "c227a796ae053b65adcd82d46f3da107"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/captadores/page.tsx": {
+    "mtime": 1777717030.9527926,
+    "hash": "db9874ecd3bfbca950994aa6e777ebc2"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/logs/page.tsx": {
+    "mtime": 1777274509.3507762,
+    "hash": "699d7f03f8a72f4ec22429011373f063"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/operadores/page.tsx": {
+    "mtime": 1777401635.6674037,
+    "hash": "313c9635ee6eaf0d8252ec29901b347c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/links/page.tsx": {
+    "mtime": 1777381480.5314527,
+    "hash": "e9b404b71eabe4dd7a788980683a388b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/ofertas/page.tsx": {
+    "mtime": 1777717030.955191,
+    "hash": "0353315566219f0a90d2a7e0a9c07420"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/contas/page.tsx": {
+    "mtime": 1777782874.3827043,
+    "hash": "b6c84ccaf9cfd8d338885d53769c3747"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/admin/configuracoes/page.tsx": {
+    "mtime": 1777717030.953636,
+    "hash": "747983d5bd08c8bf3a4d42ebb7057872"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/logout/page.tsx": {
+    "mtime": 1777281873.4221392,
+    "hash": "307b179831343dc41ba200d4a7e04f70"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/register/page.tsx": {
+    "mtime": 1777320672.5106714,
+    "hash": "f1c623d384cd780b079ca2cb7a55638a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/indicacoes/page.tsx": {
+    "mtime": 1777320645.066538,
+    "hash": "62db8753ce47e870792975d8160ae767"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/access-denied/page.tsx": {
+    "mtime": 1777282768.0631287,
+    "hash": "7f894186a5641df1c72f7946c0f07b5b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/loading.tsx": {
+    "mtime": 1777782771.7271862,
+    "hash": "d1b69af3e32cd3432bf3c462e995c473"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/avisos/page.tsx": {
+    "mtime": 1777754281.1541452,
+    "hash": "f9c1eaaeb8cbea59bf36db95c59c3b2d"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/enviar-conta/page.tsx": {
+    "mtime": 1777717030.95707,
+    "hash": "06bad1bf2859986866ac0632c6e07358"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/pagamentos/page.tsx": {
+    "mtime": 1777717030.9580479,
+    "hash": "7e75a3377209d2385959045cdd01029c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/perfil/page.tsx": {
+    "mtime": 1777319654.902005,
+    "hash": "a1b05014bb3ec10f27cd685cb653738a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/minhas-contas/page.tsx": {
+    "mtime": 1777491128.299976,
+    "hash": "2d08629791caa16900ae5f79396c50f9"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/dashboard/captador-dashboard-data.tsx": {
+    "mtime": 1777782821.9985816,
+    "hash": "2b6a20a8d5e41d4d143885ae59e6d33f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/dashboard/captador-dashboard-skeleton.tsx": {
+    "mtime": 1777782808.4259474,
+    "hash": "913ab53f4b411c858f4688fb8488d810"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/dashboard/page.tsx": {
+    "mtime": 1777782822.8358834,
+    "hash": "39bbe9dade6bb7a64c5d618a0eb2415e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/indicacoes/page.tsx": {
+    "mtime": 1777381530.0926979,
+    "hash": "bfb34ff002b41dd728621f05b206b933"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/captador/ofertas/page.tsx": {
+    "mtime": 1777717030.9575553,
+    "hash": "cee084db5a403ad54869b1e682a36808"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/complete-profile/page.tsx": {
+    "mtime": 1777309318.6383421,
+    "hash": "c5c9db477f409aa7f7d6f93a78cf77bc"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/api/cron/reassign-sla/route.ts": {
+    "mtime": 1777279621.3353796,
+    "hash": "24a327c46e2febf80e37e69656fe1019"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/ganhos/page.tsx": {
+    "mtime": 1777320643.0589921,
+    "hash": "5aaab58ed252321439f144fb3bc5f8d1"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/login/page.tsx": {
+    "mtime": 1777320672.034554,
+    "hash": "1f8ccbcab03a8e7eeb9ea06d16b5e31c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/offers-critical-existing-users.spec.ts": {
+    "mtime": 1777563657.4456985,
+    "hash": "5bfa7ba1651369788f704ee3e5bdd844"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/admin-delete-env-fallback.spec.ts": {
+    "mtime": 1777434983.6059966,
+    "hash": "f1c147591360b91a03fbd7144cf6d1d3"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/operator-full-account-cycle.spec.ts": {
+    "mtime": 1777526464.231499,
+    "hash": "990df9d6718218ce425a4855cd600683"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/global-setup.ts": {
+    "mtime": 1777395566.924601,
+    "hash": "6d209d653c6a9de9e387672eac1db407"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/global-teardown.ts": {
+    "mtime": 1777388649.159008,
+    "hash": "4a801e90e9d50aa2dee23e0f079e0634"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/leadpayx-critical-flows.spec.ts": {
+    "mtime": 1777563619.6450434,
+    "hash": "4ad2bc85860b6af193f78af9f0653a66"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/support/e2e-state.ts": {
+    "mtime": 1777388428.8807964,
+    "hash": "ee7fd82bbe1a516387e33a9d44cde645"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/tests/e2e/support/auth.ts": {
+    "mtime": 1777397299.6980023,
+    "hash": "e063095d65d98c49d3417428c27a6dab"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427090900_operational_model_rules.sql": {
+    "mtime": 1777281257.4988914,
+    "hash": "bedd694c3c2bafeda63db06c36ad4f86"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430320000_ensure_captador_submission_briefs.sql": {
+    "mtime": 1777433427.204525,
+    "hash": "9de84925943a90a6984b9384a44a2092"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260503140000_captador_web_push.sql": {
+    "mtime": 1777754059.6489356,
+    "hash": "11cdc749fabc0e300ef782156203e1be"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430440000_get_financial_summary_admin_gate.sql": {
+    "mtime": 1777526667.0069187,
+    "hash": "90bcad79f9e5df62fd6df9ea4d79d6ee"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430240000_referral_base_increment_leva.sql": {
+    "mtime": 1777324564.5801196,
+    "hash": "9a7b123336e72570be21b68c76344f84"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430380000_operator_batch_rotation_consolidated.sql": {
+    "mtime": 1777491128.2990463,
+    "hash": "f853fd77e3b73f07696c7f66f6275316"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430260000_remove_sort_order_captador_global_offers.sql": {
+    "mtime": 1777370501.2658427,
+    "hash": "c48a5403adc94a0757c411c0a922a7b3"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427071000_initial_leadpayx.sql": {
+    "mtime": 1777274720.0432186,
+    "hash": "3b27e9635945da1b24d3c08b73d2442a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427151000_restore_signup_profile_referral_trigger.sql": {
+    "mtime": 1777305224.9145582,
+    "hash": "266d1141983eaa52e1651280e93d3c57"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427085700_referral_bonus_rule.sql": {
+    "mtime": 1777280303.0837803,
+    "hash": "94e2fc9db6bb57cbf4c929f746edf5ff"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427093400_whatsapp_group_setting.sql": {
+    "mtime": 1777282583.4300938,
+    "hash": "d80903bb85569461ce204e6e0384fb42"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427123100_fix_auth_signup_profile_trigger.sql": {
+    "mtime": 1777293376.6542563,
+    "hash": "15c3bbb5c1a65e44a9d05afae3b48ce4"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430270000_admin_validated_referral_metrics.sql": {
+    "mtime": 1777381636.4021292,
+    "hash": "baec024ba1e2909f8187fb442df321fa"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260429120000_operator_promotions_single_operation.sql": {
+    "mtime": 1777310494.7231913,
+    "hash": "ff9eadc2bf4e9fd503bc077a5155b1ec"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260502120000_captador_completion_notifications.sql": {
+    "mtime": 1777751492.112165,
+    "hash": "d15e1c9b16f237a1806954af8c3c0413"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430420000_operator_pick_batch_stability_fix.sql": {
+    "mtime": 1777493071.6969116,
+    "hash": "b287d469a3786ffd5991326391ed350c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430390000_resolve_pgrst203_assign_batch.sql": {
+    "mtime": 1777491128.306772,
+    "hash": "7616867a3c3f39b7e23b657678473b4a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427073600_production_hardening.sql": {
+    "mtime": 1777275641.71781,
+    "hash": "7feaa383eba603206dc1113e62a78db4"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430360000_remove_operator_eligibility_gate.sql": {
+    "mtime": 1777491128.3067286,
+    "hash": "6c771c14ae655e59a0a11699e22b432e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430370000_assign_batch_rpc_signature_compat.sql": {
+    "mtime": 1777491128.3104315,
+    "hash": "f539ebfd7c12154b5bbb0d9aea6878f2"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427080200_auth_loop_fallback.sql": {
+    "mtime": 1777277026.6598523,
+    "hash": "9c37031494357424bafbb173bf2a093e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427085300_profile_whatsapp.sql": {
+    "mtime": 1777280030.8353868,
+    "hash": "8db4dfcd673427cbf59be00707eb7531"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427084300_payments_ranking_operator_sla.sql": {
+    "mtime": 1777279551.8557837,
+    "hash": "610dded4d16aa0c7eb38910ea0c949db"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430290000_operator_cycle_queue_summary.sql": {
+    "mtime": 1777403479.1745427,
+    "hash": "a053dd18dca8fa0c42dc10cc45cfa549"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430250000_operator_cycles_enforcement.sql": {
+    "mtime": 1777368218.455724,
+    "hash": "ae50d028342309723fcd73016a59a280"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427082500_admin_role_controls.sql": {
+    "mtime": 1777278560.6707976,
+    "hash": "f2a557562324b992ed9f1e97b7f8314c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260427145600_referral_code_bonus_10.sql": {
+    "mtime": 1777305224.9145389,
+    "hash": "41b715d75803f071b54757dab94bc3ae"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260428210000_pix_payout_referral_tier_deposit_brief.sql": {
+    "mtime": 1777322340.2994695,
+    "hash": "13a745202a5cbfcc4a196188559a40b2"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430120000_global_role_commissions.sql": {
+    "mtime": 1777312809.4558833,
+    "hash": "35d22e64560158135ea6fa3270e6d20c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430350000_operator_rotation_window.sql": {
+    "mtime": 1777491128.314721,
+    "hash": "502bf453fba3d4470786dc77c158473f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430140000_captador_global_offers.sql": {
+    "mtime": 1777313430.6304317,
+    "hash": "991c35f50cdba4a95c4637b73be238e5"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260428170000_referral_utm_immutability.sql": {
+    "mtime": 1777309725.742331,
+    "hash": "2fbdb438202552898bbba1999a703cc6"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430400000_account_row_protect_assign_hotfix.sql": {
+    "mtime": 1777491590.756325,
+    "hash": "92381147a43d80854c587053ab73c8f3"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430410000_operator_cycle_claim_without_rotation.sql": {
+    "mtime": 1777492228.629908,
+    "hash": "d2e9c75ca93a844181cc29c44b5a547c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430310000_account_row_protect_bypass_and_storage.sql": {
+    "mtime": 1777416433.3103976,
+    "hash": "0b4d51acb776d897fd02827f7fd8c29c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430210000_set_admin_role_email_normalize.sql": {
+    "mtime": 1777318098.5568585,
+    "hash": "1131750e365c4fb35988a4a17bfe6595"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430330000_ensure_accounts_columns_for_select.sql": {
+    "mtime": 1777436306.0586152,
+    "hash": "e9a429bef1624aece57104bc1d95cf4a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260501010000_promotion_offer_cycle_and_deposit_range.sql": {
+    "mtime": 1777568741.4281538,
+    "hash": "88a23844d2cf2c30344134ee0bad216f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430430000_operator_balance_destination_for_captador.sql": {
+    "mtime": 1777526358.34832,
+    "hash": "421d0a1d11b946aebdcb3ba6533c9421"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/supabase/migrations/20260430280000_remove_promotion_offer_display_order.sql": {
+    "mtime": 1777382631.0196545,
+    "hash": "60d7f38aa1ca717f5a3fb292214b9d11"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/ui/cards.tsx": {
+    "mtime": 1777281845.0915658,
+    "hash": "262513fcda782a399f73a19157d2b3c6"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/ui/button.tsx": {
+    "mtime": 1777281832.275635,
+    "hash": "3275121b745318b0f22283ac92db202f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/ui/brand.tsx": {
+    "mtime": 1777413483.886306,
+    "hash": "3d231ef021e5d185edbc344f425faf91"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/ui/forms.tsx": {
+    "mtime": 1777491128.306761,
+    "hash": "82486f71112a8004441da5d071e37e4c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/ui/back-button.tsx": {
+    "mtime": 1777281422.2308083,
+    "hash": "01ded7ba29b7a2da07dd0f14239db397"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/auth/auth-card.tsx": {
+    "mtime": 1777413426.9755359,
+    "hash": "5acbaf7158470ed929d8f7d7abb879b4"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/auth/register-form.tsx": {
+    "mtime": 1777717030.9645703,
+    "hash": "c02f6369182fb8035f388a48272228b7"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/auth/complete-profile-form.tsx": {
+    "mtime": 1777717030.9640791,
+    "hash": "d61cb337066b5f89b6fecd237a89a2dc"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/auth/login-form.tsx": {
+    "mtime": 1777320671.966802,
+    "hash": "601c6a57575715a86eee2ba5b9736890"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/layout/nav.tsx": {
+    "mtime": 1777751492.1121857,
+    "hash": "15fc8cae8fd2ce0fec71d6c789d1d251"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/layout/role-based-layout.tsx": {
+    "mtime": 1777717030.969163,
+    "hash": "6a6675204d74d2327ead0ed67ff0a129"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/layout/segment-route-loading.tsx": {
+    "mtime": 1777782899.435558,
+    "hash": "a62fbf985db43dd8274c40c5a2d9cb9a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/admin-role-form.tsx": {
+    "mtime": 1777278485.52091,
+    "hash": "413c08be0a0910a734a50814fa85cd7e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/global-commission-form.tsx": {
+    "mtime": 1777312853.6382267,
+    "hash": "bf292557b34ac068b3ce01c4e3489487"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/clear-deposit-brief-button.tsx": {
+    "mtime": 1777322266.8564234,
+    "hash": "2f28f7ca9f35a495e058d73f370643c6"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/copy-link-button.tsx": {
+    "mtime": 1777310488.5395336,
+    "hash": "915154bcad2c67956db7e48a13d8edab"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/captador-global-offers-admin-forms.tsx": {
+    "mtime": 1777370468.1246758,
+    "hash": "34a5bd8f8184c18b8694cb2af35dea7b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/promotion-offer-form.tsx": {
+    "mtime": 1777717030.9634562,
+    "hash": "3d3066f11ff34bff02ebc6c2a009f429"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/captador-admin-list-item.tsx": {
+    "mtime": 1777717030.961422,
+    "hash": "80e019fb1afd52361e1637618b35948a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/profile-admin-editor.tsx": {
+    "mtime": 1777717030.9627666,
+    "hash": "8d47477ad3ec045ff505bee384afe96a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/confirm-submit-button.tsx": {
+    "mtime": 1777367862.9801567,
+    "hash": "0f48abd8c237e2e6302e276587ab7734"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/captadores-search-bar.tsx": {
+    "mtime": 1777434945.2373574,
+    "hash": "5fcaf763f51f33cc15416235a84bf539"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/admin/profile-admin-card.tsx": {
+    "mtime": 1777717030.9620671,
+    "hash": "3ed37f40d80f516f5e22fa8a3881b93f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/public/institutional-page.tsx": {
+    "mtime": 1777436465.2433896,
+    "hash": "946091d8988a4d77a8d228316b0cf26f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/theme/theme-provider.tsx": {
+    "mtime": 1777279935.260232,
+    "hash": "e3f51afddbcb7da56d65c6c7451a440b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/theme/theme-toggle.tsx": {
+    "mtime": 1777282720.3199127,
+    "hash": "6972c9c21703c810aef457fad5322c84"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/captador-deposit-brief-banner.tsx": {
+    "mtime": 1777717030.9658015,
+    "hash": "be722c068ac1a43142dad625996a2ab4"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/sla-indicator.tsx": {
+    "mtime": 1777279730.6512542,
+    "hash": "c7f2707b19b10a3b8d4f43cc4578273f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/captador-notifications-section.tsx": {
+    "mtime": 1777751492.1114168,
+    "hash": "3b4b3ca57831060dcd3ec8e177d37498"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/promotion-offer-grid.tsx": {
+    "mtime": 1777717030.9672837,
+    "hash": "0361729a132c9f03d9d3ba2dd1dc33cd"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/captador-push-settings.tsx": {
+    "mtime": 1777754302.598634,
+    "hash": "d380d787b38de1dd93835bd9d15e1f1a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/account-card.tsx": {
+    "mtime": 1777717030.9651601,
+    "hash": "5dd9347317075860334cd9885fcf337e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/operator-queue-auto-refresh.tsx": {
+    "mtime": 1777717030.9668775,
+    "hash": "ff4adf6a5100530a3b03a34af761927b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/referral-box.tsx": {
+    "mtime": 1777382677.4570606,
+    "hash": "d82eccdf139f60bcddb4069d3984df54"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/captador-global-offers-panel.tsx": {
+    "mtime": 1777387631.8212748,
+    "hash": "de5ab9d3c20580161147013c4c4a4b01"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/operator-pick-batch-form.tsx": {
+    "mtime": 1777570152.9643936,
+    "hash": "7513152fbc50c015c41b5f1efaf74b97"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/captador-whatsapp-group-alert.tsx": {
+    "mtime": 1777409776.1180131,
+    "hash": "c0de59ca63f38240cb32d908f23f3f19"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/captador-profile-form.tsx": {
+    "mtime": 1777717030.966629,
+    "hash": "4aaa5096d0200c11ccafdc98b6bf7574"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/payout-request-form.tsx": {
+    "mtime": 1777322202.441765,
+    "hash": "6905115354f5ac2800a130cf2b0c8cf3"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/components/domain/submit-account-form.tsx": {
+    "mtime": 1777717030.9679139,
+    "hash": "2bc5dd4018a430905ebff0cf75e37895"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/push-sw.js": {
+    "mtime": 1777754115.2173693,
+    "hash": "734c41bb3b11bdfb8b2cbbbf041cbc36"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/scripts/build_obsidian_vault.py": {
+    "mtime": 1777787354.6748624,
+    "hash": "520905e947b58fce0ae6e66824d18a4b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/validation.ts": {
+    "mtime": 1777717030.9745913,
+    "hash": "f39d1e112b0183255a9408784c48ba74"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/account-columns.ts": {
+    "mtime": 1777526359.6855679,
+    "hash": "35d6b3ae9ab87c4c079d1bce04d6da14"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/register-href.ts": {
+    "mtime": 1777320619.5009701,
+    "hash": "6e3a8fef1d0c8976f459fe31a28f2a41"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/pix-key.ts": {
+    "mtime": 1777319537.6817982,
+    "hash": "2f725dd6d1c19ab0289d8cc3bca34f1b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/push-client.ts": {
+    "mtime": 1777754116.8933482,
+    "hash": "e9943b7b52d87acf0cb80dd886c65074"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/account-print-signed-url.ts": {
+    "mtime": 1777491128.30681,
+    "hash": "4e87ac2f9db9dc53a295159eacd55f0d"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/set-admin-role-error.test.ts": {
+    "mtime": 1777318097.2557673,
+    "hash": "847935e94b87738a5045c6ac6ee6f4cd"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/payments.server.ts": {
+    "mtime": 1777717030.9722567,
+    "hash": "9ae8f45a9e0c70da60c91821ff5dffc1"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/settings.ts": {
+    "mtime": 1777717030.972883,
+    "hash": "a1ce7d2c9210c09f061aee700c175ee1"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/captador-global-offers.ts": {
+    "mtime": 1777313430.6304317,
+    "hash": "901c51265d661b2c98f1711fd0c46383"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/captador-global-offers.test.ts": {
+    "mtime": 1777313430.8383038,
+    "hash": "e33378870d04930e557c055b8924fa55"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/set-admin-role-error.ts": {
+    "mtime": 1777318097.2557812,
+    "hash": "31db528641e9d90c0f01305a07d0fdac"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/account-operation.ts": {
+    "mtime": 1777310487.5046449,
+    "hash": "91ac3a04a43dc5597c2aca1f86f59f86"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/account-operational.ts": {
+    "mtime": 1777319611.226348,
+    "hash": "4be6106cd92fdd5140ad3dbbcd928bd4"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/pix-key.test.ts": {
+    "mtime": 1777319544.372004,
+    "hash": "1814d3363047458522044574791adbfa"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/search-utils.ts": {
+    "mtime": 1777434064.2420344,
+    "hash": "782d80834a56e624cc59b10bcee344e7"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/account-validation.test.ts": {
+    "mtime": 1777491128.3067079,
+    "hash": "35c4a935c13d5bd2e73dde7b50abc7a2"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/types.ts": {
+    "mtime": 1777751492.1120906,
+    "hash": "5161120edd3cd1b324e7361bb913a4a9"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/global-commission.test.ts": {
+    "mtime": 1777312885.093159,
+    "hash": "733a8098ffd9458f0c3c142d8c04c4e1"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/constants.ts": {
+    "mtime": 1777274011.6493385,
+    "hash": "cc6fd81b13210bf420f3990c753f280a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/account-operation.test.ts": {
+    "mtime": 1777310487.5297608,
+    "hash": "e382d6fecf88a33db72c0cf992bbdfda"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/register-href.test.ts": {
+    "mtime": 1777320673.1618934,
+    "hash": "5ec891fe6207338ecfbcfad17cff5f68"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/global-commission.ts": {
+    "mtime": 1777312830.8230917,
+    "hash": "7cab93d922706196e9e08568c34b96e5"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/referrals.test.ts": {
+    "mtime": 1777324566.6566138,
+    "hash": "b1205fbcd27269e20216c3239c98ae96"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/postgrest-select-error.ts": {
+    "mtime": 1777436306.0585475,
+    "hash": "c8f543f2c1504f03a42e8932a6402ccf"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/env.ts": {
+    "mtime": 1777279605.312494,
+    "hash": "3fb2abf74b7ba7cc959dc7540a77d6e8"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/payments.ts": {
+    "mtime": 1777387585.6502714,
+    "hash": "d4be8bdfd3ff1c2861dde0c3dac67d3a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/referrals.ts": {
+    "mtime": 1777324392.582119,
+    "hash": "70e4bdd6b2791ac0cd59022e319463c4"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/captador-submission-brief.ts": {
+    "mtime": 1777717030.9710596,
+    "hash": "9847c4072d971356c63135cf971350f1"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/auth.ts": {
+    "mtime": 1777305224.9146154,
+    "hash": "e1cea6dc86f8753506df1427fe7be669"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/queries/captador-global-offers.ts": {
+    "mtime": 1777370486.1374676,
+    "hash": "8a713517d1d7533cdbfe2b6426078f3c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/queries/promotion-offers.ts": {
+    "mtime": 1777568666.7037823,
+    "hash": "f21b1e78e97d2d082a83ffd12de165ce"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/supabase/admin.ts": {
+    "mtime": 1777279610.2569506,
+    "hash": "333bdf28d8c49d03a792d75a61522667"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/supabase/client.ts": {
+    "mtime": 1777274015.7720203,
+    "hash": "65f220a592ff68d47aa12e1a9199fe96"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/supabase/server.ts": {
+    "mtime": 1777274020.8257704,
+    "hash": "4686c3c75595130e332f2495ec112a0f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/web-push/config.ts": {
+    "mtime": 1777754085.7019153,
+    "hash": "1d54d65477374ec779ec0167b480225f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/web-push/send-completion.ts": {
+    "mtime": 1777754162.8141968,
+    "hash": "aaef9a37e418e0d4e3c41eafd30c7b5a"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/actions/domain.ts": {
+    "mtime": 1777754107.967398,
+    "hash": "4e6309b6945a2a56d964ae4ec0e7c99c"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/actions/auth.ts": {
+    "mtime": 1777717030.9698691,
+    "hash": "51105a867539a355dddd755e1f69adee"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/lib/actions/captador-push.ts": {
+    "mtime": 1777754309.5565984,
+    "hash": "82ed824e4c4e0222a847722792b313ce"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/README.md": {
+    "mtime": 1777269526.709172,
+    "hash": "f15aaa42d5d299d091b1171097ea56ad"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/AGENTS.md": {
+    "mtime": 1777269571.0870469,
+    "hash": "9e09241799026ac05be315a2f0b50055"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/CLAUDE.md": {
+    "mtime": 1777269571.087159,
+    "hash": "5c27369b226fcf2be8a6cfe52224e767"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/auth-session-refresh.md": {
+    "mtime": 1777782877.368555,
+    "hash": "5c53075bbc008febcb7f5a5d4604d372"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/e2e-playwright.md": {
+    "mtime": 1777388611.5400052,
+    "hash": "517abd25b281ce592f00100f581778fa"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/wiki/fluxos.md": {
+    "mtime": 1777785904.1021137,
+    "hash": "b32b9ba3597234c6656366d02b3f7108"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/wiki/roles-e-permissoes.md": {
+    "mtime": 1777785891.6003373,
+    "hash": "7237c624e2160614fe76fb71a236059e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/wiki/arquitetura.md": {
+    "mtime": 1777785884.2630458,
+    "hash": "a77e464a32dc57ad221576a737ad88ae"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/wiki/funcoes-criticas.md": {
+    "mtime": 1777785917.0503318,
+    "hash": "720b1dd0b94a4fb59006c95c1de138fe"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/wiki/index.md": {
+    "mtime": 1777785874.4795115,
+    "hash": "c1ad82c3f70b34fdb34d539eed3339ab"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/wiki/riscos-e-refatoracao.md": {
+    "mtime": 1777785922.2229686,
+    "hash": "a07e7dc9cbcedb54b07e3b42498de99d"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/docs/wiki/banco-de-dados.md": {
+    "mtime": 1777785912.1930516,
+    "hash": "d3d37416f7df9dc4c60add70e2fda92f"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/playwright-report/index.html": {
+    "mtime": 1777470523.716161,
+    "hash": "257534a596d882f6493bc3810844b1b0"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/playwright-report/index 2.html": {
+    "mtime": 1777470497.0,
+    "hash": "d877d3aaaa8035a95ca35302153f3420"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/icon.png": {
+    "mtime": 1777432602.5350266,
+    "hash": "2753838ad1095865de47778cc798c01b"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/app/apple-icon.png": {
+    "mtime": 1777432602.5477357,
+    "hash": "b6391e07b70766ebe049de0c205d4c15"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/file.svg": {
+    "mtime": 1777269526.7075372,
+    "hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/og-image.png": {
+    "mtime": 1777413361.2150223,
+    "hash": "c8dd3e7791ec67ba026330b7cfc235af"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/vercel.svg": {
+    "mtime": 1777269526.7096853,
+    "hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/next.svg": {
+    "mtime": 1777269526.7097178,
+    "hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/globe.svg": {
+    "mtime": 1777269526.709674,
+    "hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/window.svg": {
+    "mtime": 1777269526.709768,
+    "hash": "a2760511c65806022ad20adf74370ff3"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/brand/logo-wordmark.png": {
+    "mtime": 1777415218.9035084,
+    "hash": "4914fe93d97c26c253a319f4a6e02450"
+  },
+  "/Users/yamamenezesdafonseca/Desktop/leadpay/public/brand/logo-mark.png": {
+    "mtime": 1777413360.8721871,
+    "hash": "51ca768346e3c83513dd4722dbbece95"
+  }
+}
