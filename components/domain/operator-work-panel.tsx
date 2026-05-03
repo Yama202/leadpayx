@@ -70,6 +70,8 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
   const orderedIdsCsv = useMemo(() => ordered.map((a) => a.id).join(","), [ordered]);
 
   const canFinalizeCycle = ordered.every((a) => operatorCanProgressAccount(a.status));
+  const [showWhereBalance, setShowWhereBalance] = useState(false);
+  const whereBalanceId = `${baseId}-where-balance`;
 
   if (!ordered.length) {
     return null;
@@ -102,6 +104,57 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
           ))}
         </ul>
       ) : null}
+
+      <div className="mt-4">
+        <Button
+          aria-controls={whereBalanceId}
+          aria-expanded={showWhereBalance}
+          className="w-full sm:w-auto"
+          onClick={() => {
+            setShowWhereBalance((open) => !open);
+          }}
+          type="button"
+          variant="secondary"
+        >
+          Para onde foi o saldo
+        </Button>
+        {showWhereBalance ? (
+          <div
+            className="mt-3 space-y-4 rounded-2xl border border-[#00E07A]/20 bg-black/30 p-4 text-sm"
+            id={whereBalanceId}
+            role="region"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Texto que o captador verá após finalizar
+            </p>
+            {ordered.length > 1
+              ? ordered.map((acc, idx) => (
+                  <div className="space-y-1.5 border-b border-white/[0.06] pb-3 last:border-b-0 last:pb-0" key={acc.id}>
+                    <p className="font-mono text-sm font-bold text-white">{acc.account_identifier}</p>
+                    <p className="leading-relaxed text-zinc-300">
+                      {idx === 0
+                        ? OPERATOR_BALANCE_DESTINATION_PRIMARY
+                        : OPERATOR_BALANCE_DESTINATION_ALTERNATE}
+                    </p>
+                  </div>
+                ))
+              : (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500">Se marcar destino principal</p>
+                      <p className="mt-1 leading-relaxed text-zinc-300">{OPERATOR_BALANCE_DESTINATION_PRIMARY}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500">Se marcar destino alternativo</p>
+                      <p className="mt-1 leading-relaxed text-zinc-300">
+                        {OPERATOR_BALANCE_DESTINATION_ALTERNATE}
+                      </p>
+                    </div>
+                  </div>
+                )}
+          </div>
+        ) : null}
+      </div>
 
       <div className="mt-6 space-y-6">
         {canFinalizeCycle ? (

@@ -1,12 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-
-import { Button } from "@/components/ui/button";
-import { upsertPromotionOfferAction } from "@/lib/actions/domain";
+import { SubmitButton } from "@/components/ui/forms";
+import { upsertPromotionOfferFormAction } from "@/lib/actions/domain";
 import type { PromotionOffer } from "@/lib/types";
-import { initialActionState } from "@/lib/validation";
 
 function toDateTimeLocal(value: string | null) {
   if (!value) {
@@ -148,6 +144,7 @@ function OfferFields({ offer }: { offer?: PromotionOffer }) {
   );
 }
 
+/** Feedback após criar/editar usa `offer_success` / `offer_error` na página (redirect), não estado local — evita perder mensagem ao `refresh()` RSC. */
 export function PromotionOfferForm({
   offer,
   submitLabel,
@@ -157,38 +154,10 @@ export function PromotionOfferForm({
   submitLabel: string;
   className?: string;
 }) {
-  const [state, formAction] = useActionState(upsertPromotionOfferAction, initialActionState);
-  const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-  const isCreate = !offer;
-
-  useEffect(() => {
-    if (!state.ok) {
-      return;
-    }
-    if (isCreate) {
-      formRef.current?.reset();
-    }
-    router.refresh();
-  }, [isCreate, router, state.ok]);
-
   return (
-    <form action={formAction} className={className} ref={formRef}>
-      <OfferFields offer={offer} />
-      <Button className="mt-6 min-h-12 w-full cursor-pointer sm:w-auto" type="submit">
-        {submitLabel}
-      </Button>
-      {state.message ? (
-        <p
-          className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${
-            state.ok
-              ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100"
-              : "border-rose-300/40 bg-rose-500/10 text-rose-100"
-          }`}
-        >
-          {state.message}
-        </p>
-      ) : null}
+    <form action={upsertPromotionOfferFormAction} className={className}>
+      <OfferFields key={offer?.id ?? "__offer_create__"} offer={offer} />
+      <SubmitButton className="mt-6 min-h-12 w-full cursor-pointer sm:w-auto">{submitLabel}</SubmitButton>
     </form>
   );
 }

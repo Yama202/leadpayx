@@ -32,15 +32,21 @@ test("A) admin cria, edita e exclui oferta", async ({ page }) => {
   await page.getByLabel("Valor por conta (BRL)").first().fill("33.5");
   await page.getByRole("button", { name: "Criar" }).click();
 
-  await expect(page.getByText("Oferta salva e disponível conforme status configurado.")).toBeVisible();
+  await page.waitForURL(/\/admin\/ofertas\?offer_success=/, { timeout: 15_000 });
   const createdCard = page.locator("article").filter({ hasText: offerName }).first();
   await expect(createdCard).toBeVisible();
+  await expect(
+    page.getByText("Oferta salva e disponível conforme status configurado.", { exact: true }),
+  ).toBeVisible();
 
   await createdCard.getByText("Editar").click();
   await createdCard.getByLabel("Nome").fill(editedOfferName);
   await createdCard.getByRole("button", { name: "Salvar" }).click();
-  await expect(page.getByText("Oferta salva e disponível conforme status configurado.")).toBeVisible();
+  await page.waitForURL(/\/admin\/ofertas\?offer_success=/, { timeout: 15_000 });
   await expect(page.locator("article").filter({ hasText: editedOfferName }).first()).toBeVisible();
+  await expect(
+    page.getByText("Oferta salva e disponível conforme status configurado.", { exact: true }),
+  ).toBeVisible();
 
   page.once("dialog", (dialog) => dialog.accept());
   await page
@@ -84,9 +90,9 @@ test("C) captador e operador solicitam pagamento e admin vê pendências", async
 
   const adminPage = await browser.newPage();
   await loginViaUI(adminPage, state.users.admin.email, state.users.admin.password);
-  await adminPage.goto("/admin/pagamentos");
+  await adminPage.goto("/admin/pagamentos/captadores");
   await expect(adminPage.getByRole("heading", { name: "Pagamentos" })).toBeVisible();
-  await expect(adminPage.getByText("Pendente geral")).toBeVisible();
+  await expect(adminPage.getByText(/Pendente \((captadores|operadores)\)/)).toBeVisible();
   await expect(adminPage.getByText("Pendente/pago por pessoa")).toBeVisible();
   await expect(adminPage.getByRole("table")).toBeVisible();
   await adminPage.close();
@@ -181,14 +187,29 @@ test("F) operador vê fila operacional sem promoções e recebe ciclo de 2 conta
       .first(),
   ).toBeVisible();
 
-  const pickBtn = page.getByRole("button", { name: /Pegar lote de/ });
+  const pickBtn = page.getByRole("button", { name: /Pegar ciclo novo/ });
   await expect(pickBtn).toBeEnabled({ timeout: 15_000 });
   await pickBtn.click();
-  await expect(page.getByText(/Lote atribuído com 2 conta|Lote atribuído com 2 contas/i)).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(page.getByText(idA)).toBeVisible();
-  await expect(page.getByText(idB)).toBeVisible();
+  // Não asserir toast "Lote atribuído…": operator-pick-batch-form dispara router.refresh() ao receber state.message e o aviso some rápido (asserção instável).
+  // Esperar gravação no servidor e abrir SSR de novo: evita corrida refresh vs cartões dos AccountCard (h3).
+  const operatorId = state.users.operator.id;
+  await expect
+    .poll(
+      async () => {
+        const { data } = await admin
+          .from("accounts")
+          .select("id")
+          .in("account_identifier", [idA, idB])
+          .eq("operador_id", operatorId);
+        return data?.length ?? 0;
+      },
+      { message: "atribuir lote ao operador (RPC / fila)", timeout: 25_000 },
+    )
+    .toBe(2);
+  await page.goto("/operador/dashboard");
+  const cardHeadingTimeout = { timeout: 20_000 };
+  await expect(page.getByRole("heading", { level: 3, name: idA, exact: true })).toBeVisible(cardHeadingTimeout);
+  await expect(page.getByRole("heading", { level: 3, name: idB, exact: true })).toBeVisible(cardHeadingTimeout);
 
   await admin.from("accounts").delete().in("account_identifier", [idA, idB]);
 });
@@ -341,6 +362,17 @@ test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqu
   const groupUrl = `https://chat.whatsapp.com/e2e-${state.runId}`;
   const minDeposit = 150;
   const accountIdentifier = `[E2E-DEPOSIT-${state.runId}]`;
+  const priorRequirePrint = await admin
+    .from("app_settings")
+    .select("value")
+    .eq("key", "require_new_account_print")
+    .maybeSingle();
+  const priorRequirePrintValue = priorRequirePrint.data?.value ?? null;
+  await admin.from("app_settings").upsert(
+    { key: "require_new_account_print", value: false },
+    { onConflict: "key" },
+  );
+  await admin.from("accounts").delete().eq("account_identifier", accountIdentifier);
 
   await loginViaUI(page, state.users.admin.email, state.users.admin.password);
   await page.goto("/admin/configuracoes");
@@ -403,9 +435,30 @@ test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqu
   await captadorPage.getByLabel("Valor já depositado (BRL)").fill("100");
   await captadorPage.getByRole("button", { name: "Enviar para fila" }).click();
   await expect(captadorPage.getByText("Envio bloqueado: o valor já depositado deve ser no mínimo")).toBeVisible();
+  // revalidatePath("/captador/enviar-conta") na action pode remontar o form — repor campos antes do 2.º envio.
+  await captadorPage.getByLabel("Identificador da conta/lead").fill(accountIdentifier);
+  await captadorPage.getByLabel("E-mail da conta (login do lead)").fill(`lead.${state.runId}@example.test`);
+  await captadorPage.getByLabel("Senha da conta").fill("SenhaForte123!");
   await captadorPage.getByLabel("Valor já depositado (BRL)").fill(String(minDeposit));
   await captadorPage.getByRole("button", { name: "Enviar para fila" }).click();
-  await expect(captadorPage.getByText("Conta enviada para a fila.")).toBeVisible();
+  // Não asserir só o toast de sucesso — confirmar persistência e lista SSR (h3 do AccountCard).
+  await expect
+    .poll(
+      async () => {
+        const { data } = await admin
+          .from("accounts")
+          .select("id,captador_id")
+          .eq("account_identifier", accountIdentifier);
+        const row = data?.[0];
+        return row?.captador_id === state.users.captador.id ? 1 : 0;
+      },
+      { message: "conta do captador persistida após envio", timeout: 25_000 },
+    )
+    .toBe(1);
+  await captadorPage.goto("/captador/minhas-contas");
+  await expect(
+    captadorPage.getByRole("heading", { level: 3, name: accountIdentifier, exact: true }),
+  ).toBeVisible({ timeout: 20_000 });
 
   await admin.from("accounts").delete().eq("account_identifier", accountIdentifier);
   await admin
@@ -419,5 +472,13 @@ test("H) admin configura depósito+grupo WhatsApp e captador vê aviso com bloqu
     },
     { onConflict: "key" },
   );
+  if (priorRequirePrintValue === null) {
+    await admin.from("app_settings").delete().eq("key", "require_new_account_print");
+  } else {
+    await admin.from("app_settings").upsert(
+      { key: "require_new_account_print", value: priorRequirePrintValue },
+      { onConflict: "key" },
+    );
+  }
   await captadorPage.close();
 });
