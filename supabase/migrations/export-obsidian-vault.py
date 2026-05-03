@@ -149,7 +149,7 @@ for item in nodes.values():
 index_lines = [
     "# LeadPayX - Obsidian Graph",
     "",
-    f"Vault gerado a partir de `graphify-out/graph.json` (raiz: `{REPO_ROOT}`).",
+    f"Vault gerado a partir de `graphify-out/graph.json` (pasta do repo: `{REPO_ROOT.name}`).",
     "",
     "Regenerar: `python3 supabase/migrations/export-obsidian-vault.py`",
     "",

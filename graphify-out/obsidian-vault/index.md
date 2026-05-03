@@ -1,6 +1,6 @@
 # LeadPayX - Obsidian Graph
 
-Vault gerado a partir de `graphify-out/graph.json` (raiz: `/Users/yamamenezesdafonseca/Desktop/leadpay`).
+Vault gerado a partir de `graphify-out/graph.json` (pasta do repo: `leadpay`).
 
 Regenerar: `python3 supabase/migrations/export-obsidian-vault.py`
 
