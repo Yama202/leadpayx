@@ -26,7 +26,7 @@ export function LoginForm({ registerHref = "/register" }: { registerHref?: strin
             required
             type="password"
           />
-          <SubmitButton>Entrar</SubmitButton>
+          <SubmitButton pendingLabel="A entrar…">Entrar</SubmitButton>
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">
             Ainda não tem acesso?{" "}
             <Link className="font-bold text-slate-950 dark:text-white" href={registerHref}>

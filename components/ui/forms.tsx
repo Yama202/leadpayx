@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import type { ActionState } from "@/lib/validation";
 
 export function Field({
@@ -70,12 +71,36 @@ export function TextArea({
   );
 }
 
-export function SubmitButton({ children }: { children: string }) {
+export function SubmitButton({
+  children,
+  className = "",
+  pendingLabel = "A guardar…",
+  variant = "primary",
+}: {
+  children: string;
+  /** Classes extra no botão (ex.: max-w-md). */
+  className?: string;
+  /** Texto enquanto a Server Action corre (feedback imediato). */
+  pendingLabel?: string;
+  variant?: "primary" | "secondary" | "danger";
+}) {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full" disabled={pending} type="submit">
-      {pending ? "Processando..." : children}
+    <Button
+      className={`inline-flex w-full items-center justify-center gap-2 ${className}`}
+      disabled={pending}
+      type="submit"
+      variant={variant}
+    >
+      {pending ? (
+        <>
+          <Spinner className="shrink-0" />
+          <span>{pendingLabel}</span>
+        </>
+      ) : (
+        children
+      )}
     </Button>
   );
 }

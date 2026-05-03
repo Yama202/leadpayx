@@ -93,7 +93,7 @@ export function SubmitAccountForm({ depositBriefMinBrl }: { depositBriefMinBrl?:
               Obrigatório quando a regra global estiver ativa. Imagens ou PDF até 5MB.
             </span>
           </label>
-          <SubmitButton>Enviar para fila</SubmitButton>
+          <SubmitButton pendingLabel="A enviar…">Enviar para fila</SubmitButton>
         </>
       )}
     </ActionForm>

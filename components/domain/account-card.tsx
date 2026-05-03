@@ -2,18 +2,13 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 
 import type { OperationalCredentials } from "@/lib/account-operational";
-import { completeAccountAction, startAccountAction } from "@/lib/actions/domain";
 import { OperationalCredentialsPanel } from "@/components/domain/operational-credentials-panel";
 import { StatusBadge } from "@/components/ui/cards";
-import { Button } from "@/components/ui/button";
-import { TextArea } from "@/components/ui/forms";
 import type { Account } from "@/lib/types";
-import { operatorCanProgressAccount } from "@/lib/account-operation";
 import { SlaIndicator } from "@/components/domain/sla-indicator";
 
 export function AccountCard({
   account,
-  operatorActions = false,
   /** Quando definido (operador/admin no servidor), exibe e-mail e senha decifrados. */
   operationalCredentials,
   /** URL assinada (curta duração) para o print — só preencha em contextos admin/operador no servidor. */
@@ -25,7 +20,6 @@ export function AccountCard({
   children,
 }: {
   account: Account;
-  operatorActions?: boolean;
   operationalCredentials?: OperationalCredentials | null;
   accountPrintSignedUrl?: string | null;
   captadorPixKey?: string | null;
@@ -126,30 +120,6 @@ export function AccountCard({
         <p className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-3 text-sm font-semibold text-emerald-100">
           Esta conta já foi operada e finalizada. Não aparecerá novamente na fila ativa.
         </p>
-      ) : null}
-      {operatorActions && operatorCanProgressAccount(account.status) ? (
-        <div className="mt-5 space-y-4">
-          <form action={startAccountAction} className="max-w-md">
-            <input name="accountId" type="hidden" value={account.id} />
-            <Button className="w-full" type="submit" variant="secondary">
-              Começar com conta
-            </Button>
-          </form>
-          <form
-            action={completeAccountAction}
-            className="space-y-3 rounded-2xl border border-white/[0.08] bg-black/25 p-4"
-          >
-            <input name="accountId" type="hidden" value={account.id} />
-            <TextArea
-              label="Informar ao captador: conta/destino do saldo"
-              name="balanceDestination"
-              placeholder="Ex.: banco, agência/conta ou Pix, titular, documento — o que o captador precisa saber."
-            />
-            <Button className="w-full sm:w-auto" type="submit">
-              Finalizar operação
-            </Button>
-          </form>
-        </div>
       ) : null}
       {children ? <div className="mt-5">{children}</div> : null}
     </article>

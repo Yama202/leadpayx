@@ -4,14 +4,27 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { ensurePayoutAction } from "@/lib/actions/domain";
 import { initialActionState } from "@/lib/validation";
 
 function PayoutSubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button className="h-full min-h-12 w-full" disabled={pending} type="submit" variant="secondary">
-      {pending ? "Enviando…" : "Solicitar pagamento"}
+    <Button
+      className="inline-flex h-full min-h-12 w-full items-center justify-center gap-2"
+      disabled={pending}
+      type="submit"
+      variant="secondary"
+    >
+      {pending ? (
+        <>
+          <Spinner className="shrink-0" />
+          <span>A enviar…</span>
+        </>
+      ) : (
+        "Solicitar pagamento"
+      )}
     </Button>
   );
 }

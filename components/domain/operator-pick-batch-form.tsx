@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { pickNextBatchStateAction } from "@/lib/actions/domain";
 import { initialActionState } from "@/lib/validation";
 
@@ -46,8 +47,15 @@ function SubmitPickBatchButton({
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button className="h-full w-full" disabled={disabled || pending} type="submit">
-      {pending ? "Carregando lote..." : `Pegar lote de ${minimumBatch}`}
+    <Button className="inline-flex h-full w-full items-center justify-center gap-2" disabled={disabled || pending} type="submit">
+      {pending ? (
+        <>
+          <Spinner className="shrink-0" />
+          <span>A carregar lote…</span>
+        </>
+      ) : (
+        `Pegar lote de ${minimumBatch}`
+      )}
     </Button>
   );
 }

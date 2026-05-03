@@ -1,9 +1,10 @@
+import dynamic from "next/dynamic";
+
 import { AccountCard } from "@/components/domain/account-card";
 import { CaptadorPushSettings } from "@/components/domain/captador-push-settings";
 import { CaptadorNotificationsSection } from "@/components/domain/captador-notifications-section";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
-import { ReferralBox } from "@/components/domain/referral-box";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
@@ -13,6 +14,24 @@ import { getWhatsappGroupUrl } from "@/lib/settings";
 import { ACCOUNT_SELECT_CAPTADOR, ACCOUNT_SELECT_CAPTADOR_FALLBACK } from "@/lib/account-columns";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, AppSetting, Profile, UserNotification } from "@/lib/types";
+
+const ReferralBox = dynamic(
+  () => import("@/components/domain/referral-box").then((m) => ({ default: m.ReferralBox })),
+  {
+    loading: () => (
+      <aside
+        aria-hidden
+        className="flex min-h-[14rem] flex-col justify-center rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl"
+      >
+        <div className="h-5 w-2/5 animate-pulse rounded-lg bg-white/10" />
+        <div className="mt-6 h-10 w-full animate-pulse rounded-2xl bg-white/5" />
+        <div className="mt-3 h-4 w-3/4 animate-pulse rounded bg-white/5" />
+        <div className="mt-6 h-12 w-full animate-pulse rounded-2xl bg-white/5" />
+      </aside>
+    ),
+    ssr: true,
+  },
+);
 
 type DashboardEarning = {
   amount: number | string;

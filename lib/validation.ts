@@ -89,10 +89,33 @@ export const accountSchema = z.object({
     }),
 });
 
-export const rejectAccountSchema = z.object({
-  accountId: z.string().uuid(),
-  reason: z.string().trim().min(8, "Informe um motivo com contexto.").max(500),
-});
+export const rejectAccountSchema = z
+  .object({
+    accountId: z.string().uuid(),
+    reasonPreset: z.enum(["not_new_account", "no_balance", "other"]),
+    otherReason: z.string().trim().max(500).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.reasonPreset === "other") {
+      const detail = (data.otherReason ?? "").trim();
+      if (detail.length < 8) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Descreva o motivo com pelo menos 8 caracteres.",
+          path: ["otherReason"],
+        });
+      }
+    }
+  })
+  .transform((data) => ({
+    accountId: data.accountId,
+    reason:
+      data.reasonPreset === "not_new_account"
+        ? "Recusa pelo operador: não é conta nova."
+        : data.reasonPreset === "no_balance"
+          ? "Recusa pelo operador: conta sem saldo."
+          : (data.otherReason ?? "").trim(),
+  }));
 
 export const accountIdSchema = z.object({
   accountId: z.string().uuid(),

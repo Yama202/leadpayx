@@ -1,14 +1,13 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { OperatorWorkPanel } from "@/components/domain/operator-work-panel";
 import { OperatorQueueAutoRefresh } from "@/components/domain/operator-queue-auto-refresh";
 import { OperatorPickBatchForm } from "@/components/domain/operator-pick-batch-form";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
-import { rejectAccountFormAction } from "@/lib/actions/domain";
 import { operationalCredentialsFromAccount } from "@/lib/account-operational";
 import { ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
 import { accountPrintSignedUrlMap } from "@/lib/account-print-signed-url";
 import { createClient } from "@/lib/supabase/server";
 import type { Account, AppSetting, Profile } from "@/lib/types";
-import { Field, SubmitButton } from "@/components/ui/forms";
 
 type DashboardEarning = {
   amount: number | string;
@@ -57,7 +56,7 @@ export async function OperadorDashboardData({
     opError === "complete"
       ? "Não foi possível finalizar a conta (prazo, permissão ou estado inválido). Atualize a página e tente novamente."
       : opError === "complete_balance"
-        ? "Ao finalizar, preencha onde foi aplicado o saldo (mínimo 8 caracteres) para o captador acompanhar."
+        ? "Ao finalizar, selecione o destino do saldo (principal ou alternativo) para o captador acompanhar."
         : opError === "start"
           ? "Não foi possível iniciar a operação (SLA ou estado da conta). Atualize a página."
           : opError === "invalid"
@@ -127,23 +126,21 @@ export async function OperadorDashboardData({
           </p>
         )}
       </section>
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 space-y-6">
         {assignedList.length ? (
-          assignedList.map((account) => (
-            <AccountCard
-              account={account}
-              accountPrintSignedUrl={printUrls.get(account.id) ?? null}
-              key={account.id}
-              operationalCredentials={operationalCredentialsFromAccount(account)}
-              operatorActions
-            >
-              <form action={rejectAccountFormAction} className="space-y-5">
-                <input name="accountId" type="hidden" value={account.id} />
-                <Field label="Motivo da recusa" name="reason" placeholder="Descreva o motivo obrigatório" />
-                <SubmitButton>Recusar conta</SubmitButton>
-              </form>
-            </AccountCard>
-          ))
+          <>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {assignedList.map((account) => (
+                <AccountCard
+                  account={account}
+                  accountPrintSignedUrl={printUrls.get(account.id) ?? null}
+                  key={account.id}
+                  operationalCredentials={operationalCredentialsFromAccount(account)}
+                />
+              ))}
+            </div>
+            <OperatorWorkPanel accounts={assignedList} />
+          </>
         ) : (
           <EmptyState description="Use o botão para pegar até duas contas pendentes." title="Nenhuma conta atribuída" />
         )}

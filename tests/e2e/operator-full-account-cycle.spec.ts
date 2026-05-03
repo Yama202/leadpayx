@@ -159,17 +159,21 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
         `Batch ${batch + 1} deveria ter exatamente ${ACCOUNTS_PER_BATCH} contas atribuídas`,
       ).toBe(ACCOUNTS_PER_BATCH);
 
+      const panel = page.getByRole("region", { name: /Operação na conta selecionada/i });
+
       for (const account of assignedNow) {
         const card = page.locator("article").filter({ hasText: account.account_identifier }).first();
         await expect(card).toBeVisible();
 
-        await card.getByRole("button", { name: "Começar com conta" }).click();
-        await expect(card.getByRole("button", { name: "Finalizar operação" })).toBeVisible();
+        const multiPickHeading = panel.getByText("Qual conta você está operando agora?");
+        if (await multiPickHeading.isVisible()) {
+          await panel.locator("label").filter({ hasText: account.account_identifier }).getByRole("radio").check();
+        }
+        await panel.getByRole("button", { name: "Começar com conta" }).click();
+        await expect(panel.getByRole("button", { name: "Finalizar operação" })).toBeVisible();
 
-        await card
-          .getByLabel(/conta\/destino do saldo/i)
-          .fill("Saldo creditado na conta corrente 12345-6, Banco Exemplo, titular Lead Teste.");
-        await card.getByRole("button", { name: "Finalizar operação" }).click();
+        await panel.getByRole("radio", { name: /Destino principal/i }).check();
+        await panel.getByRole("button", { name: "Finalizar operação" }).click();
         await expect(page.locator("article").filter({ hasText: account.account_identifier })).toHaveCount(0);
 
         await page.goto("/operador/historico");
