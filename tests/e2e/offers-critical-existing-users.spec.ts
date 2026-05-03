@@ -64,16 +64,22 @@ test("admin cria oferta e captador é redirecionado ao tentar acessar /captador/
   await page.getByLabel("Valor por conta (BRL)").first().fill("25");
   await page.getByRole("button", { name: "Criar" }).click();
 
-  await expect(page.getByText("Oferta salva e disponível conforme status configurado.")).toBeVisible();
+  await page.waitForURL(/\/admin\/ofertas\?offer_success=/, { timeout: 15_000 });
   const offerCard = page.locator("article").filter({ hasText: offerName }).first();
   await expect(offerCard).toBeVisible();
+  await expect(
+    page.getByText("Oferta salva e disponível conforme status configurado.", { exact: true }),
+  ).toBeVisible();
 
   await offerCard.getByText("Editar").click();
   await offerCard.getByLabel("Nome").fill(editedOfferName);
   await offerCard.getByLabel("URL (HTTPS)").fill(editedOfferUrl);
   await offerCard.getByRole("button", { name: "Salvar" }).click();
-  await expect(page.getByText("Oferta salva e disponível conforme status configurado.")).toBeVisible();
+  await page.waitForURL(/\/admin\/ofertas\?offer_success=/, { timeout: 15_000 });
   await expect(page.locator("article").filter({ hasText: editedOfferName }).first()).toBeVisible();
+  await expect(
+    page.getByText("Oferta salva e disponível conforme status configurado.", { exact: true }),
+  ).toBeVisible();
 
   const captadorPage = await browser.newPage();
   await ensureCaptadorUser("captador@gmail.com", captadorPassword);
