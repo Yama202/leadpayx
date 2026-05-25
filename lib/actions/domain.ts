@@ -728,84 +728,108 @@ export async function adminResetUserDataAction(
   }
 
   const { profileId, role } = parsed.data;
-  const supabase = createAdminClient();
 
   try {
-  if (role === "captador") {
-    const { data: captadorEarnings } = await supabase
-      .from("earnings")
-      .select("id")
-      .eq("user_id", profileId);
-    const earningIds = (captadorEarnings ?? []).map((e) => e.id);
+    const supabase = createAdminClient();
 
-    if (earningIds.length > 0) {
-      await supabase.from("payout_earnings").delete().in("earning_id", earningIds);
-    }
-    await supabase.from("payouts").delete().eq("user_id", profileId);
-    await supabase.from("earnings").delete().eq("user_id", profileId);
-    await supabase.from("user_notifications").delete().eq("user_id", profileId);
+    if (role === "captador") {
+      const { data: captadorEarnings, error: e1 } = await supabase
+        .from("earnings")
+        .select("id")
+        .eq("user_id", profileId);
+      if (e1) return { ok: false, message: `Erro ao buscar ganhos: ${e1.message}` };
+      const earningIds = (captadorEarnings ?? []).map((e) => e.id);
 
-    const { data: captadorAccounts } = await supabase
-      .from("accounts")
-      .select("id")
-      .eq("captador_id", profileId);
-    const accountIds = (captadorAccounts ?? []).map((a) => a.id);
+      if (earningIds.length > 0) {
+        const { error: e2 } = await supabase.from("payout_earnings").delete().in("earning_id", earningIds);
+        if (e2) return { ok: false, message: `Erro ao apagar payout_earnings: ${e2.message}` };
+      }
 
-    if (accountIds.length > 0) {
-      await supabase.from("operator_assignments").delete().in("account_id", accountIds);
-    }
-    await supabase.from("accounts").delete().eq("captador_id", profileId);
-    await supabase.from("profiles").update({ referral_bonus_paid: false }).eq("id", profileId);
-  } else {
-    const { data: opEarnings } = await supabase
-      .from("earnings")
-      .select("id")
-      .eq("user_id", profileId);
-    const earningIds = (opEarnings ?? []).map((e) => e.id);
+      const { error: e3 } = await supabase.from("payouts").delete().eq("user_id", profileId);
+      if (e3) return { ok: false, message: `Erro ao apagar payouts: ${e3.message}` };
 
-    const { data: assignedAccounts } = await supabase
-      .from("accounts")
-      .select("id")
-      .eq("operador_id", profileId)
-      .in("status", ["assigned", "in_progress"]);
+      const { error: e4 } = await supabase.from("earnings").delete().eq("user_id", profileId);
+      if (e4) return { ok: false, message: `Erro ao apagar earnings: ${e4.message}` };
 
-    if (assignedAccounts?.length) {
-      await supabase
+      const { error: e5 } = await supabase.from("user_notifications").delete().eq("user_id", profileId);
+      if (e5) return { ok: false, message: `Erro ao apagar notificações: ${e5.message}` };
+
+      const { data: captadorAccounts, error: e6 } = await supabase
         .from("accounts")
-        .update({
-          operador_id: null,
-          status: "pending",
-          assigned_at: null,
-          started_at: null,
-          operation_started_at: null,
-          operation_deadline_at: null,
-        })
-        .in("id", assignedAccounts.map((a) => a.id));
+        .select("id")
+        .eq("captador_id", profileId);
+      if (e6) return { ok: false, message: `Erro ao buscar contas: ${e6.message}` };
+      const accountIds = (captadorAccounts ?? []).map((a) => a.id);
+
+      if (accountIds.length > 0) {
+        const { error: e7 } = await supabase.from("operator_assignments").delete().in("account_id", accountIds);
+        if (e7) return { ok: false, message: `Erro ao apagar atribuições: ${e7.message}` };
+      }
+
+      const { error: e8 } = await supabase.from("accounts").delete().eq("captador_id", profileId);
+      if (e8) return { ok: false, message: `Erro ao apagar contas: ${e8.message}` };
+
+      const { error: e9 } = await supabase.from("profiles").update({ referral_bonus_paid: false }).eq("id", profileId);
+      if (e9) return { ok: false, message: `Erro ao atualizar perfil: ${e9.message}` };
+    } else {
+      const { data: opEarnings, error: e1 } = await supabase
+        .from("earnings")
+        .select("id")
+        .eq("user_id", profileId);
+      if (e1) return { ok: false, message: `Erro ao buscar ganhos: ${e1.message}` };
+      const earningIds = (opEarnings ?? []).map((e) => e.id);
+
+      const { data: assignedAccounts } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("operador_id", profileId)
+        .in("status", ["assigned", "in_progress"]);
+
+      if (assignedAccounts?.length) {
+        const { error: e2 } = await supabase
+          .from("accounts")
+          .update({
+            operador_id: null,
+            status: "pending",
+            assigned_at: null,
+            started_at: null,
+            operation_started_at: null,
+            operation_deadline_at: null,
+          })
+          .in("id", assignedAccounts.map((a) => a.id));
+        if (e2) return { ok: false, message: `Erro ao liberar contas: ${e2.message}` };
+      }
+
+      const { error: e3 } = await supabase.from("operator_assignments").delete().eq("operador_id", profileId);
+      if (e3) return { ok: false, message: `Erro ao apagar atribuições: ${e3.message}` };
+
+      if (earningIds.length > 0) {
+        const { error: e4 } = await supabase.from("payout_earnings").delete().in("earning_id", earningIds);
+        if (e4) return { ok: false, message: `Erro ao apagar payout_earnings: ${e4.message}` };
+      }
+
+      const { error: e5 } = await supabase.from("payouts").delete().eq("user_id", profileId);
+      if (e5) return { ok: false, message: `Erro ao apagar payouts: ${e5.message}` };
+
+      const { error: e6 } = await supabase.from("earnings").delete().eq("user_id", profileId);
+      if (e6) return { ok: false, message: `Erro ao apagar earnings: ${e6.message}` };
     }
 
-    await supabase.from("operator_assignments").delete().eq("operador_id", profileId);
+    await createAuditLog("admin.reset_user_data", "profile", profileId, {
+      role,
+      reset_by: admin.id,
+    });
 
-    if (earningIds.length > 0) {
-      await supabase.from("payout_earnings").delete().in("earning_id", earningIds);
-    }
-    await supabase.from("payouts").delete().eq("user_id", profileId);
-    await supabase.from("earnings").delete().eq("user_id", profileId);
-  }
-
-  await createAuditLog("admin.reset_user_data", "profile", profileId, {
-    role,
-    reset_by: admin.id,
-  });
-
-  const returnPath = role === "captador" ? "/admin/captadores" : "/admin/operadores";
-  revalidatePath(returnPath);
-  return {
-    ok: true,
-    message: `Dados de ${role === "captador" ? "captador" : "operador"} zerados com sucesso.`,
-  };
+    const returnPath = role === "captador" ? "/admin/captadores" : "/admin/operadores";
+    revalidatePath(returnPath);
+    return {
+      ok: true,
+      message: `Dados de ${role === "captador" ? "captador" : "operador"} zerados com sucesso.`,
+    };
   } catch (err) {
-    console.error("[adminResetUserDataAction] erro inesperado", err);
-    return { ok: false, message: "Erro interno ao zerar dados. Tente novamente." };
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[adminResetUserDataAction]", msg);
+    return { ok: false, message: `Erro: ${msg}` };
   }
 }
 
