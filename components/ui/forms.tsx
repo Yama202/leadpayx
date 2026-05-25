@@ -55,19 +55,28 @@ export function TextArea({
   name,
   placeholder,
   error,
+  required,
+  rows = 4,
+  maxLength,
 }: {
   label: string;
   name: string;
   placeholder?: string;
   error?: string[];
+  required?: boolean;
+  rows?: number;
+  maxLength?: number;
 }) {
   return (
     <label className="block">
       <span className="text-sm font-bold text-zinc-200">{label}</span>
       <textarea
         className="mt-2 min-h-28 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-base text-white outline-none transition-colors duration-200 placeholder:text-zinc-500 focus:border-[#00E07A] focus:ring-4 focus:ring-[#00E07A]/10"
+        maxLength={maxLength}
         name={name}
         placeholder={placeholder}
+        required={required}
+        rows={rows}
       />
       {error?.[0] ? <span className="mt-2 block text-sm text-rose-300">{error[0]}</span> : null}
     </label>

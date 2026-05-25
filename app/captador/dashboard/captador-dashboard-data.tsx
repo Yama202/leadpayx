@@ -7,7 +7,7 @@ import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
-import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
+import { getCaptadorMinDepositRequirementBrl } from "@/lib/captador-deposit-requirement";
 import { toCurrency } from "@/lib/payments";
 import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
@@ -41,7 +41,7 @@ type DashboardEarning = {
 
 export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
   const supabase = await createClient();
-  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, depositBrief, whatsappUrl, notificationsRes, pushCountRes] =
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, minDepositBrl, whatsappUrl, notificationsRes, pushCountRes] =
     await Promise.all([
       supabase
         .from("accounts")
@@ -73,7 +73,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
           "referral_utm_campaign",
         ])
         .returns<AppSetting[]>(),
-      getCaptadorSubmissionBrief(profile.id),
+      getCaptadorMinDepositRequirementBrl(profile.id),
       getWhatsappGroupUrl(),
       supabase
         .from("user_notifications")
@@ -153,7 +153,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
 
   return (
     <>
-      {depositBrief ? <CaptadorDepositBriefBanner minDepositBrl={Number(depositBrief.min_deposit_brl)} /> : null}
+      {minDepositBrl != null ? <CaptadorDepositBriefBanner minDepositBrl={Number(minDepositBrl)} /> : null}
       <CaptadorPushSettings subscriptionCountServer={pushSubscriptionCount} vapidPublicKey={pushPublicKey} />
       <CaptadorNotificationsSection compact notifications={notificationsPreview} />
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

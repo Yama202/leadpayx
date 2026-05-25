@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PublicHeader, TrustPaymentBlock } from "@/components/public/institutional-page";
+import { BrandLogo } from "@/components/ui/brand";
 import type { RegisterLinkSearchInput } from "@/lib/register-href";
 import { buildRegisterHref } from "@/lib/register-href";
 import { getWhatsappGroupUrl } from "@/lib/settings";
@@ -105,7 +106,7 @@ export default async function Home({
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
                     Painel captador
                   </p>
-                  <p className="mt-1 text-lg font-black text-white">LeadPayX</p>
+                  <BrandLogo className="mt-2" variant="compact" />
                 </div>
                 <span className="rounded-full border border-[#00E07A]/25 bg-[#00E07A]/10 px-3 py-1 text-xs font-bold text-[#16F28A]">
                   Online

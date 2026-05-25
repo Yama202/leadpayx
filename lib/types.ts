@@ -1,5 +1,5 @@
 export type UserRole = "admin" | "operator" | "captador";
-export type ProfileStatus = "active" | "inactive";
+export type ProfileStatus = "active" | "inactive" | "pending_approval";
 export type AccountStatus =
   | "pending"
   | "assigned"
@@ -83,6 +83,7 @@ export type UserNotification = {
     account_id?: string;
     commission_brl?: number;
     account_identifier?: string;
+    balance_destination?: string | null;
   };
   read_at: string | null;
   created_at: string;

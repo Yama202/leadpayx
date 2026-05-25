@@ -59,7 +59,7 @@ export async function OperadorDashboardData({
     opError === "complete"
       ? "Não foi possível finalizar a conta (prazo, permissão ou estado inválido). Atualize a página e tente novamente."
       : opError === "complete_balance"
-        ? "Ao finalizar, selecione o destino do saldo (principal ou alternativo) para o captador acompanhar."
+        ? "Ao finalizar: com 2 contas escolhe a linha onde ficou o saldo; com 1 conta escreve o destino — mínimo 8 caracteres."
         : opError === "start"
           ? "Não foi possível iniciar a operação (SLA ou estado da conta). Atualize a página."
           : opError === "invalid"
@@ -75,13 +75,15 @@ export async function OperadorDashboardData({
     earnings?.filter((earning) => earning.type === "operator_account_completed").length ?? 0;
   const minimumBatch = Number(settingValues.operational_min_batch_size ?? 2);
   const queueRows: CycleQueueRow[] = Array.isArray(cycleQueue) ? cycleQueue : [];
-  const assignedList = accounts ?? [];
+  const assignedList = (accounts ?? []).slice(0, Math.max(1, minimumBatch));
   const printUrls = await accountPrintSignedUrlMap(supabase, assignedList);
   const availableCycles = queueRows.map((cycle) => ({
     captadorId: cycle.captador_id,
     count: Number(cycle.pending_count ?? 0),
     name: cycle.captador_name ?? "Captador",
   }));
+  const hasCycleReady = availableCycles.some((cycle) => cycle.count >= minimumBatch);
+  const canPickNext = assignedList.length === 0 && hasCycleReady;
 
   return (
     <>
@@ -108,14 +110,16 @@ export async function OperadorDashboardData({
         />
         <div className="flex flex-col gap-2">
           <OperatorPickBatchForm
-            disabled={assignedList.length > 0}
+            disabled={!canPickNext}
             minimumBatch={minimumBatch}
+            helperText={
+              !hasCycleReady
+                ? "Nenhum ciclo completo disponível agora."
+                : assignedList.length > 0
+                  ? "Conclua ou recuse o ciclo atual antes de reservar um novo lote."
+                  : null
+            }
           />
-          {assignedList.length > 0 ? (
-            <p className="text-xs leading-snug text-zinc-500">
-              Conclua ou recuse o ciclo atual antes de reservar um novo lote.
-            </p>
-          ) : null}
         </div>
       </div>
       <section className="mt-4 rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
@@ -142,6 +146,7 @@ export async function OperadorDashboardData({
       <div className="mt-6 space-y-6">
         {assignedList.length ? (
           <>
+            <OperatorWorkPanel accounts={assignedList} />
             <div className="grid gap-4 lg:grid-cols-2">
               {assignedList.map((account) => (
                 <AccountCard
@@ -152,7 +157,6 @@ export async function OperadorDashboardData({
                 />
               ))}
             </div>
-            <OperatorWorkPanel accounts={assignedList} />
           </>
         ) : (
           <EmptyState description="Use o botão para pegar até duas contas pendentes." title="Nenhuma conta atribuída" />

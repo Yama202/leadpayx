@@ -78,6 +78,12 @@ export function CaptadorNotificationsSection({
           >
             <p className="font-bold text-white">{n.title}</p>
             <p className="mt-1 leading-relaxed">{n.body}</p>
+            {n.metadata?.balance_destination ? (
+              <p className="mt-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs leading-relaxed text-zinc-200">
+                <span className="font-semibold text-zinc-400">Destino do saldo:</span>{" "}
+                {n.metadata.balance_destination}
+              </p>
+            ) : null}
             <p className="mt-2 text-xs text-zinc-500">{formatWhen(n.created_at)}</p>
           </li>
         ))}

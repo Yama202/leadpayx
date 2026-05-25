@@ -1,3 +1,4 @@
+import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
 import { CaptadorAdminListItem } from "@/components/admin/captador-admin-list-item";
 import { CaptadoresSearchBar } from "@/components/admin/captadores-search-bar";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
@@ -34,10 +35,12 @@ export default async function AdminCaptadoresPage({
 
   const supabase = await createClient();
 
+  // Captadores ativos/inativos (lista principal)
   let captadoresQuery = supabase
     .from("profiles")
     .select("*")
     .eq("role", "captador")
+    .in("status", ["active", "inactive"])
     .order("created_at", { ascending: false });
 
   if (pattern) {
@@ -48,6 +51,14 @@ export default async function AdminCaptadoresPage({
   }
 
   const { data: captadores, error: captadoresError } = await captadoresQuery;
+
+  // Captadores aguardando aprovação (sempre visíveis, independente de busca)
+  const { data: pendingCaptadores } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("role", "captador")
+    .eq("status", "pending_approval")
+    .order("created_at", { ascending: false });
 
   const captadorIds = (captadores ?? []).map((c) => c.id).filter(Boolean);
 
@@ -117,6 +128,36 @@ export default async function AdminCaptadoresPage({
       {profileSuccess ? (
         <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
           {decodeURIComponent(profileSuccess)}
+        </div>
+      ) : null}
+
+      {pendingCaptadores && pendingCaptadores.length > 0 ? (
+        <div className="mb-6 rounded-[2rem] border border-amber-400/20 bg-amber-400/[0.05] p-5 shadow-lg backdrop-blur-sm">
+          <p className="mb-1 text-xs font-black uppercase tracking-[0.14em] text-amber-300">
+            Aguardando aprovação · {pendingCaptadores.length}
+          </p>
+          <p className="mb-4 text-xs text-amber-100/70">
+            Estes usuários criaram conta mas ainda não têm acesso ao painel.
+          </p>
+          <div className="flex flex-col gap-2">
+            {pendingCaptadores.map((c) => (
+              <div
+                key={c.id}
+                className="flex flex-col items-start gap-3 rounded-2xl border border-amber-400/15 bg-black/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-white">
+                    {c.name?.trim() || c.email || "Sem nome"}
+                  </p>
+                  <p className="truncate text-xs text-zinc-400">{c.email}</p>
+                  <p className="mt-0.5 text-[11px] text-zinc-600">
+                    Cadastro: {new Date(c.created_at).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <ApproveCaptadorButton profileId={c.id} />
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 

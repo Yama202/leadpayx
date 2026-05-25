@@ -56,6 +56,7 @@ export const config = {
     "/captador/:path*",
     "/operador/:path*",
     "/complete-profile",
+    "/aguardando-aprovacao",
     "/logout",
     "/access-denied",
   ],

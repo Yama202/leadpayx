@@ -66,7 +66,7 @@ export const accountSchema = z.object({
     .string()
     .trim()
     .min(3, "Informe o e-mail da conta.")
-    .email("Informe um e-mail válido.")
+    .email("Informe um e-mail válido (precisa de @).")
     .transform((v) => v.toLowerCase()),
   leadAccountPassword: z
     .string()
@@ -138,7 +138,7 @@ const destinationString = z
   .min(8, "Descreva o destino do saldo com pelo menos 8 caracteres (conta, titular, banco etc.).")
   .max(800, "Texto muito longo. Resuma em até 800 caracteres.");
 
-/** Finaliza todas as contas do lote (ordem = assigned_at). Com 1 conta, exige `balanceDestination` no form. */
+/** Finaliza todas as contas do lote (ordem = assigned_at). Mensagem ao captador gravada em cada conta. */
 export const completeOperatorCycleSchema = z
   .object({
     orderedAccountIds: z
@@ -160,13 +160,36 @@ export const completeOperatorCycleSchema = z
       (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
       destinationString.optional(),
     ),
+    balanceTargetAccountId: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z.string().uuid().optional(),
+    ),
   })
   .superRefine((data, ctx) => {
-    if (data.orderedAccountIds.length === 1 && !data.balanceDestination) {
+    const n = data.orderedAccountIds.length;
+    if (n === 1) {
+      if (!data.balanceDestination) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Descreva para onde foi o saldo desta conta antes de finalizar.",
+          path: ["balanceDestination"],
+        });
+      }
+      return;
+    }
+    if (!data.balanceTargetAccountId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Selecione o destino do saldo para finalizar a conta.",
-        path: ["balanceDestination"],
+        message: "Escolhe em qual conta ficou o saldo das duas antes de finalizar.",
+        path: ["balanceTargetAccountId"],
+      });
+      return;
+    }
+    if (!data.orderedAccountIds.includes(data.balanceTargetAccountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Conta selecionada não pertence a este ciclo.",
+        path: ["balanceTargetAccountId"],
       });
     }
   });
@@ -176,10 +199,14 @@ export const payoutProcessSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+export const approveCaptadorSchema = z.object({
+  profileId: z.string().uuid(),
+});
+
 export const adminProfileUpdateSchema = z.object({
   profileId: z.string().uuid(),
   role: z.enum(["admin", "operator", "captador"]),
-  status: z.enum(["active", "inactive"]),
+  status: z.enum(["active", "inactive", "pending_approval"]),
   whatsapp: z
     .string()
     .trim()

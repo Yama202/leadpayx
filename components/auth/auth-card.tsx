@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { BackButton } from "@/components/ui/back-button";
 import { BrandLogo } from "@/components/ui/brand";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function AuthCard({
   title,
@@ -21,9 +20,8 @@ export function AuthCard({
       <div className="hero-grid pointer-events-none absolute inset-0 opacity-50" />
       <div className="pointer-events-none absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-[#00E07A]/20 blur-[110px] sm:h-[32rem] sm:w-[32rem]" />
       <section className="relative z-10 w-full max-w-md rounded-[2rem] border border-white/[0.08] bg-white/[0.04] p-6 shadow-2xl shadow-black/35 backdrop-blur-xl">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
           <BrandLogo showTagline variant="horizontal" />
-          <ThemeToggle />
         </div>
         <BackButton
           className="mt-6 min-h-10 px-3 py-2 text-xs uppercase tracking-[0.14em]"

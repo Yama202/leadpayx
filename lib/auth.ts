@@ -16,7 +16,7 @@ export const getCurrentAuthState = cache(async () => {
   const cookieStore = await cookies();
 
   if (!hasSupabaseAuthCookie(cookieStore.getAll())) {
-    return { profile: null, userId: null };
+    return { profile: null, userId: null, pendingApproval: false };
   }
 
   const supabase = await createClient();
@@ -24,7 +24,7 @@ export const getCurrentAuthState = cache(async () => {
   const userId = claims?.claims.sub ?? null;
 
   if (claimsError || !userId) {
-    return { profile: null, userId: null };
+    return { profile: null, userId: null, pendingApproval: false };
   }
 
   const { data, error } = await supabase
@@ -33,11 +33,19 @@ export const getCurrentAuthState = cache(async () => {
     .eq("id", userId)
     .single<Profile>();
 
-  if (error || !data || data.status !== "active") {
-    return { profile: null, userId };
+  if (error || !data) {
+    return { profile: null, userId, pendingApproval: false };
   }
 
-  return { profile: data, userId };
+  if (data.status === "pending_approval") {
+    return { profile: null, userId, pendingApproval: true };
+  }
+
+  if (data.status !== "active") {
+    return { profile: null, userId, pendingApproval: false };
+  }
+
+  return { profile: data, userId, pendingApproval: false };
 });
 
 export async function getCurrentProfile() {
@@ -53,9 +61,10 @@ export async function getAuthenticatedUserId() {
 }
 
 export async function requireProfile() {
-  const { profile, userId } = await getCurrentAuthState();
+  const { profile, userId, pendingApproval } = await getCurrentAuthState();
 
   if (!profile) {
+    if (pendingApproval) redirect("/aguardando-aprovacao");
     redirect(userId ? "/complete-profile" : "/login");
   }
 

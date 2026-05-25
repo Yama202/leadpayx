@@ -8,13 +8,10 @@ import {
   isEncryptionConfigured,
 } from "@/lib/account-credentials-crypto";
 import { requireProfile, requireRole } from "@/lib/auth";
-import { getCaptadorSubmissionBrief } from "@/lib/captador-submission-brief";
+import { getCaptadorMinDepositRequirementBrl } from "@/lib/captador-deposit-requirement";
 import { DEFAULT_OPERATOR_BATCH_SIZE } from "@/lib/constants";
+import { twoAccountCycleBalanceDestination } from "@/lib/operator-cycle-balance-message";
 import { roundBrlHalfUp } from "@/lib/global-commission";
-import {
-  OPERATOR_BALANCE_DESTINATION_ALTERNATE,
-  OPERATOR_BALANCE_DESTINATION_PRIMARY,
-} from "@/lib/operator-balance-destinations";
 import {
   logSetAdminRoleRpcError,
   mapSetAdminRoleRpcToUserMessage,
@@ -25,6 +22,7 @@ import {
   adminUserDeleteSchema,
   adminRoleActionSchema,
   adminProfileUpdateSchema,
+  approveCaptadorSchema,
   accountSchema,
   appSettingsSchema,
   captadorDepositBriefClearSchema,
@@ -159,8 +157,7 @@ export async function submitAccountAction(
     .maybeSingle();
   const requireNewAccountPrint = coerceAppSettingBoolean(printSetting?.value);
 
-  const depositBrief = await getCaptadorSubmissionBrief(profile.id);
-  const minDepositRequired = Number(depositBrief?.min_deposit_brl ?? 0);
+  const minDepositRequired = Number((await getCaptadorMinDepositRequirementBrl(profile.id)) ?? 0);
   const declaredDeposit = parsed.data.declaredDepositBrl ?? null;
   if (minDepositRequired > 0) {
     if (declaredDeposit == null) {
@@ -441,12 +438,12 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
     redirect("/operador/dashboard?op_error=complete_balance");
   }
 
-  const { orderedAccountIds, balanceDestination } = parsed.data;
+  const { orderedAccountIds, balanceDestination, balanceTargetAccountId } = parsed.data;
   const supabase = await createClient();
 
   const { data: rows, error: loadErr } = await supabase
     .from("accounts")
-    .select("id,status,operador_id")
+    .select("id,status,operador_id,account_identifier")
     .in("id", orderedAccountIds);
 
   const rowById = new Map((rows ?? []).map((row) => [row.id, row]));
@@ -468,14 +465,18 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
     }
   }
 
-  const destinations: string[] =
-    orderedAccountIds.length === 1
-      ? [balanceDestination!]
-      : [OPERATOR_BALANCE_DESTINATION_PRIMARY, OPERATOR_BALANCE_DESTINATION_ALTERNATE];
+  let message: string;
+  if (orderedAccountIds.length === 1) {
+    message = balanceDestination!;
+  } else {
+    const targetRow = rowById.get(balanceTargetAccountId!);
+    const label = String(targetRow?.account_identifier ?? "").trim();
+    message = twoAccountCycleBalanceDestination(label);
+  }
 
   for (let i = 0; i < orderedAccountIds.length; i += 1) {
     const accountId = orderedAccountIds[i]!;
-    const dest = destinations[i]!;
+    const dest = message;
     const { error } = await completeAccount(accountId, dest);
     if (error) {
       const msg = String(error.message ?? "").toLowerCase();
@@ -677,6 +678,36 @@ export async function ensurePayoutAction(): Promise<ActionState> {
 
 export async function ensurePayoutFormAction(): Promise<void> {
   await ensurePayoutAction();
+}
+
+export async function adminApproveCaptadorAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await requireRole(["admin"]);
+  const parsed = approveCaptadorSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    return { ok: false, message: "ID de perfil inválido." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ status: "active" })
+    .eq("id", parsed.data.profileId)
+    .eq("status", "pending_approval");
+
+  if (error) {
+    return { ok: false, message: "Não foi possível aprovar o captador." };
+  }
+
+  await createAuditLog("admin.captador_approved", "profile", parsed.data.profileId, {
+    approved_by: admin.id,
+  });
+
+  revalidatePath("/admin/captadores");
+  return { ok: true, message: "Captador aprovado." };
 }
 
 export async function adminUpdateProfileAction(formData: FormData): Promise<void> {

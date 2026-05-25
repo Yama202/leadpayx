@@ -1,7 +1,15 @@
+import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
 import { ProfileAdminEditor } from "@/components/admin/profile-admin-editor";
 import type { CaptadorSubmissionBrief, Profile } from "@/lib/types";
 
 function statusPill(status: string | null | undefined) {
+  if (status === "pending_approval") {
+    return (
+      <span className="inline-flex shrink-0 items-center rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-amber-300 ring-1 ring-amber-400/30">
+        Pendente
+      </span>
+    );
+  }
   const active = status === "active";
   return (
     <span
@@ -75,6 +83,14 @@ export function CaptadorAdminListItem({
         </span>
       </summary>
       <div className="border-t border-white/[0.08] bg-black/20 px-4 py-5 sm:px-5">
+        {profile.status === "pending_approval" ? (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.07] px-4 py-3">
+            <p className="text-sm text-amber-200/90">
+              Este captador ainda não foi aprovado e não tem acesso ao painel.
+            </p>
+            <ApproveCaptadorButton profileId={profile.id} />
+          </div>
+        ) : null}
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
           <ProfileAdminEditor dangerZone="collapsed" depositBrief={depositBrief} profile={profile} />
         </div>

@@ -1,14 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 
 import { SupabaseResourceHints } from "@/components/layout/supabase-resource-hints";
-import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
-
-/** Inline mínimo: tema antes da pintura — beforeInteractive não bloqueia parse como script cru no head mal posicionado. */
-const themeInitScript =
-  '(()=>{try{var s=localStorage.getItem("leadpayx-theme")||"system";var d=s==="dark"||(s==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(_){}})();';
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -71,19 +65,12 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <head>
         <SupabaseResourceHints />
       </head>
-      <body className="min-h-full bg-[#050706] text-white">
-        <Script
-          dangerouslySetInnerHTML={{ __html: themeInitScript }}
-          id="leadpayx-theme-init"
-          strategy="beforeInteractive"
-        />
-        <ThemeProvider>{children}</ThemeProvider>
-      </body>
+      <body className="min-h-full bg-[#050706] text-white">{children}</body>
     </html>
   );
 }

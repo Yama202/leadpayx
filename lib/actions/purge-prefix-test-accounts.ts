@@ -133,7 +133,10 @@ export async function purgePrefixTestAccountsAction(
           "Erro ao processar dados ligados às contas (ex.: UUID inválido em notificações). Faz redeploy depois da última migração de limpeza (versão que valida IDs) ou corrige linhas órfãs no SQL Editor.",
       };
     }
-    return { ok: false, message: "Não foi possível executar a limpeza. Tente novamente." };
+    return {
+      ok: false,
+      message: `Não foi possível executar a limpeza. Código Supabase/Postgres: ${error.code ?? "—"} — ${error.message}. Confirma migrações no projeto (admin_purge_prefix_test_accounts) e variáveis na Vercel.`,
+    };
   }
 
   const stats = parsePurgeRpcPayload(data);

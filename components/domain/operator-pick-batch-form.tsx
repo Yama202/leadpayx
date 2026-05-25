@@ -12,9 +12,11 @@ import { initialActionState } from "@/lib/validation";
 export function OperatorPickBatchForm({
   disabled,
   minimumBatch,
+  helperText,
 }: {
   disabled: boolean;
   minimumBatch: number;
+  helperText?: string | null;
 }) {
   const [state, formAction] = useActionState(pickNextBatchStateAction, initialActionState);
   const router = useRouter();
@@ -33,6 +35,8 @@ export function OperatorPickBatchForm({
         <p className={`text-xs font-semibold ${state.ok ? "text-emerald-300" : "text-rose-300"}`}>
           {state.message}
         </p>
+      ) : helperText ? (
+        <p className="text-xs leading-snug text-zinc-500">{helperText}</p>
       ) : null}
     </form>
   );

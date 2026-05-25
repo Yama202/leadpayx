@@ -190,7 +190,6 @@ critical_names = [
     "SubmitButton",
     "completeAccountAction",
     "rejectAccount",
-    "operator-balance-destinations",
     "registerCaptadorPush",
 ]
 

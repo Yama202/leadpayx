@@ -165,6 +165,9 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
         await expect(page.locator("article").filter({ hasText: account.account_identifier })).toHaveCount(1);
       }
 
+      await panel
+        .locator(`input[name="balanceTargetAccountId"][value="${assignedNow[0]!.id}"]`)
+        .check();
       await panel.getByRole("button", { name: "Finalizar ciclo" }).click();
 
       for (const account of assignedNow) {
@@ -174,7 +177,10 @@ test("operational flow: 10 contas captador -> operador processa sem duplicidade/
         const dbRow = (await loadAccountsByIdentifiers(admin, [account.account_identifier]))[0];
         expect(dbRow.status).toBe("completed");
         expect(dbRow.operador_id).toBe(state.users.operator.id);
-        expect((dbRow.operator_balance_destination ?? "").length).toBeGreaterThanOrEqual(8);
+        const dest = dbRow.operator_balance_destination ?? "";
+        expect(dest.length).toBeGreaterThanOrEqual(8);
+        expect(dest).toContain("Saldo das duas contas deste ciclo foi para");
+        expect(dest).toContain(assignedNow[0]!.account_identifier);
       }
 
       await page.goto("/operador/historico");

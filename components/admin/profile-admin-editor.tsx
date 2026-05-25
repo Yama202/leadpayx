@@ -129,6 +129,11 @@ export function ProfileAdminEditor({
             defaultValue={profile.status}
             name="status"
           >
+            {profile.status === "pending_approval" ? (
+              <option disabled value="pending_approval">
+                Aguardando aprovação
+              </option>
+            ) : null}
             <option value="active">Ativo</option>
             <option value="inactive">Inativo</option>
           </select>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useMemo, useState } from "react";
+import { useActionState, useEffect, useId, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
@@ -8,14 +8,11 @@ import {
   rejectAccountAction,
 } from "@/lib/actions/domain";
 import { operatorCanProgressAccount } from "@/lib/account-operation";
-import {
-  OPERATOR_BALANCE_DESTINATION_ALTERNATE,
-  OPERATOR_BALANCE_DESTINATION_PRIMARY,
-} from "@/lib/operator-balance-destinations";
 import type { Account } from "@/lib/types";
 import { SubmitButton, TextArea } from "@/components/ui/forms";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { twoAccountCycleBalanceDestination } from "@/lib/operator-cycle-balance-message";
 import { initialActionState, type ActionState } from "@/lib/validation";
 
 type OperatorWorkPanelProps = {
@@ -44,6 +41,9 @@ function DangerSubmitButton({ children }: { children: string }) {
   );
 }
 
+const BALANCE_PLACEHOLDER =
+  "Descreva objetivamente para onde foi o saldo (ex.: conta destino, Pix, titular, instituição ou o que combinaram). Mínimo 8 caracteres.";
+
 export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
   const ordered = useMemo(() => {
     return [...accounts].sort((a, b) => {
@@ -69,9 +69,24 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
 
   const orderedIdsCsv = useMemo(() => ordered.map((a) => a.id).join(","), [ordered]);
 
+  const [balanceTargetAccountId, setBalanceTargetAccountId] = useState(
+    () => (ordered.length === 2 ? ordered[0]!.id : ""),
+  );
+  useEffect(() => {
+    if (ordered.length === 2) {
+      setBalanceTargetAccountId(ordered[0]!.id);
+    }
+  }, [orderedIdsCsv]);
+
+  const twoAccountPreview = useMemo(() => {
+    if (ordered.length !== 2 || !balanceTargetAccountId) {
+      return "";
+    }
+    const acc = ordered.find((a) => a.id === balanceTargetAccountId);
+    return acc ? twoAccountCycleBalanceDestination(acc.account_identifier) : "";
+  }, [ordered, balanceTargetAccountId]);
+
   const canFinalizeCycle = ordered.every((a) => operatorCanProgressAccount(a.status));
-  const [showWhereBalance, setShowWhereBalance] = useState(false);
-  const whereBalanceId = `${baseId}-where-balance`;
 
   if (!ordered.length) {
     return null;
@@ -86,9 +101,8 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
       <h2 className="text-base font-black tracking-tight text-white">Ciclo de operação</h2>
       <p className="mt-1 text-sm text-zinc-400">
         {ordered.length > 1
-          ? "Finalize o ciclo completo (duas contas) com um único envio: a primeira na ordem de atribuição usa o destino principal e a segunda o alternativo. Recusas continuam por conta."
-          : "Finalize com o destino do saldo ou recuse — uma ação primária de cada vez."}
-
+          ? "Com duas contas, escolhe só em qual delas ficou o saldo — a mensagem ao captador é gerada automaticamente. Recusas continuam por conta."
+          : "Informa em texto para onde foi o saldo; o captador lê essa mensagem na conta finalizada. Ou recusa a conta."}
       </p>
 
       {ordered.length > 1 ? (
@@ -96,118 +110,92 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
           <li className="font-semibold text-zinc-300">Ordem do ciclo (atribuição)</li>
           {ordered.map((acc, idx) => (
             <li className="flex flex-wrap items-baseline gap-2 text-zinc-400" key={acc.id}>
+              <span className="tabular-nums font-bold text-zinc-500">{idx + 1}.</span>
               <span className="font-mono font-bold text-white">{acc.account_identifier}</span>
-              <span className="text-xs">
-                {idx === 0 ? "→ destino principal ao finalizar ciclo" : "→ destino alternativo ao finalizar ciclo"}
-              </span>
             </li>
           ))}
         </ul>
       ) : null}
 
-      <div className="mt-4">
-        <Button
-          aria-controls={whereBalanceId}
-          aria-expanded={showWhereBalance}
-          className="w-full sm:w-auto"
-          onClick={() => {
-            setShowWhereBalance((open) => !open);
-          }}
-          type="button"
-          variant="secondary"
-        >
-          Para onde foi o saldo
-        </Button>
-        {showWhereBalance ? (
-          <div
-            className="mt-3 space-y-4 rounded-2xl border border-[#00E07A]/20 bg-black/30 p-4 text-sm"
-            id={whereBalanceId}
-            role="region"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Texto que o captador verá após finalizar
-            </p>
-            {ordered.length > 1
-              ? ordered.map((acc, idx) => (
-                  <div className="space-y-1.5 border-b border-white/[0.06] pb-3 last:border-b-0 last:pb-0" key={acc.id}>
-                    <p className="font-mono text-sm font-bold text-white">{acc.account_identifier}</p>
-                    <p className="leading-relaxed text-zinc-300">
-                      {idx === 0
-                        ? OPERATOR_BALANCE_DESTINATION_PRIMARY
-                        : OPERATOR_BALANCE_DESTINATION_ALTERNATE}
-                    </p>
-                  </div>
-                ))
-              : (
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs font-semibold text-zinc-500">Se marcar destino principal</p>
-                      <p className="mt-1 leading-relaxed text-zinc-300">{OPERATOR_BALANCE_DESTINATION_PRIMARY}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-zinc-500">Se marcar destino alternativo</p>
-                      <p className="mt-1 leading-relaxed text-zinc-300">
-                        {OPERATOR_BALANCE_DESTINATION_ALTERNATE}
-                      </p>
-                    </div>
-                  </div>
-                )}
-          </div>
-        ) : null}
-      </div>
-
       <div className="mt-6 space-y-6">
         {canFinalizeCycle ? (
-          <form action={completeOperatorCycleAction} className="space-y-4">
+          <form
+            action={completeOperatorCycleAction}
+            className="space-y-5"
+            key={`finalize-${orderedIdsCsv}`}
+          >
             <input name="orderedAccountIds" type="hidden" value={orderedIdsCsv} />
-            {ordered.length === 1 ? (
-              <fieldset>
-                <legend className="text-sm font-bold text-zinc-200">
-                  Informar ao captador: destino do saldo
+            {ordered.length === 2 ? (
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-bold text-zinc-200" id={`${baseId}-bal-legend`}>
+                  O saldo das duas contas foi para qual linha?
                 </legend>
-                <p className="mt-1 text-xs text-zinc-500">
-                  Um clique define o texto que o captador verá na conta finalizada.
+                <p className="text-xs text-zinc-500">
+                  Clica na conta certa. O captador vê a mesma frase em cada conta ao carregares em{" "}
+                  <span className="font-semibold text-zinc-400">Finalizar ciclo</span>.
                 </p>
                 <div
-                  className="mt-3 grid gap-3 sm:grid-cols-2"
+                  className="space-y-2"
                   role="radiogroup"
-                  aria-label="Destino do saldo informado ao captador"
+                  aria-labelledby={`${baseId}-bal-legend`}
                 >
-                  <label className="cursor-pointer rounded-2xl border border-white/10 bg-black/25 p-4 transition-colors has-[:checked]:border-[#00E07A] has-[:checked]:bg-[#00E07A]/10">
-                    <input
-                      aria-label="Destino principal"
-                      className="sr-only"
-                      name="balanceDestination"
-                      required
-                      type="radio"
-                      value={OPERATOR_BALANCE_DESTINATION_PRIMARY}
-                    />
-                    <span className="block text-sm font-black text-white">Destino principal</span>
-                    <span className="mt-1 block text-xs leading-snug text-zinc-400">
-                      Fluxo padrão / primeira linha
-                    </span>
-                  </label>
-                  <label className="cursor-pointer rounded-2xl border border-white/10 bg-black/25 p-4 transition-colors has-[:checked]:border-[#00E07A] has-[:checked]:bg-[#00E07A]/10">
-                    <input
-                      aria-label="Destino alternativo"
-                      className="sr-only"
-                      name="balanceDestination"
-                      type="radio"
-                      value={OPERATOR_BALANCE_DESTINATION_ALTERNATE}
-                    />
-                    <span className="block text-sm font-black text-white">Destino alternativo</span>
-                    <span className="mt-1 block text-xs leading-snug text-zinc-400">
-                      Fluxo secundário
-                    </span>
-                  </label>
+                  {ordered.map((acc, idx) => {
+                    const inputId = `${baseId}-bal-${acc.id}`;
+                    return (
+                      <label
+                        className="flex cursor-pointer flex-col gap-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 has-[:checked]:border-[#00E07A]/60 has-[:checked]:ring-1 has-[:checked]:ring-[#00E07A]/30"
+                        key={acc.id}
+                      >
+                        <span className="flex items-center gap-3">
+                          <input
+                            checked={balanceTargetAccountId === acc.id}
+                            className="accent-[#00E07A]"
+                            id={inputId}
+                            name="balanceTargetAccountId"
+                            onChange={() => {
+                              setBalanceTargetAccountId(acc.id);
+                            }}
+                            required
+                            type="radio"
+                            value={acc.id}
+                          />
+                          <span className="font-mono text-sm font-bold text-white">
+                            {acc.account_identifier}
+                          </span>
+                          <span className="text-xs text-zinc-500">({idx + 1}.ª no ciclo)</span>
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
+                {twoAccountPreview ? (
+                  <p
+                    className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs leading-relaxed text-zinc-300"
+                    role="status"
+                  >
+                    <span className="font-semibold text-zinc-400">Mensagem ao captador:</span>{" "}
+                    {twoAccountPreview}
+                  </p>
+                ) : null}
               </fieldset>
             ) : (
-              <p className="text-sm text-zinc-400">
-                Ao confirmar, as duas contas acima serão concluídas:{" "}
-                <span className="text-zinc-300">principal</span> na primeira e{" "}
-                <span className="text-zinc-300">alternativo</span> na segunda.
-              </p>
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-bold text-zinc-200">
+                  Para onde foi o saldo desta conta?
+                </legend>
+                <p className="text-xs text-zinc-500">
+                  O captador lê o texto abaixo na conta quando clicas em{" "}
+                  <span className="font-semibold text-zinc-400">Finalizar ciclo</span>.
+                </p>
+                <TextArea
+                  label={ordered[0]!.account_identifier}
+                  maxLength={800}
+                  name="balanceDestination"
+                  placeholder={BALANCE_PLACEHOLDER}
+                  required
+                  rows={4}
+                />
+              </fieldset>
             )}
             <SubmitButton pendingLabel="A finalizar ciclo…">Finalizar ciclo</SubmitButton>
           </form>
