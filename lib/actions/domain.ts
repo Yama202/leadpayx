@@ -730,6 +730,7 @@ export async function adminResetUserDataAction(
   const { profileId, role } = parsed.data;
   const supabase = createAdminClient();
 
+  try {
   if (role === "captador") {
     const { data: captadorEarnings } = await supabase
       .from("earnings")
@@ -802,6 +803,10 @@ export async function adminResetUserDataAction(
     ok: true,
     message: `Dados de ${role === "captador" ? "captador" : "operador"} zerados com sucesso.`,
   };
+  } catch (err) {
+    console.error("[adminResetUserDataAction] erro inesperado", err);
+    return { ok: false, message: "Erro interno ao zerar dados. Tente novamente." };
+  }
 }
 
 export async function adminUpdateProfileAction(formData: FormData): Promise<void> {
