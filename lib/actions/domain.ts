@@ -764,6 +764,20 @@ export async function adminResetUserDataAction(
       if (accountIds.length > 0) {
         const { error: e7 } = await supabase.from("operator_assignments").delete().in("account_id", accountIds);
         if (e7) return { ok: false, message: `Erro ao apagar atribuições: ${e7.message}` };
+
+        // Operator earnings that reference these accounts must be removed before accounts are deleted,
+        // otherwise ON DELETE SET NULL triggers a check constraint violation (account_earning_requires_account).
+        const { data: linkedEarnings } = await supabase
+          .from("earnings")
+          .select("id")
+          .in("account_id", accountIds);
+        const linkedEarningIds = (linkedEarnings ?? []).map((e: { id: string }) => e.id);
+        if (linkedEarningIds.length > 0) {
+          const { error: e7b } = await supabase.from("payout_earnings").delete().in("earning_id", linkedEarningIds);
+          if (e7b) return { ok: false, message: `Erro ao apagar payout_earnings vinculados: ${e7b.message}` };
+          const { error: e7c } = await supabase.from("earnings").delete().in("id", linkedEarningIds);
+          if (e7c) return { ok: false, message: `Erro ao apagar earnings vinculados: ${e7c.message}` };
+        }
       }
 
       const { error: e8 } = await supabase.from("accounts").delete().eq("captador_id", profileId);
