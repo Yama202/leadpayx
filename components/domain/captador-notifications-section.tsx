@@ -1,3 +1,6 @@
+"use client";
+
+import { useOptimistic, useTransition } from "react";
 import Link from "next/link";
 
 import { markAllCaptadorNotificationsReadAction } from "@/lib/actions/domain";
@@ -19,7 +22,12 @@ export function CaptadorNotificationsSection({
   notifications: UserNotification[];
   compact?: boolean;
 }) {
-  const unread = notifications.filter((n) => !n.read_at).length;
+  const [optimisticNotifs, setAllRead] = useOptimistic(
+    notifications,
+    (state) => state.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })),
+  );
+  const [isPending, startTransition] = useTransition();
+  const unread = optimisticNotifs.filter((n) => !n.read_at).length;
 
   if (!notifications.length) {
     return (
@@ -55,11 +63,20 @@ export function CaptadorNotificationsSection({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {unread > 0 ? (
-            <form action={markAllCaptadorNotificationsReadAction}>
-              <Button className="min-h-9 text-xs" type="submit" variant="secondary">
-                Marcar lidos
-              </Button>
-            </form>
+            <Button
+              className="min-h-9 text-xs"
+              disabled={isPending}
+              onClick={() =>
+                startTransition(async () => {
+                  setAllRead(undefined);
+                  await markAllCaptadorNotificationsReadAction();
+                })
+              }
+              type="button"
+              variant="secondary"
+            >
+              Marcar lidos
+            </Button>
           ) : null}
           <Link className="text-sm font-semibold text-[#16F28A] hover:underline" href="/captador/avisos">
             Ver tudo
@@ -67,7 +84,7 @@ export function CaptadorNotificationsSection({
         </div>
       </div>
       <ul className="mt-4 space-y-3">
-        {(compact ? notifications.slice(0, 4) : notifications).map((n) => (
+        {(compact ? optimisticNotifs.slice(0, 4) : optimisticNotifs).map((n) => (
           <li
             className={`rounded-2xl border px-4 py-3 text-sm ${
               n.read_at

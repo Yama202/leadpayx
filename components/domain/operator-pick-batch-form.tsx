@@ -22,11 +22,9 @@ export function OperatorPickBatchForm({
   const router = useRouter();
 
   useEffect(() => {
-    if (!state.message) {
-      return;
-    }
+    if (!state.ok) return;
     router.refresh();
-  }, [router, state.message]);
+  }, [router, state.ok]);
 
   return (
     <form action={formAction} className="space-y-2">

@@ -203,6 +203,11 @@ export const approveCaptadorSchema = z.object({
   profileId: z.string().uuid(),
 });
 
+export const adminResetUserDataSchema = z.object({
+  profileId: z.string().uuid(),
+  role: z.enum(["captador", "operator"]),
+});
+
 export const adminProfileUpdateSchema = z.object({
   profileId: z.string().uuid(),
   role: z.enum(["admin", "operator", "captador"]),

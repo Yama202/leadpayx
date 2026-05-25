@@ -91,6 +91,10 @@ export async function loginAction(
     redirect("/complete-profile");
   }
 
+  if (profile.status === "pending_approval") {
+    redirect("/aguardando-aprovacao");
+  }
+
   if (profile.status !== "active") {
     await supabase.auth.signOut();
     return { ok: false, message: "Seu perfil está inativo. Fale com o admin." };

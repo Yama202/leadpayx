@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ClearDepositBriefButton } from "@/components/admin/clear-deposit-brief-button";
+import { ResetUserDataButton } from "@/components/admin/reset-user-data-button";
 import { Button } from "@/components/ui/button";
 import {
   adminDeleteManagedUserAction,
@@ -206,6 +207,31 @@ export function ProfileAdminEditor({
           ) : null}
         </div>
       ) : null}
+
+      <details
+        aria-label="Zerar dados transacionais deste usuário"
+        className="group/reset rounded-2xl border border-amber-500/20 bg-amber-950/[0.10] open:border-amber-400/30 open:bg-amber-950/15"
+      >
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-xs font-bold text-amber-200/80 transition-colors hover:bg-amber-500/10 hover:text-amber-100 [&::-webkit-details-marker]:hidden">
+          <span>Zerar dados — contas, ganhos e histórico</span>
+          <span
+            aria-hidden
+            className="text-[10px] text-amber-300/70 transition-transform group-open/reset:rotate-180"
+          >
+            ▼
+          </span>
+        </summary>
+        <div className="border-t border-amber-500/15 px-3 py-3 space-y-2">
+          <p className="text-xs text-amber-100/60">
+            Mantém o login e o perfil. Remove contas enviadas, ganhos, pagamentos e notificações
+            {profile.role === "operator" ? " — contas ativas voltam para a fila" : ""}.
+          </p>
+          <ResetUserDataButton
+            profileId={profile.id}
+            role={profile.role === "captador" ? "captador" : "operator"}
+          />
+        </div>
+      </details>
 
       {dangerZone === "prominent" ? (
         <div className="mt-1">{deleteForm}</div>

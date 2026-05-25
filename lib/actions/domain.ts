@@ -22,6 +22,7 @@ import {
   adminUserDeleteSchema,
   adminRoleActionSchema,
   adminProfileUpdateSchema,
+  adminResetUserDataSchema,
   approveCaptadorSchema,
   accountSchema,
   appSettingsSchema,
@@ -474,26 +475,17 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
     message = twoAccountCycleBalanceDestination(label);
   }
 
-  for (let i = 0; i < orderedAccountIds.length; i += 1) {
-    const accountId = orderedAccountIds[i]!;
-    const dest = message;
-    const { error } = await completeAccount(accountId, dest);
+  const completionResults = await Promise.all(
+    orderedAccountIds.map((accountId) => completeAccount(accountId, message)),
+  );
+
+  for (const { error } of completionResults) {
     if (error) {
       const msg = String(error.message ?? "").toLowerCase();
       if (msg.includes("balance destination required")) {
         redirect("/operador/dashboard?op_error=complete_balance");
       }
       redirect("/operador/dashboard?op_error=complete");
-    }
-
-    try {
-      const { notifyCaptadorOnAccountCompletionPush } = await import("@/lib/web-push/send-completion");
-      await notifyCaptadorOnAccountCompletionPush({
-        actorUserId: operatorProfile.id,
-        accountId,
-      });
-    } catch (pushErr) {
-      console.error("[completeOperatorCycleAction] push pós-finalização", pushErr);
     }
   }
 
@@ -502,6 +494,20 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
   revalidatePath("/captador/minhas-contas");
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/avisos");
+
+  await Promise.allSettled(
+    orderedAccountIds.map(async (accountId) => {
+      try {
+        const { notifyCaptadorOnAccountCompletionPush } = await import("@/lib/web-push/send-completion");
+        await notifyCaptadorOnAccountCompletionPush({
+          actorUserId: operatorProfile.id,
+          accountId,
+        });
+      } catch (pushErr) {
+        console.error("[completeOperatorCycleAction] push pós-finalização", pushErr);
+      }
+    }),
+  );
 }
 
 export async function markAllCaptadorNotificationsReadAction(): Promise<void> {
@@ -708,6 +714,94 @@ export async function adminApproveCaptadorAction(
 
   revalidatePath("/admin/captadores");
   return { ok: true, message: "Captador aprovado." };
+}
+
+export async function adminResetUserDataAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await requireRole(["admin"]);
+  const parsed = adminResetUserDataSchema.safeParse(formDataToObject(formData));
+
+  if (!parsed.success) {
+    return { ok: false, message: "Dados inválidos." };
+  }
+
+  const { profileId, role } = parsed.data;
+  const supabase = createAdminClient();
+
+  if (role === "captador") {
+    const { data: captadorEarnings } = await supabase
+      .from("earnings")
+      .select("id")
+      .eq("user_id", profileId);
+    const earningIds = (captadorEarnings ?? []).map((e) => e.id);
+
+    if (earningIds.length > 0) {
+      await supabase.from("payout_earnings").delete().in("earning_id", earningIds);
+    }
+    await supabase.from("payouts").delete().eq("user_id", profileId);
+    await supabase.from("earnings").delete().eq("user_id", profileId);
+    await supabase.from("user_notifications").delete().eq("user_id", profileId);
+
+    const { data: captadorAccounts } = await supabase
+      .from("accounts")
+      .select("id")
+      .eq("captador_id", profileId);
+    const accountIds = (captadorAccounts ?? []).map((a) => a.id);
+
+    if (accountIds.length > 0) {
+      await supabase.from("operator_assignments").delete().in("account_id", accountIds);
+    }
+    await supabase.from("accounts").delete().eq("captador_id", profileId);
+    await supabase.from("profiles").update({ referral_bonus_paid: false }).eq("id", profileId);
+  } else {
+    const { data: opEarnings } = await supabase
+      .from("earnings")
+      .select("id")
+      .eq("user_id", profileId);
+    const earningIds = (opEarnings ?? []).map((e) => e.id);
+
+    const { data: assignedAccounts } = await supabase
+      .from("accounts")
+      .select("id")
+      .eq("operador_id", profileId)
+      .in("status", ["assigned", "in_progress"]);
+
+    if (assignedAccounts?.length) {
+      await supabase
+        .from("accounts")
+        .update({
+          operador_id: null,
+          status: "pending",
+          assigned_at: null,
+          started_at: null,
+          operation_started_at: null,
+          operation_deadline_at: null,
+        })
+        .in("id", assignedAccounts.map((a) => a.id));
+    }
+
+    await supabase.from("operator_assignments").delete().eq("operador_id", profileId);
+
+    if (earningIds.length > 0) {
+      await supabase.from("payout_earnings").delete().in("earning_id", earningIds);
+    }
+    await supabase.from("payouts").delete().eq("user_id", profileId);
+    await supabase.from("earnings").delete().eq("user_id", profileId);
+  }
+
+  await createAuditLog("admin.reset_user_data", "profile", profileId, {
+    role,
+    reset_by: admin.id,
+  });
+
+  const returnPath = role === "captador" ? "/admin/captadores" : "/admin/operadores";
+  revalidatePath(returnPath);
+  return {
+    ok: true,
+    message: `Dados de ${role === "captador" ? "captador" : "operador"} zerados com sucesso.`,
+  };
 }
 
 export async function adminUpdateProfileAction(formData: FormData): Promise<void> {

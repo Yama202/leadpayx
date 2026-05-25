@@ -82,10 +82,14 @@ export async function requireRole(roles: UserRole[]) {
 }
 
 export async function redirectAuthenticatedUser() {
-  const { profile, userId } = await getCurrentAuthState();
+  const { profile, userId, pendingApproval } = await getCurrentAuthState();
 
   if (profile) {
     redirect(roleHome[profile.role]);
+  }
+
+  if (pendingApproval) {
+    redirect("/aguardando-aprovacao");
   }
 
   if (userId) {
