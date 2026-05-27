@@ -20,7 +20,7 @@ export default async function Home({
   const whatsappUrl = await getWhatsappGroupUrl();
 
   return (
-    <main className="relative min-h-dvh overflow-hidden text-white" style={{ background: "#151515" }}>
+    <main className="relative min-h-dvh overflow-hidden text-white" style={{ background: "#050706" }}>
       <ScrollRevealInit />
 
       {/* ── Camadas de fundo ── */}
@@ -121,7 +121,7 @@ export default async function Home({
             style={{ fontSize: "clamp(0.95rem, 1.8vw, 1.1rem)", letterSpacing: "-0.01em" }}
           >
             Painel em tempo real, ganhos por validação, sistema de indicação e
-            pagamentos organizados — tudo num só lugar, optimizado para celular.
+            pagamentos organizados — tudo num só lugar.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
@@ -155,7 +155,7 @@ export default async function Home({
 
           {/* Trust chips */}
           <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
-            {["Painel real-time", "Ganhos por validação", "Indicação", "Pagamentos", "Mobile-first"].map(
+            {["Painel real-time", "Ganhos por validação", "Indicação", "Pagamentos"].map(
               (chip, i) => (
                 <span
                   className="hero-chip rounded-full border border-[rgba(233,235,223,0.10)] bg-[rgba(255,255,255,0.03)] px-3.5 py-1.5 text-xs font-bold tracking-wide text-[#94958e]"
@@ -402,8 +402,8 @@ export default async function Home({
             },
             {
               icon: <IconMobile />,
-              title: "Mobile-first",
-              body: "Interface desenhada para celular do zero. Rápida, responsiva, sem fricção.",
+              title: "Acesso em qualquer lugar",
+              body: "Painel acessível de qualquer dispositivo. Rápido, responsivo e sem fricção.",
               delay: "reveal-delay-6",
             },
           ].map((feat) => (
