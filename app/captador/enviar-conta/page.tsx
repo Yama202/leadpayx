@@ -22,8 +22,6 @@ export default async function EnviarContaPage() {
 
   return (
     <RoleBasedLayout description="Envio seguro de credenciais." profile={profile} title="Enviar conta">
-      <CaptadorWhatsappGroupAlert whatsappUrl={whatsappUrl} />
-
       {/* ── Checklist obrigatório — impossível de ignorar ── */}
       <div className="mb-4 rounded-[1.6rem] border-2 border-rose-500/40 bg-rose-500/10 p-5">
         <div className="flex items-center gap-3">
