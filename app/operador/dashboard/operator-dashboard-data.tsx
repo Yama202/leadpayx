@@ -159,7 +159,7 @@ export async function OperadorDashboardData({
             </div>
           </>
         ) : (
-          <EmptyState description="Use o botão para pegar até duas contas pendentes." title="Nenhuma conta atribuída" />
+          <EmptyState description={`Use o botão para pegar ${minimumBatch > 1 ? `até ${minimumBatch} contas pendentes` : "uma conta pendente"}.`} title="Nenhuma conta atribuída" />
         )}
       </div>
     </>

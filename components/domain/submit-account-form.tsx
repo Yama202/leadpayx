@@ -66,6 +66,9 @@ export function SubmitAccountForm({ offers = [] }: { offers?: PromotionOffer[] }
                           Depósito mínimo: R$ {offerMinDeposit.toFixed(2)}
                         </span>
                       ) : null}
+                      <span className="text-xs text-zinc-500">
+                        {offer.requires_pair ? "Envio em par (2 contas)" : "Conta única aceite"}
+                      </span>
                     </label>
                   );
                 })}

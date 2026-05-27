@@ -113,6 +113,25 @@ function OfferFields({ offer }: { offer?: PromotionOffer }) {
         </span>
       </label>
       <label className="block sm:col-span-2">
+        <input name="requiresPair" type="hidden" value="off" />
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Envio em par</span>
+        <span className="mt-2 flex min-h-12 items-center gap-3 rounded-2xl border border-violet-300/40 bg-violet-50/60 px-4 dark:border-violet-400/20 dark:bg-violet-400/10">
+          <input
+            className="size-4 accent-violet-600"
+            defaultChecked={offer?.requires_pair ?? true}
+            name="requiresPair"
+            type="checkbox"
+            value="on"
+          />
+          <span className="text-sm font-black uppercase tracking-[0.1em] text-violet-700 dark:text-violet-200">
+            Exige par de contas (operador pega 2 de uma vez)
+          </span>
+        </span>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Desmarca para permitir operação de conta única (lote de 1).
+        </p>
+      </label>
+      <label className="block sm:col-span-2">
         <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Válida até (opcional)</span>
         <input
           className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 px-4 dark:border-white/10 dark:bg-slate-950/70 dark:text-white"

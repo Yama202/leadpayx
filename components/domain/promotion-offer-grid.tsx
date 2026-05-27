@@ -150,6 +150,15 @@ export function PromotionOfferGrid({
               Sempre contas novas
             </p>
           ) : null}
+          <p
+            className={
+              isOperator
+                ? "relative mt-3 rounded-xl border border-violet-300/35 bg-violet-400/20 px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-violet-100"
+                : "relative mt-3 rounded-2xl border border-violet-300 bg-violet-50 px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-violet-700 dark:border-violet-300/30 dark:bg-violet-400/10 dark:text-violet-100"
+            }
+          >
+            {offer.requires_pair ? "Envio em par (2 contas)" : "Conta única aceite"}
+          </p>
           {offer.valid_until ? (
             <p
               className={

@@ -101,7 +101,7 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
       <h2 className="text-base font-black tracking-tight text-white">Ciclo de operação</h2>
       <p className="mt-1 text-sm text-zinc-400">
         {ordered.length > 1
-          ? "Com duas contas, escolhe só em qual delas ficou o saldo — a mensagem ao captador é gerada automaticamente. Recusas continuam por conta."
+          ? "Com as contas do ciclo, escolhe só em qual delas ficou o saldo — a mensagem ao captador é gerada automaticamente. Recusas continuam por conta."
           : "Informa em texto para onde foi o saldo; o captador lê essa mensagem na conta finalizada. Ou recusa a conta."}
       </p>
 

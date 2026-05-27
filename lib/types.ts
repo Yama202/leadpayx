@@ -148,6 +148,8 @@ export type PromotionOffer = {
   max_deposit_brl: number | null;
   cycle_deposit_brl: number | null;
   only_new_accounts: boolean;
+  /** Quando true, o captador deve enviar em par (2 contas) para que o operador opere. Default true. */
+  requires_pair: boolean;
   promotion_url: string;
   status: ProfileStatus;
   valid_until: string | null;

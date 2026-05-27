@@ -312,7 +312,7 @@ export async function pickNextBatchAction(): Promise<ActionState> {
     const errorMessage = String(error.message ?? "");
     const normalizedError = errorMessage.toLowerCase();
     if (normalizedError.includes("minimum operational batch not available")) {
-      return { ok: false, message: "Ainda não há ciclo completo (2 contas) disponível para atribuição." };
+      return { ok: false, message: "Ainda não há contas suficientes disponíveis para atribuição." };
     }
     if (normalizedError.includes("operator unavailable")) {
       return { ok: false, message: "Seu perfil de operador está indisponível no momento." };
@@ -1533,6 +1533,7 @@ export async function upsertPromotionOfferAction(
     max_deposit_brl: parsed.data.maxDepositBrl,
     cycle_deposit_brl: parsed.data.cycleDepositBrl,
     only_new_accounts: parsed.data.onlyNewAccounts,
+    requires_pair: parsed.data.requiresPair,
     promotion_url: parsed.data.promotionUrl,
     status: parsed.data.status,
     valid_until: validUntilInput,

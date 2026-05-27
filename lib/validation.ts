@@ -58,7 +58,8 @@ export const profileSchema = z.object({
 
 export const accountSchema = z.object({
   promotionOfferId: z
-    .string({ required_error: "Selecione a casa/oferta antes de enviar." })
+    .string()
+    .min(1, "Selecione a casa/oferta antes de enviar.")
     .uuid("Oferta inválida — recarregue a página."),
   accountIdentifier: z
     .string()
@@ -390,6 +391,10 @@ export const promotionOfferSchema = z.object({
     .string()
     .optional()
     .transform((value) => value === "on"),
+  requiresPair: z
+    .string()
+    .optional()
+    .transform((value) => value !== "off"),
   promotionUrl: z
     .string()
     .trim()
