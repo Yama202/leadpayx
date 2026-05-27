@@ -62,11 +62,11 @@ const MEGA_MENUS: MegaMenu[] = [
     label: "Como funciona",
     panel: {
       links: [
-        { title: "Envio de conta", desc: "Submetes credenciais pelo painel em segundos" },
-        { title: "Fila operacional", desc: "Sistema distribui ao operador por ciclo" },
-        { title: "Pagamento rastreável", desc: "Comissão creditada com comprovante automático" },
+        { title: "Envias a conta", desc: "Submetes os dados pelo painel em segundos" },
+        { title: "Aguardas validação", desc: "Acompanhas o estado no teu painel" },
+        { title: "Recebes o pagamento", desc: "Comissão creditada com comprovante" },
       ],
-      feature: { label: "Processo", title: "4 etapas claras", desc: "Do envio ao Pix sem burocracia" },
+      feature: { label: "Processo", title: "Simples e direto", desc: "Do envio ao pagamento sem complicação" },
     },
   },
   {
@@ -74,11 +74,11 @@ const MEGA_MENUS: MegaMenu[] = [
     label: "Ganhos",
     panel: {
       links: [
-        { title: "Comissão por conta", desc: "Ganho a cada conta operada com sucesso" },
-        { title: "Bónus de indicação", desc: "Percentual dos ganhos do teu indicado" },
-        { title: "Histórico completo", desc: "Cada pagamento registado e conferível" },
+        { title: "Ganho por conta", desc: "Cada conta processada gera comissão" },
+        { title: "Bónus de indicação", desc: "Acumulas bónus pelas contas dos teus indicados" },
+        { title: "Comprovante sempre disponível", desc: "Cada pagamento fica registado" },
       ],
-      feature: { label: "Ganhos", title: "100% rastreável", desc: "Histórico e comprovante em cada pagamento" },
+      feature: { label: "Ganhos", title: "Transparente", desc: "Sabes sempre o que recebeste e porquê" },
     },
   },
   {
@@ -86,11 +86,11 @@ const MEGA_MENUS: MegaMenu[] = [
     label: "Indicações",
     panel: {
       links: [
-        { title: "Link único", desc: "O teu link pessoal para convidar captadores" },
-        { title: "Ganhos passivos", desc: "Percentual de cada operação do indicado" },
-        { title: "Painel em tempo real", desc: "Acompanhas o crescimento da rede" },
+        { title: "Link pessoal", desc: "Partilhas o teu link e convidas outros" },
+        { title: "Bónus por indicado", desc: "Cada conta do teu indicado gera bónus para ti" },
+        { title: "Painel em tempo real", desc: "Acompanhas os teus indicados e os seus resultados" },
       ],
-      feature: { label: "Rede", title: "Indica e ganha", desc: "Sem limite de rede ou teto de bónus" },
+      feature: { label: "Rede", title: "Indica e ganha", desc: "Sem limite de indicados ou teto de bónus" },
     },
   },
   {
@@ -98,11 +98,11 @@ const MEGA_MENUS: MegaMenu[] = [
     label: "FAQ",
     panel: {
       links: [
-        { title: "Como começo?", desc: "Crias conta, confirmas e já podes enviar" },
-        { title: "Quando recebo?", desc: "Assim que a conta for validada pelo operador" },
-        { title: "É seguro?", desc: "Credenciais cifradas, nunca expostas ao operador" },
+        { title: "Como começo?", desc: "Cadastras, aguardas aprovação e envias" },
+        { title: "Quando recebo?", desc: "Assim que a conta for processada" },
+        { title: "É seguro?", desc: "Os teus dados ficam sempre protegidos" },
       ],
-      feature: { label: "Suporte", title: "Transparência total", desc: "Resposta para cada dúvida do processo" },
+      feature: { label: "Suporte", title: "Sem dúvidas", desc: "Respondemos tudo antes de começares" },
     },
   },
 ];
@@ -217,10 +217,10 @@ export function NavMegaMenu() {
 /* ── Mobile Nav (hamburger + panel) ───────────────────────── */
 
 const MOBILE_NAV_ITEMS = [
-  { href: "/como-funciona", label: "Como funciona", sub: "Fluxo do envio ao pagamento" },
-  { href: "/ganhos",        label: "Ganhos",         sub: "Comissões e bónus de indicação" },
-  { href: "/indicacoes",    label: "Indicações",     sub: "Convida e ganha passivamente" },
-  { href: "/faq",           label: "FAQ",            sub: "Dúvidas frequentes" },
+  { href: "/como-funciona", label: "Como funciona", sub: "Do envio ao pagamento, passo a passo" },
+  { href: "/ganhos",        label: "Ganhos",         sub: "O que ganhas e como recebes" },
+  { href: "/indicacoes",    label: "Indicações",     sub: "Indica amigos e ganha bónus" },
+  { href: "/faq",           label: "FAQ",            sub: "Perguntas frequentes" },
 ];
 
 export function MobileNav({ registerHref = "/register" }: { registerHref?: string }) {

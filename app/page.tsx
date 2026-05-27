@@ -100,7 +100,7 @@ export default async function Home({
           {/* Badge animado */}
           <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#00E07A]/25 bg-[#00E07A]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#16F28A] shadow-[0_0_28px_rgba(0,224,122,0.12)] lg:mx-0">
             <span className="dot-pulse inline-block h-1.5 w-1.5 rounded-full bg-[#00E07A]" />
-            Plataforma operacional para captadores
+            Envie contas. Ganhe na hora.
           </p>
 
           <h1
@@ -120,8 +120,8 @@ export default async function Home({
             className="mx-auto mt-6 max-w-xl leading-[1.65] text-[#94958e] lg:mx-0"
             style={{ fontSize: "clamp(0.95rem, 1.8vw, 1.1rem)", letterSpacing: "-0.01em" }}
           >
-            Painel em tempo real, ganhos por validação, sistema de indicação e
-            pagamentos organizados — tudo num só lugar.
+            Envia contas pelo painel, acompanha o status e recebe o pagamento
+            com comprovante — simples assim.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
@@ -155,7 +155,7 @@ export default async function Home({
 
           {/* Trust chips */}
           <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
-            {["Painel real-time", "Ganhos por validação", "Indicação", "Pagamentos"].map(
+            {["Ganhos por conta", "Indicação com bónus", "Pagamento com comprovante"].map(
               (chip, i) => (
                 <span
                   className="hero-chip rounded-full border border-[rgba(233,235,223,0.10)] bg-[rgba(255,255,255,0.03)] px-3.5 py-1.5 text-xs font-bold tracking-wide text-[#94958e]"
@@ -256,7 +256,7 @@ export default async function Home({
             Simples do envio ao pagamento.
           </h2>
           <p className="mt-3 max-w-xl text-base leading-7 text-[#5f6059]">
-            Quatro etapas claras. Nenhuma burocracia no meio.
+            Do cadastro ao pagamento em poucos passos.
           </p>
         </div>
 
@@ -265,29 +265,29 @@ export default async function Home({
             {
               step: "01",
               icon: <IconSend />,
-              title: "Enviás a conta",
-              body: "Submetes o identificador e credenciais protegidas. O sistema regista e coloca na fila.",
+              title: "Cadastra e acessa",
+              body: "Crias a conta, aguardas aprovação e já tens acesso ao painel para começar.",
               delay: "reveal-delay-1",
             },
             {
               step: "02",
               icon: <IconQueue />,
-              title: "Entra na fila",
-              body: "A conta fica pendente e disponível para o operador designado por ordem de chegada.",
+              title: "Enviás a conta",
+              body: "Submetes os dados pelo painel. Rápido e seguro.",
               delay: "reveal-delay-2",
             },
             {
               step: "03",
               icon: <IconOperator />,
-              title: "Operador trabalha",
-              body: "O operador opera no prazo de SLA. Informa o destino do saldo ao terminar.",
+              title: "Aguardas validação",
+              body: "A conta entra em processamento. Acompanhas o status no teu painel em tempo real.",
               delay: "reveal-delay-3",
             },
             {
               step: "04",
               icon: <IconPix />,
-              title: "Recebès o ganho",
-              body: "Comissão creditada automaticamente, com histórico e comprovante sempre disponíveis.",
+              title: "Recebes o pagamento",
+              body: "Comissão creditada automaticamente com comprovante. Sabes sempre o que recebeste.",
               delay: "reveal-delay-4",
             },
           ].map((item) => (
@@ -316,10 +316,10 @@ export default async function Home({
           <p className="section-label mb-5 text-[#3f403d]">Fluxo em tempo real</p>
           <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center sm:justify-between sm:gap-2">
             {[
-              { label: "Captador", sub: "envia conta" },
-              { label: "Fila", sub: "pendente" },
-              { label: "Operador", sub: "em operação" },
-              { label: "Pix", sub: "pago" },
+              { label: "Envio", sub: "submetes a conta" },
+              { label: "Processamento", sub: "aguardas" },
+              { label: "Validação", sub: "conta aprovada" },
+              { label: "Pagamento", sub: "recebes" },
             ].map((node, i) => (
               <div className="flex flex-col items-center gap-2 sm:flex-1" key={node.label}>
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#00E07A]/25 bg-[#00E07A]/10 text-[#16F28A]">
@@ -373,37 +373,37 @@ export default async function Home({
             {
               icon: <IconChart />,
               title: "Painel em tempo real",
-              body: "Acompanhas contas enviadas, status, ganhos acumulados e indicações numa única vista.",
+              body: "Acompanhas todas as contas enviadas, o estado de cada uma e os teus ganhos acumulados.",
               delay: "reveal-delay-1",
             },
             {
               icon: <IconMoney />,
-              title: "Ganhos por validação",
-              body: "Cada conta operada com sucesso gera comissão automática, registada com histórico completo.",
+              title: "Ganhos por conta",
+              body: "A cada conta processada, a tua comissão é creditada automaticamente.",
               delay: "reveal-delay-2",
             },
             {
               icon: <IconUsers />,
-              title: "Sistema de indicação",
-              body: "Indica outros captadores e acumula bónus progressivos por cada validação do teu indicado.",
+              title: "Indicação com bónus",
+              body: "Indica outros captadores e acumulas bónus a cada conta que eles enviarem.",
               delay: "reveal-delay-3",
             },
             {
               icon: <IconShield />,
-              title: "Credenciais protegidas",
-              body: "Palavras-passe e dados sensíveis cifrados no servidor. Nunca expostos ao cliente.",
+              title: "Dados seguros",
+              body: "Os teus dados ficam protegidos. Envias à vontade sem preocupações.",
               delay: "reveal-delay-4",
             },
             {
               icon: <IconClock />,
-              title: "SLA garantido",
-              body: "Contas têm prazo máximo de operação. Se o SLA expirar, a conta é redistribuída automaticamente.",
+              title: "Pagamentos no prazo",
+              body: "As contas são processadas com agilidade. Não ficas à espera sem resposta.",
               delay: "reveal-delay-5",
             },
             {
               icon: <IconMobile />,
-              title: "Acesso em qualquer lugar",
-              body: "Painel acessível de qualquer dispositivo. Rápido, responsivo e sem fricção.",
+              title: "Comprovante sempre disponível",
+              body: "Cada pagamento fica registado com comprovante. Sabes sempre o que recebeste e quando.",
               delay: "reveal-delay-6",
             },
           ].map((feat) => (
@@ -448,7 +448,7 @@ export default async function Home({
             {" "}as tuas captações?
           </h2>
           <p className="relative mx-auto mt-5 max-w-lg text-base leading-7 text-[#5f6059]">
-            Cria a tua conta gratuitamente e começa a registar contas, acompanhar ganhos e receber pagamentos organizados.
+            Cria a tua conta, envia as primeiras contas e começa a receber. Simples assim.
           </p>
 
           <div className="relative mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
