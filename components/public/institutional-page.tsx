@@ -137,9 +137,6 @@ export function TrustPaymentBlock() {
       </h2>
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         <p className="rounded-3xl border border-white/[0.08] bg-black/20 p-4 text-sm font-semibold leading-6 text-zinc-200">
-          Já transacionamos mais de 2 milhões.
-        </p>
-        <p className="rounded-3xl border border-white/[0.08] bg-black/20 p-4 text-sm font-semibold leading-6 text-zinc-200">
           Temos referências e operação acompanhada por histórico.
         </p>
         <p className="rounded-3xl border border-white/[0.08] bg-black/20 p-4 text-sm font-semibold leading-6 text-zinc-200">
