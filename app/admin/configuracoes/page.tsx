@@ -192,6 +192,29 @@ export default async function AdminConfiguracoesPage({
           />
           Exigir print no envio de conta nova
         </label>
+
+        <div className="sm:col-span-2 rounded-2xl border border-amber-400/30 bg-amber-500/5 p-4 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-400">Confirmação de selfie</p>
+          <label className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-200">
+            <input
+              defaultChecked={values.require_selfie_confirmation === true}
+              name="requireSelfieConfirmation"
+              type="checkbox"
+            />
+            Exigir confirmação de selfie antes de enviar conta
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold text-[#A1A1AA]">Texto do checkbox (deixe em branco para usar o padrão)</span>
+            <textarea
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm dark:border-white/10 dark:bg-slate-950/70 dark:text-white resize-none"
+              defaultValue={typeof values.selfie_confirmation_message === "string" ? values.selfie_confirmation_message : ""}
+              name="selfieConfirmationMessage"
+              placeholder="Já fiz a verificação facial (selfie) na plataforma. Sei que sem isso a conta não fica ativa e não pode ser operada."
+              rows={3}
+            />
+          </label>
+        </div>
+
           <Button className="sm:col-span-2" type="submit">
             Salvar configurações
           </Button>

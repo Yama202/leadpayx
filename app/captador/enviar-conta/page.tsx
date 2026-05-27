@@ -5,15 +5,16 @@ import { LinkButton } from "@/components/ui/button";
 import { isEncryptionConfigured } from "@/lib/account-credentials-crypto";
 import { requireRole } from "@/lib/auth";
 import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
-import { getWhatsappGroupUrl } from "@/lib/settings";
+import { getSelfieConfirmationSettings, getWhatsappGroupUrl } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function EnviarContaPage() {
   const profile = await requireRole(["captador"]);
-  const [promotionOffers, whatsappUrl] = await Promise.all([
+  const [promotionOffers, whatsappUrl, selfieSettings] = await Promise.all([
     fetchActivePromotionOffers(),
     getWhatsappGroupUrl(),
+    getSelfieConfirmationSettings(),
   ]);
 
 
@@ -70,7 +71,11 @@ export default async function EnviarContaPage() {
           <p className="mt-1 text-xs text-[#A1A1AA]">Senha cifrada no servidor. Apenas neste formulário.</p>
         </div>
         {credentialsConfigured ? (
-          <SubmitAccountForm offers={promotionOffers} />
+          <SubmitAccountForm
+            offers={promotionOffers}
+            selfieRequired={selfieSettings.required}
+            selfieMessage={selfieSettings.message}
+          />
         ) : null}
       </div>
     </RoleBasedLayout>

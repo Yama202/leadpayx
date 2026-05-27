@@ -199,6 +199,21 @@ export async function submitAccountAction(
     };
   }
 
+  const { data: selfieSetting } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "require_selfie_confirmation")
+    .maybeSingle();
+  const requireSelfieConfirmation = coerceAppSettingBoolean(selfieSetting?.value);
+  const selfieConfirmed = formData.get("selfieConfirmed") === "on";
+
+  if (requireSelfieConfirmation && !selfieConfirmed) {
+    return {
+      ok: false,
+      message: "Confirme que já fez a verificação facial (selfie) antes de enviar.",
+    };
+  }
+
   let accountPrintPath: string | null = null;
 
   if (hasPrintFile && printFile instanceof File) {
@@ -1186,6 +1201,8 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
     ["operational_min_batch_size", parsed.data.operationalMinBatchSize],
     ["whatsapp_group_url", parsed.data.whatsappGroupUrl],
     ["require_new_account_print", parsed.data.requireNewAccountPrint],
+    ["require_selfie_confirmation", parsed.data.requireSelfieConfirmation],
+    ["selfie_confirmation_message", parsed.data.selfieConfirmationMessage ?? null],
   ] as const;
 
   await Promise.all(

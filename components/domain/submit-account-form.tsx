@@ -10,7 +10,15 @@ import type { PromotionOffer } from "@/lib/types";
 const fieldClass =
   "mt-2 min-h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base text-white outline-none transition-colors duration-200 placeholder:text-zinc-500 focus:border-[#00E07A] focus:ring-4 focus:ring-[#00E07A]/10";
 
-export function SubmitAccountForm({ offers = [] }: { offers?: PromotionOffer[] }) {
+export function SubmitAccountForm({
+  offers = [],
+  selfieRequired = false,
+  selfieMessage = "",
+}: {
+  offers?: PromotionOffer[];
+  selfieRequired?: boolean;
+  selfieMessage?: string;
+}) {
   const id = useId();
   const [showPassword, setShowPassword] = useState(false);
   const [selectedOfferId, setSelectedOfferId] = useState<string>(() => offers[0]?.id ?? "");
@@ -153,6 +161,20 @@ export function SubmitAccountForm({ offers = [] }: { offers?: PromotionOffer[] }
               Obrigatório quando a regra global estiver ativa. Imagens ou PDF até 5MB.
             </span>
           </label>
+          {selfieRequired ? (
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-amber-400/40 bg-amber-500/10 px-4 py-4 transition-colors has-[:checked]:border-[#00E07A]/50 has-[:checked]:bg-[#00E07A]/8">
+              <input
+                required
+                className="mt-0.5 h-5 w-5 shrink-0 accent-[#00E07A]"
+                name="selfieConfirmed"
+                type="checkbox"
+                value="on"
+              />
+              <span className="text-sm font-semibold leading-6 text-zinc-200">
+                {selfieMessage}
+              </span>
+            </label>
+          ) : null}
           {offers.length > 0 ? (
             <SubmitButton pendingLabel="A enviar…">Enviar para fila</SubmitButton>
           ) : null}

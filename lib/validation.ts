@@ -280,6 +280,11 @@ export const appSettingsSchema = z.object({
     .string()
     .optional()
     .transform((value) => value === "on"),
+  requireSelfieConfirmation: z
+    .string()
+    .optional()
+    .transform((value) => value === "on"),
+  selfieConfirmationMessage: z.string().trim().max(300).optional(),
 });
 
 export const captadorDepositBriefSchema = z.object({
