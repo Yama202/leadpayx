@@ -267,6 +267,18 @@ export async function completeProfileAction(
         .single<Profile>();
 
   if (error || !profile) {
+    const pgCode = (error as { code?: string } | null)?.code;
+    const detail = (error as { details?: string; message?: string } | null)?.details ?? "";
+    if (pgCode === "23505") {
+      if (detail.includes("pix_key") || detail.includes("pix")) {
+        return { ok: false, message: "Esta chave Pix já está cadastrada em outra conta." };
+      }
+      if (detail.includes("whatsapp")) {
+        return { ok: false, message: "Este WhatsApp já está cadastrado em outra conta." };
+      }
+      return { ok: false, message: "Um dos dados informados já está em uso por outra conta." };
+    }
+    console.error("[completeProfileAction] db error:", error);
     return { ok: false, message: "Não foi possível completar seu perfil." };
   }
 
