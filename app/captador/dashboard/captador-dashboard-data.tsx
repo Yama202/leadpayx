@@ -7,7 +7,7 @@ import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
-import { getCaptadorMinDepositRequirementBrl } from "@/lib/captador-deposit-requirement";
+import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
 import { toCurrency } from "@/lib/payments";
 import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referrals";
 import { getWhatsappGroupUrl } from "@/lib/settings";
@@ -41,7 +41,7 @@ type DashboardEarning = {
 
 export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
   const supabase = await createClient();
-  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, minDepositBrl, whatsappUrl, notificationsRes, pushCountRes] =
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, promotionOffers, whatsappUrl, notificationsRes, pushCountRes] =
     await Promise.all([
       supabase
         .from("accounts")
@@ -73,7 +73,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
           "referral_utm_campaign",
         ])
         .returns<AppSetting[]>(),
-      getCaptadorMinDepositRequirementBrl(profile.id),
+      fetchActivePromotionOffers(),
       getWhatsappGroupUrl(),
       supabase
         .from("user_notifications")
@@ -151,9 +151,13 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
       ? process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
       : null;
 
+  const depositOffers = promotionOffers
+    .filter((o) => o.min_deposit_brl != null && Number(o.min_deposit_brl) > 0)
+    .map((o) => ({ name: o.name, minDepositBrl: Number(o.min_deposit_brl) }));
+
   return (
     <>
-      {minDepositBrl != null ? <CaptadorDepositBriefBanner minDepositBrl={Number(minDepositBrl)} /> : null}
+      {depositOffers.length > 0 ? <CaptadorDepositBriefBanner offers={depositOffers} /> : null}
       <CaptadorPushSettings subscriptionCountServer={pushSubscriptionCount} vapidPublicKey={pushPublicKey} />
       <CaptadorNotificationsSection compact notifications={notificationsPreview} />
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

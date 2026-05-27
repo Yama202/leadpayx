@@ -8,7 +8,6 @@ import {
   quotePostgrestFilterValue,
   sanitizeIlikeSearchTerm,
 } from "@/lib/search-utils";
-import type { CaptadorSubmissionBrief } from "@/lib/types";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -60,30 +59,24 @@ export default async function AdminCaptadoresPage({
     .eq("status", "pending_approval")
     .order("created_at", { ascending: false });
 
-  const captadorIds = (captadores ?? []).map((c) => c.id).filter(Boolean);
-
-  let briefs: CaptadorSubmissionBrief[] = [];
-
+  // Contas de todos os captadores visíveis (batch)
+  const captadorIds = (captadores ?? []).map((c) => c.id);
+  const accountsByCaptadorId = new Map<string, import("@/lib/types").Account[]>();
   if (captadorIds.length > 0) {
-    const { data: briefRows, error: briefError } = await supabase
-      .from("captador_submission_briefs")
-      .select("captador_id, min_deposit_brl, updated_at, updated_by")
-      .in("captador_id", captadorIds);
-
-    if (briefError) {
-      console.error("captador_submission_briefs fetch failed:", briefError);
-    } else {
-      briefs = (briefRows ?? []) as CaptadorSubmissionBrief[];
+    const { data: allAccounts } = await supabase
+      .from("accounts")
+      .select("id,captador_id,account_identifier,lead_account_email,status,created_at,completed_at,rejection_reason,operator_balance_destination")
+      .in("captador_id", captadorIds)
+      .order("created_at", { ascending: false });
+    for (const acc of allAccounts ?? []) {
+      const list = accountsByCaptadorId.get(acc.captador_id) ?? [];
+      list.push(acc as import("@/lib/types").Account);
+      accountsByCaptadorId.set(acc.captador_id, list);
     }
   }
 
-  const briefByCaptadorId = new Map<string, CaptadorSubmissionBrief>(
-    briefs.map((b) => [b.captador_id, b]),
-  );
-
   const count = captadores?.length ?? 0;
-  const countLabel =
-    count === 1 ? "1 captador encontrado" : `${count} captadores encontrados`;
+  const countLabel = count === 1 ? "1 captador encontrado" : `${count} captadores encontrados`;
 
   return (
     <RoleBasedLayout
@@ -194,7 +187,7 @@ export default async function AdminCaptadoresPage({
         <div className="mx-auto flex max-w-4xl flex-col gap-2">
           {captadores?.map((captador) => (
             <CaptadorAdminListItem
-              depositBrief={briefByCaptadorId.get(captador.id) ?? null}
+              accounts={accountsByCaptadorId.get(captador.id) ?? []}
               key={captador.id}
               profile={captador}
             />

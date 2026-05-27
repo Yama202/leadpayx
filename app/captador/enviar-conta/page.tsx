@@ -4,17 +4,21 @@ import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { LinkButton } from "@/components/ui/button";
 import { isEncryptionConfigured } from "@/lib/account-credentials-crypto";
 import { requireRole } from "@/lib/auth";
-import { getCaptadorMinDepositRequirementBrl } from "@/lib/captador-deposit-requirement";
+import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
 import { getWhatsappGroupUrl } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function EnviarContaPage() {
   const profile = await requireRole(["captador"]);
-  const [brief, whatsappUrl] = await Promise.all([
-    getCaptadorMinDepositRequirementBrl(profile.id),
+  const [promotionOffers, whatsappUrl] = await Promise.all([
+    fetchActivePromotionOffers(),
     getWhatsappGroupUrl(),
   ]);
+
+  const depositOffers = promotionOffers
+    .filter((o) => o.min_deposit_brl != null && Number(o.min_deposit_brl) > 0)
+    .map((o) => ({ name: o.name, minDepositBrl: Number(o.min_deposit_brl) }));
 
   const credentialsConfigured = isEncryptionConfigured();
 
@@ -42,7 +46,7 @@ export default async function EnviarContaPage() {
           <p className="mt-1 text-xs text-[#A1A1AA]">Senha cifrada no servidor. Apenas neste formulário.</p>
         </div>
         {credentialsConfigured ? (
-          <SubmitAccountForm depositBriefMinBrl={brief ?? null} />
+          <SubmitAccountForm depositOffers={depositOffers} />
         ) : null}
       </div>
     </RoleBasedLayout>

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
+import { CaptadorDepositBriefBanner, type DepositOffer } from "@/components/domain/captador-deposit-brief-banner";
 import { ActionForm, Field, SubmitButton, TextArea } from "@/components/ui/forms";
 import { submitAccountAction } from "@/lib/actions/domain";
 import { initialActionState } from "@/lib/validation";
@@ -10,16 +10,17 @@ import { initialActionState } from "@/lib/validation";
 const fieldClass =
   "mt-2 min-h-12 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 text-base text-white outline-none transition-colors duration-200 placeholder:text-zinc-500 focus:border-[#00E07A] focus:ring-4 focus:ring-[#00E07A]/10";
 
-export function SubmitAccountForm({ depositBriefMinBrl }: { depositBriefMinBrl?: number | null }) {
+export function SubmitAccountForm({ depositOffers = [] }: { depositOffers?: DepositOffer[] }) {
   const id = useId();
   const [showPassword, setShowPassword] = useState(false);
+  const minDepositBrl = depositOffers.length > 0 ? Math.min(...depositOffers.map((o) => o.minDepositBrl)) : null;
 
   return (
     <ActionForm action={submitAccountAction} initialState={initialActionState}>
       {(state) => (
         <>
-          {depositBriefMinBrl != null && depositBriefMinBrl > 0 ? (
-            <CaptadorDepositBriefBanner minDepositBrl={depositBriefMinBrl} />
+          {depositOffers.length > 0 ? (
+            <CaptadorDepositBriefBanner offers={depositOffers} />
           ) : null}
           <Field
             error={state.fieldErrors?.accountIdentifier}
@@ -70,12 +71,12 @@ export function SubmitAccountForm({ depositBriefMinBrl }: { depositBriefMinBrl?:
             name="accountNotes"
             placeholder="Contexto extra: campanha, restrições, observações que não são login/senha"
           />
-          {depositBriefMinBrl != null && depositBriefMinBrl > 0 ? (
+          {minDepositBrl != null ? (
             <Field
               error={state.fieldErrors?.declaredDepositBrl}
               label="Valor já depositado (BRL)"
               name="declaredDepositBrl"
-              placeholder={`Ex.: ${depositBriefMinBrl.toFixed(2)}`}
+              placeholder={`Ex.: ${minDepositBrl.toFixed(2)}`}
               required
               step="0.01"
               type="number"

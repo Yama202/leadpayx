@@ -1,6 +1,6 @@
 import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
 import { ProfileAdminEditor } from "@/components/admin/profile-admin-editor";
-import type { CaptadorSubmissionBrief, Profile } from "@/lib/types";
+import type { Account, Profile } from "@/lib/types";
 
 function statusPill(status: string | null | undefined) {
   if (status === "pending_approval") {
@@ -24,29 +24,30 @@ function statusPill(status: string | null | undefined) {
   );
 }
 
-function depositPill(hasBrief: boolean) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide ${
-        hasBrief
-          ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/25"
-          : "bg-white/5 text-zinc-500 ring-1 ring-white/10"
-      }`}
-    >
-      {hasBrief ? "Depósito" : "Sem depósito"}
-    </span>
-  );
-}
+const ACCOUNT_STATUS_LABEL: Record<string, string> = {
+  pending: "Pendente",
+  assigned: "Atribuída",
+  in_progress: "Em andamento",
+  completed: "Concluída",
+  rejected: "Rejeitada",
+};
+
+const ACCOUNT_STATUS_CLASS: Record<string, string> = {
+  pending: "bg-zinc-500/15 text-zinc-300 ring-1 ring-zinc-500/20",
+  assigned: "bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/25",
+  in_progress: "bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/25",
+  completed: "bg-[#00E07A]/12 text-[#16F28A] ring-1 ring-[#00E07A]/25",
+  rejected: "bg-rose-500/12 text-rose-300 ring-1 ring-rose-400/20",
+};
 
 export function CaptadorAdminListItem({
   profile,
-  depositBrief,
+  accounts = [],
 }: {
   profile: Profile;
-  depositBrief: CaptadorSubmissionBrief | null;
+  accounts?: Account[];
 }) {
   const displayName = profile.name?.trim() || profile.email || "Sem nome";
-  const hasDepositBrief = Boolean(depositBrief);
 
   return (
     <details
@@ -64,7 +65,11 @@ export function CaptadorAdminListItem({
           <div className="flex flex-wrap items-center gap-2 gap-y-1">
             <span className="truncate text-base font-black tracking-tight text-white">{displayName}</span>
             {statusPill(profile.status)}
-            {depositPill(hasDepositBrief)}
+            {accounts.length > 0 ? (
+              <span className="inline-flex shrink-0 items-center rounded-full bg-white/8 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-zinc-400 ring-1 ring-white/10">
+                {accounts.length} {accounts.length === 1 ? "conta" : "contas"}
+              </span>
+            ) : null}
           </div>
           <p className="mt-0.5 truncate text-sm text-zinc-400">{profile.email}</p>
         </div>
@@ -91,8 +96,37 @@ export function CaptadorAdminListItem({
             <ApproveCaptadorButton profileId={profile.id} />
           </div>
         ) : null}
+        {accounts.length > 0 ? (
+          <div className="mb-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] overflow-hidden">
+            <p className="px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500 border-b border-white/[0.06]">
+              Contas enviadas · {accounts.length}
+            </p>
+            <div className="divide-y divide-white/[0.05]">
+              {accounts.map((acc) => (
+                <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4" key={acc.id}>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-white">{acc.account_identifier}</p>
+                    <p className="truncate text-xs text-zinc-400">{acc.lead_account_email ?? "—"}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide ${ACCOUNT_STATUS_CLASS[acc.status] ?? "bg-zinc-500/15 text-zinc-300"}`}>
+                      {ACCOUNT_STATUS_LABEL[acc.status] ?? acc.status}
+                    </span>
+                    <span className="text-[11px] text-zinc-600">
+                      {new Date(acc.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4 rounded-2xl border border-dashed border-white/[0.07] px-4 py-3 text-xs text-zinc-600">
+            Nenhuma conta enviada ainda.
+          </div>
+        )}
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
-          <ProfileAdminEditor dangerZone="collapsed" depositBrief={depositBrief} profile={profile} />
+          <ProfileAdminEditor dangerZone="collapsed" profile={profile} />
         </div>
       </div>
     </details>

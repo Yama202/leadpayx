@@ -1,15 +1,19 @@
 import { toCurrency } from "@/lib/payments";
 
-/** Aviso curto quando o admin exige comprovante de depósito mínimo nos envios. */
-export function CaptadorDepositBriefBanner({ minDepositBrl }: { minDepositBrl: number }) {
+export type DepositOffer = { name: string; minDepositBrl: number };
+
+/** Aviso de depósito mínimo exigido por oferta ativa. */
+export function CaptadorDepositBriefBanner({ offers }: { offers: DepositOffer[] }) {
+  if (!offers.length) return null;
+
   return (
     <div
-      className="mb-4 flex min-h-12 items-center gap-3 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-50"
+      className="mb-4 flex gap-3 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-50"
       role="status"
     >
       <span
         aria-hidden
-        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/20"
+        className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/20"
       >
         <svg
           aria-hidden
@@ -23,12 +27,17 @@ export function CaptadorDepositBriefBanner({ minDepositBrl }: { minDepositBrl: n
         </svg>
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-black text-white">Envio com depósito</p>
-        <p className="mt-0.5 text-xs text-amber-100/95">
-          Valor mínimo já depositado exigido: <strong>{toCurrency(minDepositBrl)}</strong>.
-        </p>
-        <p className="mt-1 text-xs text-amber-100/90">
-          Esse valor permanecerá em uma das contas e poderá ser sacado somente pelo titular da conta.
+        <p className="font-black text-white">Depósito mínimo por oferta</p>
+        <ul className="mt-1.5 space-y-0.5">
+          {offers.map((o) => (
+            <li className="flex items-center justify-between gap-2 text-xs" key={o.name}>
+              <span className="text-amber-100/90">{o.name}</span>
+              <span className="font-black text-white">{toCurrency(o.minDepositBrl)}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-xs text-amber-100/70">
+          Valor permanece na conta e só pode ser sacado pelo titular.
         </p>
       </div>
     </div>
