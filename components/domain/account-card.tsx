@@ -36,6 +36,11 @@ export function AccountCard({
           <h3 className="mt-2 text-xl font-black tracking-tight text-white">
             {account.account_identifier}
           </h3>
+          {account.promotion_offer_name ? (
+            <span className="mt-1.5 inline-flex items-center rounded-full bg-[#00E07A]/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-[#16F28A] ring-1 ring-[#00E07A]/25">
+              {account.promotion_offer_name}
+            </span>
+          ) : null}
         </div>
         <StatusBadge status={account.status} />
       </div>

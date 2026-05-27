@@ -16,9 +16,6 @@ export default async function EnviarContaPage() {
     getWhatsappGroupUrl(),
   ]);
 
-  const depositOffers = promotionOffers
-    .filter((o) => o.min_deposit_brl != null && Number(o.min_deposit_brl) > 0)
-    .map((o) => ({ name: o.name, minDepositBrl: Number(o.min_deposit_brl) }));
 
   const credentialsConfigured = isEncryptionConfigured();
 
@@ -46,7 +43,7 @@ export default async function EnviarContaPage() {
           <p className="mt-1 text-xs text-[#A1A1AA]">Senha cifrada no servidor. Apenas neste formulário.</p>
         </div>
         {credentialsConfigured ? (
-          <SubmitAccountForm depositOffers={depositOffers} />
+          <SubmitAccountForm offers={promotionOffers} />
         ) : null}
       </div>
     </RoleBasedLayout>

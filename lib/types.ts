@@ -59,6 +59,9 @@ export type Account = {
   completed_by_operador_id?: string | null;
   /** Informado pelo operador ao finalizar: destino/conta do saldo (visível ao captador). */
   operator_balance_destination?: string | null;
+  /** Oferta/casa selecionada pelo captador no envio. */
+  promotion_offer_id?: string | null;
+  promotion_offer_name?: string | null;
 };
 
 export type Earning = {

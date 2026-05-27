@@ -151,6 +151,23 @@ export async function submitAccountAction(
   }
 
   const supabase = await createClient();
+
+  // Valida oferta selecionada
+  const { data: selectedOffer, error: offerError } = await supabase
+    .from("promotion_offers")
+    .select("id,name,min_deposit_brl,status")
+    .eq("id", parsed.data.promotionOfferId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (offerError || !selectedOffer) {
+    return {
+      ok: false,
+      message: "A oferta selecionada não está mais disponível. Recarregue a página e tente novamente.",
+      fieldErrors: { promotionOfferId: ["Oferta indisponível ou encerrada."] },
+    };
+  }
+
   const { data: printSetting } = await supabase
     .from("app_settings")
     .select("value")
@@ -158,16 +175,16 @@ export async function submitAccountAction(
     .maybeSingle();
   const requireNewAccountPrint = coerceAppSettingBoolean(printSetting?.value);
 
-  const minDepositRequired = Number((await getCaptadorMinDepositRequirementBrl(profile.id)) ?? 0);
+  const minDepositRequired = Number(selectedOffer.min_deposit_brl ?? 0);
   const declaredDeposit = parsed.data.declaredDepositBrl ?? null;
   if (minDepositRequired > 0) {
     if (declaredDeposit == null) {
-      return { ok: false, message: "Informe o valor já depositado para continuar." };
+      return { ok: false, message: `Informe o valor já depositado na ${selectedOffer.name} para continuar.` };
     }
     if (declaredDeposit < minDepositRequired) {
       return {
         ok: false,
-        message: `Envio bloqueado: o valor já depositado deve ser no mínimo R$ ${minDepositRequired.toFixed(2)}.`,
+        message: `Envio bloqueado: o depósito na ${selectedOffer.name} deve ser no mínimo R$ ${minDepositRequired.toFixed(2)}.`,
       };
     }
   }
@@ -227,6 +244,8 @@ export async function submitAccountAction(
       lead_account_secret_cipher: secretCipher,
       account_print_path: accountPrintPath,
       source_registration_link_id: profile.registration_link_id,
+      promotion_offer_id: selectedOffer.id,
+      promotion_offer_name: selectedOffer.name,
       status: "pending",
     })
     .select("id")

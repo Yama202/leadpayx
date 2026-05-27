@@ -105,17 +105,25 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
           : "Informa em texto para onde foi o saldo; o captador lê essa mensagem na conta finalizada. Ou recusa a conta."}
       </p>
 
-      {ordered.length > 1 ? (
-        <ul className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+      {/* Casa/oferta de cada conta — visível antes de qualquer ação */}
+      <ul className="mt-4 space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+        {ordered.length > 1 ? (
           <li className="font-semibold text-zinc-300">Ordem do ciclo (atribuição)</li>
-          {ordered.map((acc, idx) => (
-            <li className="flex flex-wrap items-baseline gap-2 text-zinc-400" key={acc.id}>
+        ) : null}
+        {ordered.map((acc, idx) => (
+          <li className="flex flex-wrap items-center gap-x-3 gap-y-1 text-zinc-400" key={acc.id}>
+            {ordered.length > 1 ? (
               <span className="tabular-nums font-bold text-zinc-500">{idx + 1}.</span>
-              <span className="font-mono font-bold text-white">{acc.account_identifier}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+            ) : null}
+            <span className="font-mono font-bold text-white">{acc.account_identifier}</span>
+            {acc.promotion_offer_name ? (
+              <span className="inline-flex items-center rounded-full bg-[#00E07A]/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-[#16F28A] ring-1 ring-[#00E07A]/25">
+                {acc.promotion_offer_name}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
 
       <div className="mt-6 space-y-6">
         {canFinalizeCycle ? (
@@ -146,7 +154,7 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
                         className="flex cursor-pointer flex-col gap-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 has-[:checked]:border-[#00E07A]/60 has-[:checked]:ring-1 has-[:checked]:ring-[#00E07A]/30"
                         key={acc.id}
                       >
-                        <span className="flex items-center gap-3">
+                        <span className="flex flex-wrap items-center gap-2">
                           <input
                             checked={balanceTargetAccountId === acc.id}
                             className="accent-[#00E07A]"
@@ -162,6 +170,11 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
                           <span className="font-mono text-sm font-bold text-white">
                             {acc.account_identifier}
                           </span>
+                          {acc.promotion_offer_name ? (
+                            <span className="inline-flex items-center rounded-full bg-[#00E07A]/10 px-2 py-0.5 text-[11px] font-black uppercase tracking-wide text-[#16F28A] ring-1 ring-[#00E07A]/20">
+                              {acc.promotion_offer_name}
+                            </span>
+                          ) : null}
                           <span className="text-xs text-zinc-500">({idx + 1}.ª no ciclo)</span>
                         </span>
                       </label>
