@@ -77,7 +77,7 @@ export function CaptadorPushSettings(props: {
 
     startTransition(async () => {
       try {
-        const reg = await navigator.serviceWorker.register("/push-sw.js", { scope: "/" });
+        const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
         await navigator.serviceWorker.ready;
 
         const perm =

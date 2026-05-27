@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sem conexão — LeadPayX</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: #050706;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 360px;
+      border: 1px solid rgba(233,235,223,0.09);
+      border-radius: 2rem;
+      background: rgba(255,255,255,0.03);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 24px 80px rgba(0,0,0,0.5);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    .icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1.5rem;
+      border-radius: 1rem;
+      background: rgba(0,224,122,0.1);
+      border: 1px solid rgba(0,224,122,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon svg { width: 28px; height: 28px; }
+    .label {
+      font-family: "SF Mono", "Fira Mono", monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: rgba(0,224,122,0.6);
+      margin-bottom: 0.75rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #e9ebdf;
+      line-height: 1.1;
+      margin-bottom: 0.75rem;
+    }
+    p {
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: #5f6059;
+      margin-bottom: 2rem;
+    }
+    button {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 1rem;
+      border: none;
+      background: #00E07A;
+      color: #031008;
+      font-size: 0.875rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 28px rgba(0,224,122,0.28);
+      transition: background 0.2s;
+    }
+    button:hover { background: #16F28A; }
+    .brand {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(233,235,223,0.2);
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg fill="none" stroke="#00E07A" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="label">Conexão</p>
+    <h1>Sem internet</h1>
+    <p>Verifique sua conexão Wi-Fi ou dados móveis e tente novamente.</p>
+    <button onclick="location.reload()">Tentar novamente</button>
+    <p class="brand">LeadPayX</p>
+  </div>
+</body>
+</html>

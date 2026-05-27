@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { ServiceWorkerInit } from "@/components/layout/service-worker-init";
 import { SupabaseResourceHints } from "@/components/layout/supabase-resource-hints";
 import "./globals.css";
 
@@ -70,7 +71,10 @@ export default function RootLayout({
       <head>
         <SupabaseResourceHints />
       </head>
-      <body className="min-h-full bg-[#050706] text-white">{children}</body>
+      <body className="min-h-full bg-[#050706] text-white">
+        <ServiceWorkerInit />
+        {children}
+      </body>
     </html>
   );
 }
