@@ -155,7 +155,7 @@ export default async function Home({
 
           {/* Trust chips */}
           <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
-            {["Ganhos por conta", "Indicação com bónus", "Pagamento com comprovante"].map(
+            {["Ganhos por conta", "Indicação com bônus", "Pagamento com comprovante"].map(
               (chip, i) => (
                 <span
                   className="hero-chip rounded-full border border-[rgba(233,235,223,0.10)] bg-[rgba(255,255,255,0.03)] px-3.5 py-1.5 text-xs font-bold tracking-wide text-[#94958e]"
@@ -266,7 +266,7 @@ export default async function Home({
               step: "01",
               icon: <IconSend />,
               title: "Cadastra e acessa",
-              body: "Crias a conta, aguardas aprovação e já tens acesso ao painel para começar.",
+              body: "Crie sua conta, aguarde a aprovação e já tenha acesso ao painel para começar.",
               delay: "reveal-delay-1",
             },
             {
@@ -279,15 +279,15 @@ export default async function Home({
             {
               step: "03",
               icon: <IconOperator />,
-              title: "Aguardas validação",
-              body: "A conta entra em processamento. Acompanhas o status no teu painel em tempo real.",
+              title: "Aguarde a validação",
+              body: "A conta entra em processamento. Acompanhe o status no seu painel em tempo real.",
               delay: "reveal-delay-3",
             },
             {
               step: "04",
               icon: <IconPix />,
-              title: "Recebes o pagamento",
-              body: "Comissão creditada automaticamente com comprovante. Sabes sempre o que recebeste.",
+              title: "Receba o pagamento",
+              body: "Comissão creditada automaticamente com comprovante. Você sabe sempre o que recebeu.",
               delay: "reveal-delay-4",
             },
           ].map((item) => (
@@ -316,10 +316,10 @@ export default async function Home({
           <p className="section-label mb-5 text-[#3f403d]">Fluxo em tempo real</p>
           <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center sm:justify-between sm:gap-2">
             {[
-              { label: "Envio", sub: "submetes a conta" },
-              { label: "Processamento", sub: "aguardas" },
+              { label: "Envio", sub: "você envia" },
+              { label: "Processamento", sub: "você aguarda" },
               { label: "Validação", sub: "conta aprovada" },
-              { label: "Pagamento", sub: "recebes" },
+              { label: "Pagamento", sub: "você recebe" },
             ].map((node, i) => (
               <div className="flex flex-col items-center gap-2 sm:flex-1" key={node.label}>
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#00E07A]/25 bg-[#00E07A]/10 text-[#16F28A]">
@@ -373,37 +373,37 @@ export default async function Home({
             {
               icon: <IconChart />,
               title: "Painel em tempo real",
-              body: "Acompanhas todas as contas enviadas, o estado de cada uma e os teus ganhos acumulados.",
+              body: "Acompanhe todas as contas enviadas, o status de cada uma e seus ganhos acumulados.",
               delay: "reveal-delay-1",
             },
             {
               icon: <IconMoney />,
               title: "Ganhos por conta",
-              body: "A cada conta processada, a tua comissão é creditada automaticamente.",
+              body: "A cada conta processada, a suacomissão é creditada automaticamente.",
               delay: "reveal-delay-2",
             },
             {
               icon: <IconUsers />,
-              title: "Indicação com bónus",
-              body: "Indica outros captadores e acumulas bónus a cada conta que eles enviarem.",
+              title: "Indicação com bônus",
+              body: "Indique outros captadores e acumule bônus a cada conta que eles enviarem.",
               delay: "reveal-delay-3",
             },
             {
               icon: <IconShield />,
               title: "Dados seguros",
-              body: "Os teus dados ficam protegidos. Envias à vontade sem preocupações.",
+              body: "Seus dados ficam protegidos. Envie à vontade sem preocupações.",
               delay: "reveal-delay-4",
             },
             {
               icon: <IconClock />,
               title: "Pagamentos no prazo",
-              body: "As contas são processadas com agilidade. Não ficas à espera sem resposta.",
+              body: "As contas são processadas com agilidade. Você não fica esperando sem resposta.",
               delay: "reveal-delay-5",
             },
             {
               icon: <IconMobile />,
               title: "Comprovante sempre disponível",
-              body: "Cada pagamento fica registado com comprovante. Sabes sempre o que recebeste e quando.",
+              body: "Cada pagamento fica registrado com comprovante. Você sabe sempre o que recebeu e quando.",
               delay: "reveal-delay-6",
             },
           ].map((feat) => (
@@ -445,10 +445,10 @@ export default async function Home({
           >
             Pronto para{" "}
             <span className="text-shimmer">escalar</span>
-            {" "}as tuas captações?
+            {" "}suas captações?
           </h2>
           <p className="relative mx-auto mt-5 max-w-lg text-base leading-7 text-[#5f6059]">
-            Cria a tua conta, envia as primeiras contas e começa a receber. Simples assim.
+            Crie sua conta, envie as primeiras contas e comece a receber. Simples assim.
           </p>
 
           <div className="relative mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">

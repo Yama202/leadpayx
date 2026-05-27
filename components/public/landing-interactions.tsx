@@ -62,9 +62,9 @@ const MEGA_MENUS: MegaMenu[] = [
     label: "Como funciona",
     panel: {
       links: [
-        { title: "Envias a conta", desc: "Submetes os dados pelo painel em segundos" },
-        { title: "Aguardas validação", desc: "Acompanhas o estado no teu painel" },
-        { title: "Recebes o pagamento", desc: "Comissão creditada com comprovante" },
+        { title: "Envie a conta", desc: "Submeta os dados pelo painel em segundos" },
+        { title: "Aguarde a validação", desc: "Acompanhe o status no seu painel" },
+        { title: "Receba o pagamento", desc: "Comissão creditada com comprovante" },
       ],
       feature: { label: "Processo", title: "Simples e direto", desc: "Do envio ao pagamento sem complicação" },
     },
@@ -75,10 +75,10 @@ const MEGA_MENUS: MegaMenu[] = [
     panel: {
       links: [
         { title: "Ganho por conta", desc: "Cada conta processada gera comissão" },
-        { title: "Bónus de indicação", desc: "Acumulas bónus pelas contas dos teus indicados" },
-        { title: "Comprovante sempre disponível", desc: "Cada pagamento fica registado" },
+        { title: "Bônus de indicação", desc: "Acumule bônus pelas contas dos seus indicados" },
+        { title: "Comprovante sempre disponível", desc: "Cada pagamento fica registrado" },
       ],
-      feature: { label: "Ganhos", title: "Transparente", desc: "Sabes sempre o que recebeste e porquê" },
+      feature: { label: "Ganhos", title: "Transparente", desc: "Você sabe sempre o que recebeu e por quê" },
     },
   },
   {
@@ -86,11 +86,11 @@ const MEGA_MENUS: MegaMenu[] = [
     label: "Indicações",
     panel: {
       links: [
-        { title: "Link pessoal", desc: "Partilhas o teu link e convidas outros" },
-        { title: "Bónus por indicado", desc: "Cada conta do teu indicado gera bónus para ti" },
-        { title: "Painel em tempo real", desc: "Acompanhas os teus indicados e os seus resultados" },
+        { title: "Link pessoal", desc: "Compartilhe seu link e convide outros" },
+        { title: "Bônus por indicado", desc: "Cada conta do seu indicado gera bônus para você" },
+        { title: "Painel em tempo real", desc: "Acompanhe seus indicados e os resultados deles" },
       ],
-      feature: { label: "Rede", title: "Indica e ganha", desc: "Sem limite de indicados ou teto de bónus" },
+      feature: { label: "Rede", title: "Indique e ganhe", desc: "Sem limite de indicados ou teto de bônus" },
     },
   },
   {
@@ -98,11 +98,11 @@ const MEGA_MENUS: MegaMenu[] = [
     label: "FAQ",
     panel: {
       links: [
-        { title: "Como começo?", desc: "Cadastras, aguardas aprovação e envias" },
+        { title: "Como começo?", desc: "Cadastre-se, aguarde aprovação e envie" },
         { title: "Quando recebo?", desc: "Assim que a conta for processada" },
-        { title: "É seguro?", desc: "Os teus dados ficam sempre protegidos" },
+        { title: "É seguro?", desc: "Seus dados ficam sempre protegidos" },
       ],
-      feature: { label: "Suporte", title: "Sem dúvidas", desc: "Respondemos tudo antes de começares" },
+      feature: { label: "Suporte", title: "Sem dúvidas", desc: "Respondemos tudo antes de você começar" },
     },
   },
 ];
@@ -218,8 +218,8 @@ export function NavMegaMenu() {
 
 const MOBILE_NAV_ITEMS = [
   { href: "/como-funciona", label: "Como funciona", sub: "Do envio ao pagamento, passo a passo" },
-  { href: "/ganhos",        label: "Ganhos",         sub: "O que ganhas e como recebes" },
-  { href: "/indicacoes",    label: "Indicações",     sub: "Indica amigos e ganha bónus" },
+  { href: "/ganhos",        label: "Ganhos",         sub: "O que você ganha e como recebe" },
+  { href: "/indicacoes",    label: "Indicações",     sub: "Indica amigos e ganha bônus" },
   { href: "/faq",           label: "FAQ",            sub: "Perguntas frequentes" },
 ];
 
