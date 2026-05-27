@@ -1,3 +1,4 @@
+import React from "react";
 import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
 import { ProfileAdminEditor } from "@/components/admin/profile-admin-editor";
 import type { Account, Profile } from "@/lib/types";
@@ -40,6 +41,30 @@ const ACCOUNT_STATUS_CLASS: Record<string, string> = {
   rejected: "bg-rose-500/12 text-rose-300 ring-1 ring-rose-400/20",
 };
 
+function accountSummary(accounts: Account[]) {
+  const counts: Record<string, number> = {};
+  for (const a of accounts) counts[a.status] = (counts[a.status] ?? 0) + 1;
+
+  const parts: React.ReactNode[] = [];
+  const order: Array<[string, string, string]> = [
+    ["pending", "Pendente", "text-zinc-400"],
+    ["assigned", "Atribuída", "text-blue-400"],
+    ["in_progress", "Andamento", "text-amber-400"],
+    ["completed", "Concluída", "text-[#16F28A]"],
+    ["rejected", "Rejeitada", "text-rose-400"],
+  ];
+  for (const [status, label, cls] of order) {
+    if (counts[status]) {
+      parts.push(
+        <span className={cls} key={status}>
+          {counts[status]} {label}
+        </span>,
+      );
+    }
+  }
+  return parts;
+}
+
 export function CaptadorAdminListItem({
   profile,
   accounts = [],
@@ -65,13 +90,17 @@ export function CaptadorAdminListItem({
           <div className="flex flex-wrap items-center gap-2 gap-y-1">
             <span className="truncate text-base font-black tracking-tight text-white">{displayName}</span>
             {statusPill(profile.status)}
-            {accounts.length > 0 ? (
-              <span className="inline-flex shrink-0 items-center rounded-full bg-white/8 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-zinc-400 ring-1 ring-white/10">
-                {accounts.length} {accounts.length === 1 ? "conta" : "contas"}
-              </span>
-            ) : null}
           </div>
-          <p className="mt-0.5 truncate text-sm text-zinc-400">{profile.email}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+            <p className="truncate text-xs text-zinc-400">{profile.email}</p>
+            {accounts.length > 0 ? (
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-500">
+                {accountSummary(accounts)}
+              </span>
+            ) : (
+              <span className="text-[11px] text-zinc-600">Sem contas</span>
+            )}
+          </div>
         </div>
         <span className="flex shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500 group-open/cap:text-[#16F28A]">
           <span className="hidden sm:inline">Detalhes</span>

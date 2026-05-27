@@ -75,6 +75,14 @@ export default async function AdminCaptadoresPage({
     }
   }
 
+  // Ordena: captadores com contas primeiro, depois por data de criação desc
+  const sortedCaptadores = [...(captadores ?? [])].sort((a, b) => {
+    const countA = accountsByCaptadorId.get(a.id)?.length ?? 0;
+    const countB = accountsByCaptadorId.get(b.id)?.length ?? 0;
+    if (countB !== countA) return countB - countA;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   const count = captadores?.length ?? 0;
   const countLabel = count === 1 ? "1 captador encontrado" : `${count} captadores encontrados`;
 
@@ -185,7 +193,7 @@ export default async function AdminCaptadoresPage({
         </div>
       ) : (
         <div className="mx-auto flex max-w-4xl flex-col gap-2">
-          {captadores?.map((captador) => (
+          {sortedCaptadores.map((captador) => (
             <CaptadorAdminListItem
               accounts={accountsByCaptadorId.get(captador.id) ?? []}
               key={captador.id}
