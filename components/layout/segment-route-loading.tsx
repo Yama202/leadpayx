@@ -52,10 +52,12 @@ export function SegmentRouteLoading() {
           </div>
         </main>
       </div>
-      <nav className="fixed inset-x-3 bottom-3 z-50 grid animate-pulse grid-cols-5 rounded-[1.6rem] border border-white/[0.08] bg-[#070909]/92 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div className="mx-auto h-10 w-14 rounded-2xl bg-white/5" key={i} />
-        ))}
+      <nav className="fixed inset-x-3 bottom-3 z-50 animate-pulse rounded-[1.6rem] border border-white/[0.08] bg-[#070909]/92 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden">
+        <div className="flex gap-1 overflow-hidden">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div className="h-10 w-14 shrink-0 rounded-2xl bg-white/5" key={i} />
+          ))}
+        </div>
       </nav>
     </div>
   );

@@ -273,8 +273,8 @@ export const appSettingsSchema = z.object({
     .max(300)
     .optional()
     .transform((value) => value || null)
-    .refine((value) => value === null || /^https:\/\/(chat\.whatsapp\.com|wa\.me)\//.test(value), {
-      message: "Informe uma URL segura de grupo WhatsApp.",
+    .refine((value) => value === null || value.startsWith("https://"), {
+      message: "Informe uma URL que comece com https://.",
     }),
   requireNewAccountPrint: z
     .string()

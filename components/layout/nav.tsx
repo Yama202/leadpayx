@@ -11,9 +11,9 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
     { href: "/captador/dashboard", label: "Início" },
     { href: "/captador/avisos", label: "Avisos" },
     { href: "/captador/enviar-conta", label: "Enviar" },
+    { href: "/captador/ofertas", label: "Ofertas" },
     { href: "/captador/indicacoes", label: "Indicações" },
     { href: "/captador/minhas-contas", label: "Contas" },
-    { href: "/captador/ofertas", label: "Ofertas" },
     { href: "/captador/pagamentos", label: "Pagamentos" },
   ],
   operator: [
@@ -91,20 +91,37 @@ export function DesktopSidebar({ role }: { role: UserRole }) {
 }
 
 export function MobileBottomNav({ role }: { role: UserRole }) {
-  const items = navItems[role].slice(0, 4);
+  const pathname = usePathname() ?? "";
+  const items = navItems[role];
+  const current = activeNavHref(pathname, items);
+  const allItems = [...items, { href: "/logout", label: "Sair" }];
 
   return (
-    <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-5 rounded-[1.6rem] border border-white/[0.08] bg-[#070909]/92 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl lg:hidden">
-      {[...items, { href: "/logout", label: "Sair" }].map((item) => (
-        <Link
-          className="flex min-h-12 items-center justify-center rounded-2xl px-2 text-center text-xs font-bold text-zinc-300 transition-colors duration-200 hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A]"
-          href={item.href}
-          prefetch={false}
-          key={item.href}
-        >
-          {item.label}
-        </Link>
-      ))}
-    </nav>
+    <div className="fixed inset-x-3 bottom-3 z-50 lg:hidden">
+      <nav className="relative overflow-hidden rounded-[1.6rem] border border-white/[0.08] bg-[#070909]/92 shadow-2xl shadow-black/40 backdrop-blur-xl">
+        {/* fade hint on right edge */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 rounded-r-[1.6rem] bg-gradient-to-l from-[#070909]/80 to-transparent" />
+        <div className="flex overflow-x-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {allItems.map((item) => {
+            const active = item.href !== "/logout" && item.href === current;
+            return (
+              <Link
+                className={`flex min-h-12 shrink-0 items-center justify-center rounded-2xl px-3.5 text-center text-xs font-bold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A] ${
+                  active
+                    ? "bg-white/[0.08] text-white"
+                    : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"
+                }`}
+                href={item.href}
+                prefetch={false}
+                key={item.href}
+                aria-current={active ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }

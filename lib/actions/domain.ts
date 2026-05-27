@@ -1167,7 +1167,8 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
   const parsed = appSettingsSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
-    return;
+    const msg = parsed.error.issues[0]?.message ?? "Erro de validação";
+    redirect(`/admin/configuracoes?error=${encodeURIComponent(msg)}`);
   }
 
   const supabase = await createClient();
@@ -1200,6 +1201,7 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
   revalidatePath("/captador/indicacoes");
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/pagamentos");
+  redirect("/admin/configuracoes?success=1");
 }
 
 export async function upsertCaptadorDepositBriefAction(formData: FormData): Promise<void> {

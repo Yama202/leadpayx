@@ -11,7 +11,12 @@ import type { AppSetting } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminConfiguracoesPage() {
+export default async function AdminConfiguracoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}) {
+  const { error, success } = await searchParams;
   const profile = await requireRole(["admin"]);
   const supabase = await createClient();
   const { data: settings } = await supabase
@@ -44,6 +49,16 @@ export default async function AdminConfiguracoesPage() {
       profile={profile}
       title="Configurações"
     >
+      {error ? (
+        <div className="mb-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400">
+          {error}
+        </div>
+      ) : null}
+      {success ? (
+        <div className="mb-2 rounded-2xl border border-[#00E07A]/30 bg-[#00E07A]/10 px-4 py-3 text-sm font-semibold text-[#16F28A]">
+          Configurações salvas com sucesso.
+        </div>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <form
           action={updateAppSettingsAction}
