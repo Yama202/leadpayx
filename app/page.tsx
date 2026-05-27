@@ -92,7 +92,7 @@ export default async function Home({
       ══════════════════════════════════════════════ */}
       <section className="loki-frame relative z-10 mx-auto grid min-h-dvh w-full max-w-7xl items-center gap-12 px-6 pb-20 pt-28 sm:pt-32 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:pt-28">
         {/* Crosshairs Loki */}
-        <span className="section-label pointer-events-none absolute left-6 top-[7.5rem] text-[#00E07A]/60">
+        <span className="section-label pointer-events-none absolute left-6 top-[7.5rem] hidden text-[#00E07A]/60 sm:block">
           01 │ Hero
         </span>
 
@@ -246,7 +246,7 @@ export default async function Home({
       {/* ══════════════════════════════════════════════
           02 — COMO FUNCIONA
       ══════════════════════════════════════════════ */}
-      <section className="loki-frame relative z-10 mx-auto w-full max-w-7xl px-6 py-24">
+      <section className="loki-frame relative z-10 mx-auto w-full max-w-7xl px-6 py-16 sm:py-24">
         <div className="scroll-reveal">
           <p className="section-label text-[#00E07A]/60">02 │ Como funciona</p>
           <h2
@@ -314,14 +314,14 @@ export default async function Home({
         {/* Feature Canvas — fluxo animado */}
         <div className="scroll-reveal reveal-delay-5 mt-8 overflow-hidden rounded-[2rem] border border-[rgba(233,235,223,0.07)] bg-[rgba(0,0,0,0.35)] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
           <p className="section-label mb-5 text-[#3f403d]">Fluxo em tempo real</p>
-          <div className="flex items-center justify-between gap-2">
+          <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center sm:justify-between sm:gap-2">
             {[
               { label: "Captador", sub: "envia conta" },
               { label: "Fila", sub: "pendente" },
               { label: "Operador", sub: "em operação" },
               { label: "Pix", sub: "pago" },
             ].map((node, i) => (
-              <div className="flex flex-1 flex-col items-center gap-2" key={node.label}>
+              <div className="flex flex-col items-center gap-2 sm:flex-1" key={node.label}>
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#00E07A]/25 bg-[#00E07A]/10 text-[#16F28A]">
                   <span className="section-label text-[0.6rem] text-[#16F28A]">0{i + 1}</span>
                 </div>
@@ -357,7 +357,7 @@ export default async function Home({
       {/* ══════════════════════════════════════════════
           04 — FEATURES BENTO
       ══════════════════════════════════════════════ */}
-      <section className="loki-frame relative z-10 mx-auto w-full max-w-7xl px-6 py-20">
+      <section className="loki-frame relative z-10 mx-auto w-full max-w-7xl px-6 py-14 sm:py-20">
         <div className="scroll-reveal">
           <p className="section-label text-[#00E07A]/60">03 │ Funcionalidades</p>
           <h2
@@ -427,8 +427,8 @@ export default async function Home({
       {/* ══════════════════════════════════════════════
           04 — CTA FINAL
       ══════════════════════════════════════════════ */}
-      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 py-24">
-        <div className="scroll-reveal overflow-hidden rounded-[2.4rem] border border-[#00E07A]/15 bg-[linear-gradient(135deg,rgba(0,224,122,0.10),rgba(255,255,255,0.025))] p-10 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_120px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:p-16">
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 py-14 sm:py-24">
+        <div className="scroll-reveal overflow-hidden rounded-[2rem] border border-[#00E07A]/15 bg-[linear-gradient(135deg,rgba(0,224,122,0.10),rgba(255,255,255,0.025))] p-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_120px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:rounded-[2.4rem] sm:p-16">
           {/* Dotgrid overlay */}
           <div className="dotgrid-bg pointer-events-none absolute inset-0 opacity-50" />
           {/* Crosshairs */}

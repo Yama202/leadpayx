@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { NavMegaMenu } from "@/components/public/landing-interactions";
+import { MobileNav, NavMegaMenu } from "@/components/public/landing-interactions";
 import { BrandLogo } from "@/components/ui/brand";
 import { LinkButton } from "@/components/ui/button";
 
@@ -21,15 +21,16 @@ export function PublicHeader({ registerHref = "/register" }: { registerHref?: st
 
         <NavMegaMenu />
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <MobileNav registerHref={registerHref} />
           <Link
-            className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-bold text-white transition-colors duration-200 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:min-w-0 sm:px-4"
+            className="hidden items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white transition-colors duration-200 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:inline-flex sm:min-h-11"
             href="/login"
           >
             Entrar
           </Link>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-[#00E07A] px-3 text-sm font-black uppercase tracking-[0.08em] text-[#031008] shadow-[0_0_34px_rgba(0,224,122,0.28)] transition-colors duration-200 hover:bg-[#16F28A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:px-5"
+            className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-[#00E07A] px-3 text-sm font-black uppercase tracking-[0.08em] text-[#031008] shadow-[0_0_34px_rgba(0,224,122,0.28)] transition-colors duration-200 hover:bg-[#16F28A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16F28A] sm:min-h-11 sm:px-5"
             href={registerHref}
           >
             Começar

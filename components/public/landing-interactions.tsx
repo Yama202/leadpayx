@@ -44,7 +44,7 @@ export function GlowCard({
   );
 }
 
-/* ── Nav Mega Menu ─────────────────────────────────────────── */
+/* ── Nav Mega Menu (desktop) ───────────────────────────────── */
 
 type MegaItem = { title: string; desc: string };
 type MegaMenu = {
@@ -130,7 +130,6 @@ export function NavMegaMenu() {
             onMouseEnter={() => enter(item.label)}
             onMouseLeave={leave}
           >
-            {/* Trigger */}
             <a
               className="flex items-center gap-1 text-sm font-semibold text-zinc-400 transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00E07A]"
               href={item.href}
@@ -147,7 +146,6 @@ export function NavMegaMenu() {
               </svg>
             </a>
 
-            {/* Panel */}
             <div
               className="absolute left-1/2 top-full z-50 mt-4 w-[400px] -translate-x-1/2 overflow-hidden rounded-[1.4rem] border border-[rgba(233,235,223,0.09)] bg-[#0e0f0f]/96 shadow-[0_32px_80px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-2xl"
               style={{
@@ -160,18 +158,14 @@ export function NavMegaMenu() {
               onMouseEnter={() => enter(item.label)}
               onMouseLeave={leave}
             >
-              {/* Top accent line animated */}
               <div className="relative h-px overflow-hidden bg-[rgba(233,235,223,0.06)]">
                 <div
                   className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-[#00E07A]/70 to-transparent"
-                  style={{
-                    animation: isOpen ? "mega-scan 1.8s cubic-bezier(0.16,1,0.3,1) forwards" : "none",
-                  }}
+                  style={{ animation: isOpen ? "mega-scan 1.8s cubic-bezier(0.16,1,0.3,1) forwards" : "none" }}
                 />
               </div>
 
               <div className="grid grid-cols-[1fr_148px]">
-                {/* Links */}
                 <div className="space-y-0.5 p-3">
                   {item.panel.links.map((link) => (
                     <a
@@ -190,7 +184,6 @@ export function NavMegaMenu() {
                   ))}
                 </div>
 
-                {/* Feature card */}
                 <div className="relative flex flex-col justify-between overflow-hidden border-l border-[rgba(233,235,223,0.07)] bg-[rgba(0,224,122,0.04)] p-4">
                   <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-[#00E07A]/[0.07] blur-2xl" />
                   <div>
@@ -202,7 +195,6 @@ export function NavMegaMenu() {
                       {item.panel.feature.desc}
                     </p>
                   </div>
-                  {/* Mini progress bar */}
                   <div className="mt-4 h-0.5 overflow-hidden rounded-full bg-[rgba(233,235,223,0.06)]">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-[#00E07A]/70 to-[#16F28A]/40"
@@ -219,5 +211,128 @@ export function NavMegaMenu() {
         );
       })}
     </div>
+  );
+}
+
+/* ── Mobile Nav (hamburger + panel) ───────────────────────── */
+
+const MOBILE_NAV_ITEMS = [
+  { href: "/como-funciona", label: "Como funciona", sub: "Fluxo do envio ao pagamento" },
+  { href: "/ganhos",        label: "Ganhos",         sub: "Comissões e bónus de indicação" },
+  { href: "/indicacoes",    label: "Indicações",     sub: "Convida e ganha passivamente" },
+  { href: "/faq",           label: "FAQ",            sub: "Dúvidas frequentes" },
+];
+
+export function MobileNav({ registerHref = "/register" }: { registerHref?: string }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <>
+      {/* Hamburger */}
+      <button
+        aria-expanded={open}
+        aria-label={open ? "Fechar menu" : "Menu de navegação"}
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-zinc-400 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00E07A] lg:hidden"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          {open ? (
+            <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+          ) : (
+            <>
+              <line x1="3" y1="8"  x2="21" y2="8"  strokeLinecap="round" />
+              <line x1="3" y1="16" x2="21" y2="16" strokeLinecap="round" />
+            </>
+          )}
+        </svg>
+      </button>
+
+      {/* Backdrop */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
+        style={{
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 0.22s",
+        }}
+        onClick={() => setOpen(false)}
+      />
+
+      {/* Panel */}
+      <div
+        className="fixed inset-x-3 z-50 overflow-hidden rounded-[1.6rem] border border-[rgba(233,235,223,0.09)] bg-[#0e0f0f]/98 shadow-[0_32px_80px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-2xl lg:hidden"
+        style={{
+          top: "5.5rem",
+          opacity: open ? 1 : 0,
+          transform: open ? "translateY(0) scale(1)" : "translateY(-10px) scale(0.97)",
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 0.25s cubic-bezier(0.16,1,0.3,1), transform 0.25s cubic-bezier(0.16,1,0.3,1)",
+          transformOrigin: "top center",
+        }}
+      >
+        {/* Accent scan line */}
+        <div className="relative h-px overflow-hidden bg-[rgba(233,235,223,0.06)]">
+          <div
+            className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-[#00E07A]/60 to-transparent"
+            style={{ animation: open ? "mega-scan 1.6s cubic-bezier(0.16,1,0.3,1) forwards" : "none" }}
+          />
+        </div>
+
+        {/* Nav links */}
+        <div className="p-2">
+          {MOBILE_NAV_ITEMS.map((item) => (
+            <a
+              className="group flex items-center justify-between rounded-xl px-4 py-3.5 transition-colors hover:bg-white/[0.04]"
+              href={item.href}
+              key={item.href}
+              onClick={() => setOpen(false)}
+            >
+              <div>
+                <p className="text-sm font-bold text-[#cbccc4] transition-colors group-hover:text-[#e9ebdf]">
+                  {item.label}
+                </p>
+                <p className="mt-0.5 text-xs text-[#3f403d] transition-colors group-hover:text-[#5f6059]">
+                  {item.sub}
+                </p>
+              </div>
+              <svg className="h-4 w-4 flex-shrink-0 text-[#3f403d] transition-colors group-hover:text-[#5f6059]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </a>
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div className="mx-4 h-px bg-[rgba(233,235,223,0.07)]" />
+
+        {/* CTAs */}
+        <div className="flex gap-2 p-3">
+          <a
+            className="flex flex-1 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-3 text-sm font-bold text-white transition-colors hover:bg-white/[0.08]"
+            href="/login"
+            onClick={() => setOpen(false)}
+          >
+            Entrar
+          </a>
+          <a
+            className="flex flex-1 items-center justify-center rounded-xl bg-[#00E07A] py-3 text-sm font-black text-[#031008] shadow-[0_0_34px_rgba(0,224,122,0.28)] transition-colors hover:bg-[#16F28A]"
+            href={registerHref}
+            onClick={() => setOpen(false)}
+          >
+            Começar
+          </a>
+        </div>
+      </div>
+    </>
   );
 }
