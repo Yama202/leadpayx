@@ -28,6 +28,63 @@ export default async function Home({
       <div className="hero-grid pointer-events-none absolute inset-0 opacity-40" />
       <div className="pointer-events-none absolute left-1/2 top-20 h-80 w-80 -translate-x-1/2 rounded-full bg-[#00E07A]/18 blur-[120px] hero-glow sm:h-[38rem] sm:w-[38rem]" />
 
+      {/* ── Canvas vivo: rede de partículas ── */}
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        fill="none"
+        preserveAspectRatio="xMidYMid slice"
+        viewBox="0 0 1440 860"
+      >
+        {/* Linhas base estáticas */}
+        <path d="M 140 210 L 420 330 L 740 190 L 1080 360 L 1330 230" stroke="rgba(233,235,223,0.055)" strokeWidth="1" />
+        <path d="M 70 520 L 420 330 L 620 580 L 920 500 L 1210 640" stroke="rgba(233,235,223,0.04)" strokeWidth="1" />
+        <path d="M 740 190 L 810 580" stroke="rgba(233,235,223,0.04)" strokeWidth="1" />
+        <path d="M 1080 360 L 1400 500" stroke="rgba(233,235,223,0.04)" strokeWidth="1" />
+        <path d="M 420 330 L 350 640" stroke="rgba(233,235,223,0.035)" strokeWidth="1" />
+
+        {/* Pulsos animados (todos < 500px de caminho) */}
+        <path className="data-stream-line" d="M 140 210 Q 280 270 420 330" stroke="#00E07A" strokeWidth="1.4" strokeLinecap="round" />
+        <path className="data-stream-line data-stream-line-2" d="M 420 330 Q 580 260 740 190" stroke="#00E07A" strokeWidth="1.3" strokeLinecap="round" />
+        <path className="data-stream-line" d="M 740 190 Q 910 275 1080 360" stroke="#16F28A" strokeWidth="1.2" strokeLinecap="round" style={{ animationDelay: "1.1s" }} />
+        <path className="data-stream-line data-stream-line-2" d="M 70 520 Q 245 425 420 330" stroke="#16F28A" strokeWidth="1" strokeLinecap="round" style={{ animationDelay: "0.5s" }} />
+        <path className="data-stream-line" d="M 1080 360 Q 1205 295 1330 230" stroke="#00E07A" strokeWidth="1.1" strokeLinecap="round" style={{ animationDelay: "1.9s" }} />
+        <path className="data-stream-line data-stream-line-2" d="M 620 580 Q 770 540 920 500" stroke="#00E07A" strokeWidth="0.9" strokeLinecap="round" style={{ animationDelay: "0.8s" }} />
+        <path className="data-stream-line" d="M 420 330 Q 385 485 350 640" stroke="#16F28A" strokeWidth="0.8" strokeLinecap="round" style={{ animationDelay: "2.2s" }} />
+
+        {/* Nó central maior — halo + ponto */}
+        <circle className="dot-pulse-delay" cx="420" cy="330" fill="none" r="22" stroke="#00E07A" strokeWidth="0.7" style={{ opacity: 0.13 }} />
+        <circle className="dot-pulse" cx="420" cy="330" fill="none" r="13" stroke="#00E07A" strokeWidth="0.6" style={{ opacity: 0.18 }} />
+        <circle className="dot-pulse-delay" cx="420" cy="330" fill="#00E07A" r="5" style={{ opacity: 0.85 }} />
+
+        {/* Nó secundário */}
+        <circle className="dot-pulse" cx="1080" cy="360" fill="none" r="16" stroke="#00E07A" strokeWidth="0.6" style={{ opacity: 0.12, animationDelay: "1.2s" }} />
+        <circle className="dot-pulse" cx="1080" cy="360" fill="#00E07A" r="4" style={{ opacity: 0.8, animationDelay: "1.2s" }} />
+
+        {/* Nós menores */}
+        {([
+          [140, 210, "#00E07A", "0s"],
+          [740, 190, "#16F28A", "0.7s"],
+          [1330, 230, "#00E07A", "1.5s"],
+          [70,  520, "#16F28A", "0.4s"],
+          [620, 580, "#00E07A", "1.0s"],
+          [920, 500, "#16F28A", "0.6s"],
+          [350, 640, "#00E07A", "2.0s"],
+          [810, 580, "#16F28A", "1.3s"],
+          [1400,500, "#00E07A", "0.9s"],
+        ] as [number, number, string, string][]).map(([cx, cy, fill, delay]) => (
+          <circle
+            className="dot-pulse"
+            cx={cx}
+            cy={cy}
+            fill={fill}
+            key={`${cx}-${cy}`}
+            r="2.5"
+            style={{ opacity: 0.65, animationDelay: delay }}
+          />
+        ))}
+      </svg>
+
       <PublicHeader registerHref={registerHref} />
 
       {/* ══════════════════════════════════════════════

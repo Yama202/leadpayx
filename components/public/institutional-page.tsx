@@ -1,15 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { NavMegaMenu } from "@/components/public/landing-interactions";
 import { BrandLogo } from "@/components/ui/brand";
 import { LinkButton } from "@/components/ui/button";
-
-const navItems = [
-  { href: "/como-funciona", label: "Como funciona" },
-  { href: "/ganhos", label: "Ganhos" },
-  { href: "/indicacoes", label: "Indicações" },
-  { href: "/faq", label: "FAQ" },
-];
 
 export type InstitutionalSection = {
   eyebrow?: string;
@@ -25,17 +19,7 @@ export function PublicHeader({ registerHref = "/register" }: { registerHref?: st
           <BrandLogo variant="compact" />
         </Link>
 
-        <div className="hidden items-center gap-7 lg:flex">
-          {navItems.map((item) => (
-            <Link
-              className="text-sm font-semibold text-zinc-400 transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00E07A]"
-              href={item.href}
-              key={item.href}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
+        <NavMegaMenu />
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <Link
