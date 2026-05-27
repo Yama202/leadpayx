@@ -298,37 +298,11 @@ export default async function Home({
       </section>
 
       {/* ══════════════════════════════════════════════
-          03 — NÚMEROS
-      ══════════════════════════════════════════════ */}
-      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 py-20">
-        <div className="dotgrid-bg scroll-reveal overflow-hidden rounded-[2.2rem] border border-[rgba(233,235,223,0.07)] bg-[rgba(0,0,0,0.4)] p-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_32px_100px_rgba(0,0,0,0.4)]">
-          <p className="section-label mb-6 text-[#00E07A]/60">03 │ Números</p>
-          <div className="grid gap-8 sm:grid-cols-3">
-            {[
-              { value: "R$2M+", label: "Já processado na plataforma", delay: "reveal-delay-1" },
-              { value: "100%", label: "Histórico e comprovante em cada pagamento", delay: "reveal-delay-2" },
-              { value: "24h", label: "SLA máximo por operação garantido", delay: "reveal-delay-3" },
-            ].map((stat) => (
-              <div className={`scroll-reveal ${stat.delay}`} key={stat.value}>
-                <p
-                  className="text-shimmer font-black"
-                  style={{ fontSize: "clamp(2.4rem,5vw,3.8rem)", lineHeight: 1, letterSpacing: "-0.05em" }}
-                >
-                  {stat.value}
-                </p>
-                <p className="mt-3 text-sm leading-6 text-[#5f6059]">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
           04 — FEATURES BENTO
       ══════════════════════════════════════════════ */}
       <section className="loki-frame relative z-10 mx-auto w-full max-w-7xl px-6 py-20">
         <div className="scroll-reveal">
-          <p className="section-label text-[#00E07A]/60">04 │ Funcionalidades</p>
+          <p className="section-label text-[#00E07A]/60">03 │ Funcionalidades</p>
           <h2
             className="mt-4 font-black text-[#e9ebdf]"
             style={{ fontSize: "clamp(1.9rem,4.5vw,3.2rem)", lineHeight: 1.05, letterSpacing: "-0.04em" }}
@@ -394,7 +368,7 @@ export default async function Home({
       </section>
 
       {/* ══════════════════════════════════════════════
-          05 — CTA FINAL
+          04 — CTA FINAL
       ══════════════════════════════════════════════ */}
       <section className="relative z-10 mx-auto w-full max-w-7xl px-6 py-24">
         <div className="scroll-reveal overflow-hidden rounded-[2.4rem] border border-[#00E07A]/15 bg-[linear-gradient(135deg,rgba(0,224,122,0.10),rgba(255,255,255,0.025))] p-10 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_40px_120px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:p-16">
@@ -406,7 +380,7 @@ export default async function Home({
           <span className="pointer-events-none absolute bottom-4 left-4 font-mono text-sm text-[#00E07A]/20">+</span>
           <span className="pointer-events-none absolute bottom-4 right-4 font-mono text-sm text-[#00E07A]/20">+</span>
 
-          <p className="section-label relative mb-5 text-[#00E07A]/60">05 │ Começa hoje</p>
+          <p className="section-label relative mb-5 text-[#00E07A]/60">04 │ Começa hoje</p>
 
           <h2
             className="relative font-black text-[#e9ebdf]"
