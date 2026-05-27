@@ -82,7 +82,9 @@ export async function OperadorDashboardData({
     count: Number(cycle.pending_count ?? 0),
     name: cycle.captador_name ?? "Captador",
   }));
-  const hasCycleReady = availableCycles.some((cycle) => cycle.count >= minimumBatch);
+  // A summary RPC já filtra apenas ciclos elegíveis (HAVING count >= effective_minimum por oferta).
+  // Qualquer entrada na lista significa que há pelo menos um ciclo pronto para atribuição.
+  const hasCycleReady = availableCycles.length > 0;
   const canPickNext = assignedList.length === 0 && hasCycleReady;
 
   return (
