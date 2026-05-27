@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { OfertasReminderPopup } from "@/components/domain/ofertas-reminder-popup";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { requireRole } from "@/lib/auth";
 
@@ -13,6 +14,7 @@ export default async function CaptadorDashboardPage() {
 
   return (
     <RoleBasedLayout description="Contas, ganhos, links e Pix." profile={profile} title="Início">
+      <OfertasReminderPopup />
       <Suspense fallback={<CaptadorDashboardSkeleton />}>
         <CaptadorDashboardData profile={profile} />
       </Suspense>
