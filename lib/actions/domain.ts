@@ -1201,8 +1201,6 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
     ["operational_min_batch_size", parsed.data.operationalMinBatchSize],
     ["whatsapp_group_url", parsed.data.whatsappGroupUrl],
     ["require_new_account_print", parsed.data.requireNewAccountPrint],
-    ["require_selfie_confirmation", parsed.data.requireSelfieConfirmation],
-    ["selfie_confirmation_message", parsed.data.selfieConfirmationMessage ?? null],
   ] as const;
 
   await Promise.all(
@@ -1213,6 +1211,13 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
       }),
     ),
   );
+
+  // Chaves novas não estão na whitelist do RPC — escrevemos direto na tabela.
+  const adminClient = createAdminClient();
+  await adminClient.from("app_settings").upsert([
+    { key: "require_selfie_confirmation", value: parsed.data.requireSelfieConfirmation, updated_by: null },
+    { key: "selfie_confirmation_message", value: parsed.data.selfieConfirmationMessage ?? null, updated_by: null },
+  ], { onConflict: "key" });
 
   revalidatePath("/admin/configuracoes");
   revalidatePath("/captador/indicacoes");
