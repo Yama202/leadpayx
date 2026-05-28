@@ -16,26 +16,33 @@ export async function notifyCaptadorOnAccountRejectionPush(opts: {
 
   const { data: account } = await admin
     .from("accounts")
-    .select("captador_id, account_identifier, status")
+    .select("captador_id, account_identifier, status, rejection_reason")
     .eq("id", opts.accountId)
     .maybeSingle();
 
   if (!account?.captador_id) return;
 
   const label = account.account_identifier?.trim() || "—";
+  const reason = account.rejection_reason?.trim() || null;
 
   let title: string;
   let body: string;
 
   if (opts.rejectionType === "no_balance") {
     title = "⚠️ Conta sem saldo — ação necessária";
-    body = `${label} — deposite o saldo mínimo na plataforma e toque em "Já coloquei o saldo".`;
+    body = reason
+      ? `${label} — ${reason}. Deposite o saldo e toque em "Já coloquei o saldo".`
+      : `${label} — deposite o saldo mínimo na plataforma e toque em "Já coloquei o saldo".`;
   } else if (opts.rejectionType === "no_facial") {
     title = "⚠️ Selfie pendente — ação necessária";
-    body = `${label} — faça a verificação facial na plataforma e toque em "Já fiz a selfie".`;
+    body = reason
+      ? `${label} — ${reason}. Faça a selfie na plataforma e toque em "Já fiz a selfie".`
+      : `${label} — faça a verificação facial na plataforma e toque em "Já fiz a selfie".`;
   } else {
     title = "❌ Conta recusada";
-    body = `${label} — recusada definitivamente. Não retornará para a fila.`;
+    body = reason
+      ? `${label} — Motivo: ${reason}.`
+      : `${label} — recusada definitivamente. Não retornará para a fila.`;
   }
 
   const payload = JSON.stringify({

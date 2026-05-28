@@ -508,7 +508,7 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
 
   const { data: rows, error: loadErr } = await supabase
     .from("accounts")
-    .select("id,status,operador_id,account_identifier")
+    .select("id,status,operador_id,account_identifier,captador_id")
     .in("id", orderedAccountIds);
 
   const rowById = new Map((rows ?? []).map((row) => [row.id, row]));
@@ -582,6 +582,19 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
         });
       } catch (pushErr) {
         console.error("[completeOperatorCycleAction] push pós-finalização", pushErr);
+      }
+    }),
+  );
+
+  // Notificação consolidada para cada captador único do ciclo: "solicite o saque"
+  const captadorIds = [...new Set(orderedAccountIds.map((id) => rowById.get(id)?.captador_id).filter(Boolean) as string[])];
+  await Promise.allSettled(
+    captadorIds.map(async (captadorId) => {
+      try {
+        const { notifyCaptadorRequestPayoutPush } = await import("@/lib/web-push/send-cycle-completion");
+        await notifyCaptadorRequestPayoutPush(captadorId);
+      } catch (pushErr) {
+        console.error("[completeOperatorCycleAction] push solicitar saque", pushErr);
       }
     }),
   );
