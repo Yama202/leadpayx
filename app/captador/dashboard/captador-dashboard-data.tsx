@@ -96,7 +96,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
         .returns<CaptadorLoan[]>(),
       supabase
         .from("accounts")
-        .select("id,account_identifier,status")
+        .select("id,account_identifier,status,rejected_at")
         .eq("captador_id", profile.id)
         .in("status", ["rejected_no_facial", "rejected_no_balance"])
         .order("rejected_at", { ascending: false }),
