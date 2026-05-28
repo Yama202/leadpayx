@@ -11,11 +11,9 @@ import { initialActionState } from "@/lib/validation";
 
 export function OperatorPickBatchForm({
   disabled,
-  minimumBatch,
   helperText,
 }: {
   disabled: boolean;
-  minimumBatch: number;
   helperText?: string | null;
 }) {
   const [state, formAction] = useActionState(pickNextBatchStateAction, initialActionState);
@@ -28,7 +26,7 @@ export function OperatorPickBatchForm({
 
   return (
     <form action={formAction} className="space-y-2">
-      <SubmitPickBatchButton disabled={disabled} minimumBatch={minimumBatch} />
+      <SubmitPickBatchButton disabled={disabled} />
       {state.message ? (
         <p className={`text-xs font-semibold ${state.ok ? "text-emerald-300" : "text-rose-300"}`}>
           {state.message}
@@ -42,10 +40,8 @@ export function OperatorPickBatchForm({
 
 function SubmitPickBatchButton({
   disabled,
-  minimumBatch,
 }: {
   disabled: boolean;
-  minimumBatch: number;
 }) {
   const { pending } = useFormStatus();
   return (
@@ -56,7 +52,7 @@ function SubmitPickBatchButton({
           <span>A reservar ciclo…</span>
         </>
       ) : (
-        `Pegar ciclo novo (${minimumBatch})`
+        "Pegar próximo ciclo"
       )}
     </Button>
   );

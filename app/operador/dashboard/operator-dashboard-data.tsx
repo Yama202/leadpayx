@@ -113,7 +113,6 @@ export async function OperadorDashboardData({
         <div className="flex flex-col gap-2">
           <OperatorPickBatchForm
             disabled={!canPickNext}
-            minimumBatch={minimumBatch}
             helperText={
               !hasCycleReady
                 ? "Nenhum ciclo completo disponível agora."
