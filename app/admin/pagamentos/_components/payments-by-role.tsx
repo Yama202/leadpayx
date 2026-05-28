@@ -106,18 +106,16 @@ export async function PaymentsByRoleView({
     }
   }
 
-  // ── Loan debt per captador for pending payouts ──────────────────────────
+  // ── Loan debt per captador (todos os payouts visíveis, não só pendentes) ──
   const debtByUserId = new Map<string, number>();
-  if (role === "captador" && pendingPayoutIds.length > 0) {
-    const pendingUserIds = payoutRowsByRole
-      .filter((p) => p.status === "pending")
-      .map((p) => p.user_id);
-    if (pendingUserIds.length > 0) {
+  if (role === "captador") {
+    const allCaptadorUserIds = [...new Set(payoutRowsByRole.map((p) => p.user_id))];
+    if (allCaptadorUserIds.length > 0) {
       const adminSupabase = await createAdminClient();
       const { data: loanRows } = await adminSupabase
         .from("captador_loans")
         .select("captador_id, remaining_amount")
-        .in("captador_id", pendingUserIds)
+        .in("captador_id", allCaptadorUserIds)
         .eq("status", "active");
       for (const loan of loanRows ?? []) {
         debtByUserId.set(loan.captador_id, (debtByUserId.get(loan.captador_id) ?? 0) + Number(loan.remaining_amount));
@@ -439,6 +437,11 @@ export async function PaymentsByRoleView({
                 </div>
               ) : (
                 <div className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+                  {captadorDebt > 0 ? (
+                    <p className="inline-flex items-center gap-1.5 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-1 text-xs font-black text-rose-300">
+                      Deve {toCurrency(captadorDebt)}
+                    </p>
+                  ) : null}
                   <p>
                     Processado em:{" "}
                     {payout.processed_at
