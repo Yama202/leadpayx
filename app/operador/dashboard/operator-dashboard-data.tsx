@@ -98,6 +98,24 @@ export async function OperadorDashboardData({
           {opErrorMessage}
         </div>
       ) : null}
+
+      {/* Conta em mãos: aparece primeiro para o operador não precisar rolar */}
+      {assignedList.length ? (
+        <div className="mb-6 space-y-4">
+          <OperatorWorkPanel accounts={assignedList} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            {assignedList.map((account) => (
+              <AccountCard
+                account={account}
+                accountPrintSignedUrl={printUrls.get(account.id) ?? null}
+                key={account.id}
+                operationalCredentials={operationalCredentialsFromAccount(account)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-4">
         <DashboardCard label="Contas em mãos" value={String(assignedList.length)} />
         <DashboardCard label="Finalizadas" value={String(operatorCompleted)} />
@@ -140,29 +158,15 @@ export async function OperadorDashboardData({
           </ul>
         ) : (
           <p className="mt-3 text-sm text-zinc-400">
-            Nenhum ciclo completo disponível agora. Se já existem 2+ contas pendentes do mesmo captador e ainda não aparece, aplique as migrations mais recentes do operador (fluxo sem rotação).
+            Nenhum ciclo completo disponível agora.
           </p>
         )}
       </section>
-      <div className="mt-6 space-y-6">
-        {assignedList.length ? (
-          <>
-            <OperatorWorkPanel accounts={assignedList} />
-            <div className="grid gap-4 lg:grid-cols-2">
-              {assignedList.map((account) => (
-                <AccountCard
-                  account={account}
-                  accountPrintSignedUrl={printUrls.get(account.id) ?? null}
-                  key={account.id}
-                  operationalCredentials={operationalCredentialsFromAccount(account)}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <EmptyState description={`Use o botão para pegar ${minimumBatch > 1 ? `até ${minimumBatch} contas pendentes` : "uma conta pendente"}.`} title="Nenhuma conta atribuída" />
-        )}
-      </div>
+      {!assignedList.length ? (
+        <div className="mt-6">
+          <EmptyState description="Use o botão acima para pegar o próximo ciclo disponível." title="Nenhuma conta atribuída" />
+        </div>
+      ) : null}
     </>
   );
 }
