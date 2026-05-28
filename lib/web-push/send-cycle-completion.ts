@@ -21,6 +21,7 @@ export async function notifyCaptadorRequestPayoutPush(captadorId: string): Promi
     body: "Suas contas foram finalizadas pela operação. Entre no app e solicite o pagamento.",
     data: {
       url: "/captador/dashboard",
+      tag: "payout-request",
     },
   });
 

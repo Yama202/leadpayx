@@ -46,7 +46,7 @@ self.addEventListener('push', (event) => {
     data: payload.data || {},
     tag: typeof payload?.data?.accountId === 'string'
       ? `account-reminder-${payload.data.accountId}`
-      : undefined,
+      : (typeof payload?.data?.tag === 'string' ? payload.data.tag : undefined),
     renotify: true,
   };
 
