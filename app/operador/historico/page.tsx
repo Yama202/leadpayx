@@ -17,7 +17,7 @@ export default async function OperadorHistoricoPage() {
     .from("accounts")
     .select(ACCOUNT_SELECT_WITH_SECRET)
     .eq("operador_id", profile.id)
-    .in("status", ["completed", "rejected"])
+    .in("status", ["completed", "rejected", "rejected_no_balance", "rejected_no_facial"])
     .order("updated_at", { ascending: false })
     .returns<Account[]>();
 

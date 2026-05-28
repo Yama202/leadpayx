@@ -1,7 +1,8 @@
 import React from "react";
 import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
 import { ProfileAdminEditor } from "@/components/admin/profile-admin-editor";
-import type { Account, Profile } from "@/lib/types";
+import { CaptadorLoanPanel } from "@/components/admin/captador-loan-panel";
+import type { Account, CaptadorLoan, CaptadorLoanRepayment, Profile } from "@/lib/types";
 
 function statusPill(status: string | null | undefined) {
   if (status === "pending_approval") {
@@ -31,6 +32,8 @@ const ACCOUNT_STATUS_LABEL: Record<string, string> = {
   in_progress: "Em andamento",
   completed: "Concluída",
   rejected: "Rejeitada",
+  rejected_no_balance: "Sem saldo",
+  rejected_no_facial: "Selfie pendente",
 };
 
 const ACCOUNT_STATUS_CLASS: Record<string, string> = {
@@ -39,6 +42,8 @@ const ACCOUNT_STATUS_CLASS: Record<string, string> = {
   in_progress: "bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/25",
   completed: "bg-[#00E07A]/12 text-[#16F28A] ring-1 ring-[#00E07A]/25",
   rejected: "bg-rose-500/12 text-rose-300 ring-1 ring-rose-400/20",
+  rejected_no_balance: "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/25",
+  rejected_no_facial: "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/25",
 };
 
 function accountSummary(accounts: Account[]) {
@@ -52,6 +57,8 @@ function accountSummary(accounts: Account[]) {
     ["in_progress", "Andamento", "text-amber-400"],
     ["completed", "Concluída", "text-[#16F28A]"],
     ["rejected", "Rejeitada", "text-rose-400"],
+    ["rejected_no_balance", "Sem saldo", "text-amber-400"],
+    ["rejected_no_facial", "Selfie pend.", "text-amber-400"],
   ];
   for (const [status, label, cls] of order) {
     if (counts[status]) {
@@ -68,9 +75,13 @@ function accountSummary(accounts: Account[]) {
 export function CaptadorAdminListItem({
   profile,
   accounts = [],
+  loans = [],
+  loanRepayments = [],
 }: {
   profile: Profile;
   accounts?: Account[];
+  loans?: CaptadorLoan[];
+  loanRepayments?: CaptadorLoanRepayment[];
 }) {
   const displayName = profile.name?.trim() || profile.email || "Sem nome";
 
@@ -154,6 +165,13 @@ export function CaptadorAdminListItem({
             Nenhuma conta enviada ainda.
           </div>
         )}
+        <div className="mb-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
+          <CaptadorLoanPanel
+            captadorId={profile.id}
+            loans={loans}
+            repayments={loanRepayments}
+          />
+        </div>
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">
           <ProfileAdminEditor dangerZone="collapsed" profile={profile} />
         </div>

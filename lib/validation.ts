@@ -96,7 +96,7 @@ export const accountSchema = z.object({
 export const rejectAccountSchema = z
   .object({
     accountId: z.string().uuid(),
-    reasonPreset: z.enum(["not_new_account", "no_balance", "other"]),
+    reasonPreset: z.enum(["not_new_account", "no_balance", "no_facial", "other"]),
     otherReason: z.string().trim().max(500).optional(),
   })
   .superRefine((data, ctx) => {
@@ -118,7 +118,14 @@ export const rejectAccountSchema = z
         ? "Recusa pelo operador: não é conta nova."
         : data.reasonPreset === "no_balance"
           ? "Recusa pelo operador: conta sem saldo."
-          : (data.otherReason ?? "").trim(),
+          : data.reasonPreset === "no_facial"
+            ? "Recusa pelo operador: falta de verificação facial (selfie)."
+            : (data.otherReason ?? "").trim(),
+    rejectionType: data.reasonPreset === "no_balance"
+      ? "no_balance"
+      : data.reasonPreset === "no_facial"
+        ? "no_facial"
+        : "permanent",
   }));
 
 export const accountIdSchema = z.object({
@@ -168,6 +175,14 @@ export const completeOperatorCycleSchema = z
       (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
       z.string().uuid().optional(),
     ),
+    balanceInitialBrl: z.preprocess(
+      (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+      z.number().min(0).optional(),
+    ),
+    balanceFinalBrl: z.preprocess(
+      (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+      z.number().min(0).optional(),
+    ),
   })
   .superRefine((data, ctx) => {
     const n = data.orderedAccountIds.length;
@@ -201,6 +216,10 @@ export const completeOperatorCycleSchema = z
 export const payoutProcessSchema = z.object({
   payoutId: z.string().uuid(),
   notes: z.string().trim().max(500).optional(),
+  amountPaid: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+    z.number().positive().optional(),
+  ),
 });
 
 export const approveCaptadorSchema = z.object({
@@ -452,6 +471,24 @@ export const adminRoleActionSchema = z
     delete copy.confirmationNormalized;
     return copy;
   });
+
+export const createLoanSchema = z.object({
+  captadorId: z.string().uuid("ID de captador inválido."),
+  amount: z.preprocess(
+    (v) => Number(v),
+    z.number().positive("Valor deve ser positivo."),
+  ),
+  notes: z.string().max(500).optional(),
+});
+
+export const claimLoanRepaymentSchema = z.object({
+  loanId: z.string().uuid("ID de empréstimo inválido."),
+  amount: z.preprocess(
+    (v) => Number(v),
+    z.number().positive("Valor deve ser positivo."),
+  ),
+  notes: z.string().max(500).optional(),
+});
 
 export type ActionState = {
   ok: boolean;

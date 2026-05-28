@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 
 import { AccountCard } from "@/components/domain/account-card";
+import { CaptadorDebtBanner } from "@/components/domain/captador-debt-banner";
 import { CaptadorPushSettings } from "@/components/domain/captador-push-settings";
 import { CaptadorNotificationsSection } from "@/components/domain/captador-notifications-section";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
@@ -13,7 +14,7 @@ import { formatReferralBonusLevaHint, getReferralSettings } from "@/lib/referral
 import { getWhatsappGroupUrl } from "@/lib/settings";
 import { ACCOUNT_SELECT_CAPTADOR, ACCOUNT_SELECT_CAPTADOR_FALLBACK } from "@/lib/account-columns";
 import { createClient } from "@/lib/supabase/server";
-import type { Account, AppSetting, Profile, UserNotification } from "@/lib/types";
+import type { Account, AppSetting, CaptadorLoan, Profile, UserNotification } from "@/lib/types";
 
 const ReferralBox = dynamic(
   () => import("@/components/domain/referral-box").then((m) => ({ default: m.ReferralBox })),
@@ -41,7 +42,7 @@ type DashboardEarning = {
 
 export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
   const supabase = await createClient();
-  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, promotionOffers, whatsappUrl, notificationsRes, pushCountRes] =
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, promotionOffers, whatsappUrl, notificationsRes, pushCountRes, loansRes] =
     await Promise.all([
       supabase
         .from("accounts")
@@ -86,6 +87,12 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
         .from("captador_web_push_subscriptions")
         .select("*", { count: "exact", head: true })
         .eq("user_id", profile.id),
+      supabase
+        .from("captador_loans")
+        .select("id,captador_id,amount,remaining_amount,notes,status,created_by,created_at,paid_at,updated_at")
+        .eq("captador_id", profile.id)
+        .eq("status", "active")
+        .returns<CaptadorLoan[]>(),
     ]);
   let accounts = accountsPrimary.data;
 
@@ -146,6 +153,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
     });
   }
   const pushSubscriptionCount = pushCountRes.count ?? 0;
+  const activeLoans = loansRes.data ?? [];
   const pushPublicKey =
     typeof process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY === "string"
       ? process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
@@ -157,6 +165,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
 
   return (
     <>
+      {activeLoans.length > 0 ? <CaptadorDebtBanner loans={activeLoans} /> : null}
       {depositOffers.length > 0 ? <CaptadorDepositBriefBanner offers={depositOffers} /> : null}
       <CaptadorPushSettings subscriptionCountServer={pushSubscriptionCount} vapidPublicKey={pushPublicKey} />
       <CaptadorNotificationsSection compact notifications={notificationsPreview} />

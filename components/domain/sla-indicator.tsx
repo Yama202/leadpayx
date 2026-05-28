@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import type { AccountStatus } from "@/lib/types";
+
 export function SlaIndicator({
   deadline,
   status,
 }: {
   deadline: string | null;
-  status: "assigned" | "in_progress" | "pending" | "completed" | "rejected";
+  status: AccountStatus;
 }) {
   const [now, setNow] = useState(() => Date.now());
 

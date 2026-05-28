@@ -27,6 +27,8 @@ const statusClasses: Record<AccountStatus | EarningStatus, string> = {
   in_progress: "bg-violet-300/10 text-violet-100 ring-violet-200/20",
   completed: "bg-[#00E07A]/10 text-[#16F28A] ring-[#00E07A]/20",
   rejected: "bg-rose-400/10 text-rose-100 ring-rose-400/20",
+  rejected_no_balance: "bg-amber-400/15 text-amber-200 ring-amber-400/25",
+  rejected_no_facial: "bg-amber-400/15 text-amber-200 ring-amber-400/25",
   paid: "bg-[#00E07A]/10 text-[#16F28A] ring-[#00E07A]/20",
   canceled: "bg-slate-400/10 text-slate-200 ring-slate-400/20",
 };

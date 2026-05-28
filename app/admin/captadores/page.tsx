@@ -3,12 +3,14 @@ import { CaptadorAdminListItem } from "@/components/admin/captador-admin-list-it
 import { CaptadoresSearchBar } from "@/components/admin/captadores-search-bar";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { requireRole } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   quotePostgrestFilterValue,
   sanitizeIlikeSearchTerm,
 } from "@/lib/search-utils";
 import { Suspense } from "react";
+import type { CaptadorLoan, CaptadorLoanRepayment } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +74,34 @@ export default async function AdminCaptadoresPage({
       const list = accountsByCaptadorId.get(acc.captador_id) ?? [];
       list.push(acc as import("@/lib/types").Account);
       accountsByCaptadorId.set(acc.captador_id, list);
+    }
+  }
+
+  // Empréstimos de todos os captadores visíveis
+  const loansByCaptadorId = new Map<string, CaptadorLoan[]>();
+  const allRepayments: CaptadorLoanRepayment[] = [];
+  if (captadorIds.length > 0) {
+    const adminSupabase = await createAdminClient();
+    const { data: allLoans } = await adminSupabase
+      .from("captador_loans")
+      .select("*")
+      .in("captador_id", captadorIds)
+      .order("created_at", { ascending: false });
+    const loanIds = (allLoans ?? []).map((l) => l.id);
+    if (loanIds.length > 0) {
+      const { data: allReps } = await adminSupabase
+        .from("captador_loan_repayments")
+        .select("*")
+        .in("loan_id", loanIds)
+        .order("created_at", { ascending: false });
+      for (const r of allReps ?? []) {
+        allRepayments.push(r as CaptadorLoanRepayment);
+      }
+    }
+    for (const loan of allLoans ?? []) {
+      const list = loansByCaptadorId.get(loan.captador_id) ?? [];
+      list.push(loan as CaptadorLoan);
+      loansByCaptadorId.set(loan.captador_id, list);
     }
   }
 
@@ -197,6 +227,10 @@ export default async function AdminCaptadoresPage({
             <CaptadorAdminListItem
               accounts={accountsByCaptadorId.get(captador.id) ?? []}
               key={captador.id}
+              loanRepayments={allRepayments.filter(
+                (r) => (loansByCaptadorId.get(captador.id) ?? []).some((l) => l.id === r.loan_id),
+              )}
+              loans={loansByCaptadorId.get(captador.id) ?? []}
               profile={captador}
             />
           ))}

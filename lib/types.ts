@@ -5,7 +5,9 @@ export type AccountStatus =
   | "assigned"
   | "in_progress"
   | "completed"
-  | "rejected";
+  | "rejected"
+  | "rejected_no_balance"
+  | "rejected_no_facial";
 export type EarningStatus = "pending" | "paid" | "canceled";
 export type PayoutStatus = "pending" | "processed";
 
@@ -59,6 +61,10 @@ export type Account = {
   completed_by_operador_id?: string | null;
   /** Informado pelo operador ao finalizar: destino/conta do saldo (visível ao captador). */
   operator_balance_destination?: string | null;
+  /** Saldo inicial da conta informado pelo operador ao finalizar (contas únicas). */
+  balance_initial_brl?: number | null;
+  /** Saldo após a operação informado pelo operador ao finalizar (contas únicas). */
+  balance_final_brl?: number | null;
   /** Oferta/casa selecionada pelo captador no envio. */
   promotion_offer_id?: string | null;
   promotion_offer_name?: string | null;
@@ -96,6 +102,8 @@ export type Payout = {
   id: string;
   user_id: string;
   amount: number;
+  /** Valor efetivamente pago pelo admin — nulo = igual a amount. */
+  amount_paid: number | null;
   status: PayoutStatus;
   payment_proof_url: string | null;
   notes: string | null;
@@ -200,4 +208,30 @@ export type CaptadorRanking = {
   generated_amount: number;
   active_days: number;
   score: number;
+};
+
+export type CaptadorLoan = {
+  id: string;
+  captador_id: string;
+  amount: number;
+  remaining_amount: number;
+  notes: string | null;
+  status: "active" | "paid";
+  created_by: string;
+  created_at: string;
+  paid_at: string | null;
+  updated_at: string;
+};
+
+export type CaptadorLoanRepayment = {
+  id: string;
+  loan_id: string;
+  amount: number;
+  kind: "captador_claim" | "payout_deduction" | "admin_adjustment";
+  status: "pending" | "approved" | "rejected";
+  claimed_by: string | null;
+  approved_by: string | null;
+  notes: string | null;
+  created_at: string;
+  approved_at: string | null;
 };

@@ -56,7 +56,7 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
     });
   }, [accounts]);
 
-  const [rejectPreset, setRejectPreset] = useState<"not_new_account" | "no_balance" | "other">(
+  const [rejectPreset, setRejectPreset] = useState<"not_new_account" | "no_balance" | "no_facial" | "other">(
     "not_new_account",
   );
   const [rejectState, rejectFormAction] = useActionState(
@@ -208,6 +208,36 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
                   required
                   rows={4}
                 />
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3 space-y-3">
+                  <p className="text-xs font-bold text-zinc-400">Saldo da conta (opcional)</p>
+                  <p className="text-xs text-zinc-600 leading-5">
+                    Preenche se houve diferença entre o depósito inicial e o saldo final. O admin usa para calcular o valor justo a pagar.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-xs font-semibold text-zinc-300">Saldo inicial (R$)</span>
+                      <input
+                        className="mt-1.5 min-h-10 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
+                        min="0"
+                        name="balanceInitialBrl"
+                        placeholder="ex: 60.00"
+                        step="0.01"
+                        type="number"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-semibold text-zinc-300">Saldo após operação (R$)</span>
+                      <input
+                        className="mt-1.5 min-h-10 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
+                        min="0"
+                        name="balanceFinalBrl"
+                        placeholder="ex: 70.00"
+                        step="0.01"
+                        type="number"
+                      />
+                    </label>
+                  </div>
+                </div>
               </fieldset>
             )}
             <SubmitButton pendingLabel="A finalizar ciclo…">Finalizar ciclo</SubmitButton>
@@ -279,6 +309,19 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
                     value="no_balance"
                   />
                   <span className="text-sm text-zinc-200">Conta sem saldo</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 has-[:checked]:border-rose-400/40">
+                  <input
+                    checked={rejectPreset === "no_facial"}
+                    className="accent-rose-400"
+                    name="reasonPreset"
+                    onChange={() => {
+                      setRejectPreset("no_facial");
+                    }}
+                    type="radio"
+                    value="no_facial"
+                  />
+                  <span className="text-sm text-zinc-200">Falta de reconhecimento facial</span>
                 </label>
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 has-[:checked]:border-rose-400/40">
                   <input

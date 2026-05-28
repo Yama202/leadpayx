@@ -20,6 +20,8 @@ export const accountStatusLabel: Record<AccountStatus, string> = {
   in_progress: "Em andamento",
   completed: "Finalizada",
   rejected: "Recusada",
+  rejected_no_balance: "Sem saldo",
+  rejected_no_facial: "Selfie pendente",
 };
 
 export const earningStatusLabel: Record<EarningStatus, string> = {

@@ -46,6 +46,8 @@ import {
   registrationLinkDeleteSchema,
   registrationLinkStatusSchema,
   startAccountSchema,
+  createLoanSchema,
+  claimLoanRepaymentSchema,
   validationError,
   type ActionState,
 } from "@/lib/validation";
@@ -401,11 +403,18 @@ export async function pickNextBatchStateAction(
   return pickNextBatchAction();
 }
 
-export async function completeAccount(accountId: string, balanceDestination: string) {
+export async function completeAccount(
+  accountId: string,
+  balanceDestination: string,
+  balanceInitialBrl?: number,
+  balanceFinalBrl?: number,
+) {
   const supabase = await createClient();
   return supabase.rpc("complete_account", {
     target_account_id: accountId,
     balance_destination: balanceDestination,
+    balance_initial_brl: balanceInitialBrl ?? null,
+    balance_final_brl: balanceFinalBrl ?? null,
   });
 }
 
@@ -473,7 +482,7 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
     redirect("/operador/dashboard?op_error=complete_balance");
   }
 
-  const { orderedAccountIds, balanceDestination, balanceTargetAccountId } = parsed.data;
+  const { orderedAccountIds, balanceDestination, balanceTargetAccountId, balanceInitialBrl, balanceFinalBrl } = parsed.data;
   const supabase = await createClient();
 
   const { data: rows, error: loadErr } = await supabase
@@ -509,8 +518,16 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
     message = twoAccountCycleBalanceDestination(label);
   }
 
+  const isSingleAccount = orderedAccountIds.length === 1;
   const completionResults = await Promise.all(
-    orderedAccountIds.map((accountId) => completeAccount(accountId, message)),
+    orderedAccountIds.map((accountId) =>
+      completeAccount(
+        accountId,
+        message,
+        isSingleAccount ? balanceInitialBrl : undefined,
+        isSingleAccount ? balanceFinalBrl : undefined,
+      ),
+    ),
   );
 
   for (const { error } of completionResults) {
@@ -561,11 +578,12 @@ export async function markAllCaptadorNotificationsReadAction(): Promise<void> {
   revalidatePath("/captador/avisos");
 }
 
-export async function rejectAccount(accountId: string, reason: string) {
+export async function rejectAccount(accountId: string, reason: string, rejectionType: string = "permanent") {
   const supabase = await createClient();
   return supabase.rpc("reject_account", {
     target_account_id: accountId,
     reason,
+    rejection_type: rejectionType,
   });
 }
 
@@ -581,15 +599,48 @@ export async function rejectAccountAction(
     return validationError("Informe o motivo da recusa.", parsed.error);
   }
 
-  const { error } = await rejectAccount(parsed.data.accountId, parsed.data.reason);
+  const { error } = await rejectAccount(parsed.data.accountId, parsed.data.reason, parsed.data.rejectionType);
 
   if (error) {
     return { ok: false, message: "Não foi possível recusar esta conta." };
   }
 
+  try {
+    const { notifyCaptadorOnAccountRejectionPush } = await import("@/lib/web-push/send-rejection");
+    await notifyCaptadorOnAccountRejectionPush({
+      accountId: parsed.data.accountId,
+      rejectionType: parsed.data.rejectionType,
+    });
+  } catch (pushErr) {
+    console.error("[rejectAccountAction] push pós-recusa", pushErr);
+  }
+
   revalidatePath("/operador/dashboard");
   revalidatePath("/operador/contas");
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/avisos");
   return { ok: true, message: "Conta recusada com motivo registrado." };
+}
+
+export async function requeueAccountAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  const formData = maybeFormData ?? (stateOrFormData as FormData);
+  await requireRole(["captador"]);
+  const accountId = formData.get("accountId");
+  if (typeof accountId !== "string" || !accountId) {
+    return { ok: false, message: "Conta inválida." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("requeue_account", { target_account_id: accountId });
+  if (error) {
+    return { ok: false, message: "Não foi possível reenviar esta conta para a fila." };
+  }
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
+  return { ok: true, message: "Conta reenviada para a fila com sucesso." };
 }
 
 export async function generateAccountEarning(accountId: string) {
@@ -608,6 +659,7 @@ export async function markPayoutAsProcessed(
   payoutId: string,
   proofFile?: File,
   notes?: string,
+  amountPaid?: number,
 ) {
   await requireRole(["admin"]);
   const supabase = await createClient();
@@ -637,6 +689,7 @@ export async function markPayoutAsProcessed(
     target_payout_id: payoutId,
     proof_path: proofPath,
     admin_notes: notes || null,
+    paid_amount: amountPaid ?? null,
   });
 }
 
@@ -657,12 +710,20 @@ export async function processPayoutAction(
     return validationError("Revise os dados do pagamento.", parsed.error);
   }
 
+  const adminSupabase = await createAdminClient();
+  const { data: payoutRow } = await adminSupabase
+    .from("payouts")
+    .select("user_id, amount")
+    .eq("id", parsed.data.payoutId)
+    .single();
+
   const proof = formData.get("proof");
   const file = proof instanceof File ? proof : undefined;
   const { error } = await markPayoutAsProcessed(
     parsed.data.payoutId,
     file,
     parsed.data.notes,
+    parsed.data.amountPaid,
   );
 
   if (error) {
@@ -674,6 +735,15 @@ export async function processPayoutAction(
       return { ok: false, message: "Comprovante muito grande. Limite de 5MB." };
     }
     return { ok: false, message: "Não foi possível processar o pagamento." };
+  }
+
+  if (payoutRow) {
+    const amountPaid = parsed.data.amountPaid ?? payoutRow.amount;
+    await adminSupabase.rpc("apply_payout_loan_deduction", {
+      p_captador_id: payoutRow.user_id,
+      p_payout_amount: payoutRow.amount,
+      p_amount_paid: amountPaid,
+    });
   }
 
   revalidatePath("/admin/pagamentos");
@@ -1690,4 +1760,128 @@ export async function rejectAccountFormAction(formData: FormData): Promise<void>
 
 export async function processPayoutFormAction(formData: FormData): Promise<void> {
   await processPayoutAction(formData);
+}
+
+export async function adminInitiatePayoutAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  const formData = maybeFormData ?? (stateOrFormData as FormData);
+  await requireRole(["admin"]);
+  const userId = formData.get("userId");
+  if (typeof userId !== "string" || !userId) {
+    return { ok: false, message: "Usuário inválido." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ensure_pending_payout", { target_user_id: userId });
+  if (error) {
+    if (error.message?.includes("no pending earnings")) {
+      return { ok: false, message: "Nenhuma comissão pendente para este captador." };
+    }
+    return { ok: false, message: "Não foi possível iniciar o pagamento." };
+  }
+  revalidatePath("/admin/pagamentos/captadores");
+  return { ok: true, message: "Pagamento iniciado com sucesso." };
+}
+
+export async function adminInitiatePayoutFormAction(formData: FormData): Promise<void> {
+  const result = await adminInitiatePayoutAction(formData);
+  if (!result.ok) {
+    redirect(`/admin/pagamentos/captadores?initiate_error=${encodeURIComponent(result.message)}`);
+  }
+  redirect("/admin/pagamentos/captadores");
+}
+
+// ── Loan actions ─────────────────────────────────────────────────────────────
+
+export async function createCaptadorLoanAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = createLoanSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return validationError("Revise os dados do empréstimo.", parsed.error);
+  }
+  await requireRole(["admin"]);
+  const adminSupabase = await createAdminClient();
+  const { error } = await adminSupabase.rpc("create_captador_loan", {
+    p_captador_id: parsed.data.captadorId,
+    p_amount: parsed.data.amount,
+    p_notes: parsed.data.notes ?? null,
+  });
+  if (error) {
+    return { ok: false, message: "Não foi possível registrar o empréstimo." };
+  }
+  revalidatePath("/admin/captadores");
+  revalidatePath(`/admin/captadores/${parsed.data.captadorId}`);
+  return { ok: true, message: "Empréstimo registrado com sucesso." };
+}
+
+export async function claimLoanRepaymentAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = claimLoanRepaymentSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return validationError("Dados inválidos.", parsed.error);
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("create_loan_repayment_claim", {
+    p_loan_id: parsed.data.loanId,
+    p_amount: parsed.data.amount,
+    p_notes: parsed.data.notes ?? null,
+  });
+  if (error) {
+    if (error.message?.includes("pending claim already exists")) {
+      return { ok: false, message: "Já existe um pedido pendente para este empréstimo." };
+    }
+    if (error.message?.includes("invalid repayment amount")) {
+      return { ok: false, message: "Valor de pagamento inválido ou superior ao saldo devedor." };
+    }
+    return { ok: false, message: "Não foi possível registrar o pagamento." };
+  }
+  revalidatePath("/captador/dashboard");
+  return { ok: true, message: "Pedido registrado. Aguardando confirmação do admin." };
+}
+
+export async function approveLoanRepaymentClaimAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const repaymentId = formData.get("repaymentId");
+  if (typeof repaymentId !== "string" || !repaymentId) {
+    return { ok: false, message: "ID inválido." };
+  }
+  const adminSupabase = await createAdminClient();
+  const { error } = await adminSupabase.rpc("approve_loan_repayment_claim", {
+    p_repayment_id: repaymentId,
+  });
+  if (error) {
+    return { ok: false, message: "Não foi possível aprovar o pagamento." };
+  }
+  revalidatePath("/admin/captadores");
+  revalidatePath("/captador/dashboard");
+  return { ok: true, message: "Pagamento aprovado." };
+}
+
+export async function rejectLoanRepaymentClaimAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const repaymentId = formData.get("repaymentId");
+  if (typeof repaymentId !== "string" || !repaymentId) {
+    return { ok: false, message: "ID inválido." };
+  }
+  const adminSupabase = await createAdminClient();
+  const { error } = await adminSupabase.rpc("reject_loan_repayment_claim", {
+    p_repayment_id: repaymentId,
+  });
+  if (error) {
+    return { ok: false, message: "Não foi possível rejeitar o pedido." };
+  }
+  revalidatePath("/admin/captadores");
+  revalidatePath("/captador/dashboard");
+  return { ok: true, message: "Pedido rejeitado." };
 }

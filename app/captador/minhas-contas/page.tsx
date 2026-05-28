@@ -1,4 +1,5 @@
 import { AccountCard } from "@/components/domain/account-card";
+import { RequeueAccountForm } from "@/components/domain/requeue-account-form";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { EmptyState } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
@@ -54,7 +55,16 @@ export default async function MinhasContasPage() {
     >
       <div className="grid gap-4 lg:grid-cols-2">
         {accounts?.length ? (
-          accounts.map((account) => <AccountCard account={account} key={account.id} />)
+          accounts.map((account) => (
+            <AccountCard account={account} key={account.id}>
+              {account.status === "rejected_no_balance" || account.status === "rejected_no_facial" ? (
+                <RequeueAccountForm
+                  accountId={account.id}
+                  status={account.status}
+                />
+              ) : null}
+            </AccountCard>
+          ))
         ) : (
           <EmptyState
             description="Quando você enviar contas autorizadas, elas aparecerão aqui."

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPagamentosCaptadoresPage({
   searchParams,
 }: {
-  searchParams: Promise<{ start?: string; end?: string }>;
+  searchParams: Promise<{ start?: string; end?: string; initiate_error?: string }>;
 }) {
   const params = await searchParams;
   return <PaymentsByRoleView role="captador" searchParams={params} />;
