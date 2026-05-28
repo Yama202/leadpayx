@@ -218,7 +218,13 @@ export const payoutProcessSchema = z.object({
   notes: z.string().trim().max(500).optional(),
   amountPaid: z.preprocess(
     (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
-    z.number().positive().optional(),
+    z.number().min(0).optional(),
+  ),
+  // Montante efetivo devido ao captador (original + ajuste de saldo).
+  // Usado para calcular a dedução correta da dívida mesmo quando amountPaid < effectiveAmount.
+  effectiveAmount: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+    z.number().min(0).optional(),
   ),
 });
 

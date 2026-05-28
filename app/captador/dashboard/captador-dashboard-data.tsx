@@ -161,6 +161,13 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
   }
   const pushSubscriptionCount = pushCountRes.count ?? 0;
   const activeLoans = loansRes.data ?? [];
+  if (requeueAccountsRes.error) {
+    console.error("[captador/dashboard] falha ao buscar contas para requeue", {
+      message: requeueAccountsRes.error.message,
+      code: requeueAccountsRes.error.code,
+      details: requeueAccountsRes.error.details,
+    });
+  }
   const requeueAccounts = (requeueAccountsRes.data ?? []) as Array<{ id: string; account_identifier: string; status: "rejected_no_facial" | "rejected_no_balance" }>;
   const pushPublicKey =
     typeof process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY === "string"

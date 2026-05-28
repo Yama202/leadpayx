@@ -386,14 +386,16 @@ export async function PaymentsByRoleView({
                   ) : null}
                   <form action={processPayoutFormAction} className="space-y-4">
                     <input name="payoutId" type="hidden" value={payout.id} />
+                    {/* effectiveAmount = calculado + ajuste; permite dedução correta da dívida na action */}
+                    <input name="effectiveAmount" type="hidden" value={suggestedAmount.toFixed(2)} />
                     <label className="block">
                       <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                         Valor pago (R$)
                       </span>
                       <input
                         className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
-                        defaultValue={suggestedAmount > 0 ? suggestedAmount.toFixed(2) : Number(payout.amount).toFixed(2)}
-                        min="0.01"
+                        defaultValue={Math.max(0, suggestedAmount - captadorDebt).toFixed(2)}
+                        min="0"
                         name="amountPaid"
                         step="0.01"
                         type="number"
@@ -402,6 +404,9 @@ export async function PaymentsByRoleView({
                         Valor calculado pelo sistema: {toCurrency(payout.amount)}.
                         {balanceAdj !== 0 && role === "captador"
                           ? ` Sugerido com ajuste: ${toCurrency(suggestedAmount)}.`
+                          : ""}
+                        {captadorDebt > 0 && role === "captador"
+                          ? ` Após dedução da dívida (${toCurrency(captadorDebt)}): ${toCurrency(Math.max(0, suggestedAmount - captadorDebt))}.`
                           : ""}
                       </span>
                     </label>

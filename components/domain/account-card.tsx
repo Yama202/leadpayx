@@ -17,6 +17,8 @@ export function AccountCard({
   captadorPixKey,
   /** QR Code (data URL) gerado no servidor com a chave Pix do captador. */
   captadorPixQrDataUrl,
+  /** Nome do captador que enviou a conta — exibido em contextos admin. */
+  captadorName,
   children,
 }: {
   account: Account;
@@ -24,6 +26,7 @@ export function AccountCard({
   accountPrintSignedUrl?: string | null;
   captadorPixKey?: string | null;
   captadorPixQrDataUrl?: string | null;
+  captadorName?: string | null;
   children?: ReactNode;
 }) {
   return (
@@ -36,6 +39,11 @@ export function AccountCard({
           <h3 className="mt-2 text-xl font-black tracking-tight text-white">
             {account.account_identifier}
           </h3>
+          {captadorName ? (
+            <p className="mt-1 text-xs font-semibold text-zinc-400">
+              Enviado por: <span className="text-zinc-200">{captadorName}</span>
+            </p>
+          ) : null}
           {account.promotion_offer_name ? (
             <span className="mt-1.5 inline-flex items-center rounded-full bg-[#00E07A]/10 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-[#16F28A] ring-1 ring-[#00E07A]/25">
               {account.promotion_offer_name}

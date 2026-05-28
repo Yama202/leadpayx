@@ -744,9 +744,12 @@ export async function processPayoutAction(
 
   if (payoutRow) {
     const amountPaid = parsed.data.amountPaid ?? payoutRow.amount;
+    // effectiveAmount inclui ajuste de saldo (calculado na UI e enviado como campo oculto).
+    // Garante que a dedução da dívida usa o valor real devido ao captador, não só o base.
+    const effectivePayout = parsed.data.effectiveAmount ?? payoutRow.amount;
     await adminSupabase.rpc("apply_payout_loan_deduction", {
       p_captador_id: payoutRow.user_id,
-      p_payout_amount: payoutRow.amount,
+      p_payout_amount: effectivePayout,
       p_amount_paid: amountPaid,
     });
   }

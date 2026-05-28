@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useMemo, useState } from "react";
+import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
@@ -99,8 +99,53 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
 
   const canFinalizeCycle = ordered.every((a) => operatorCanProgressAccount(a.status));
 
-  if (!ordered.length) {
+  // Preserva o identificador da conta recusada mesmo após o componente receber accounts=[].
+  // O ref é atualizado a cada render enquanto ordered tem dados, então ao revalidar o
+  // dashboard (que esvazia assignedList), o identificador correto ainda está disponível.
+  const lastKnownIdentifierRef = useRef<string>("");
+  const currentIdentifier =
+    ordered.find((a) => a.id === rejectedAccountId)?.account_identifier ??
+    ordered[0]?.account_identifier ??
+    "";
+  // Só atualiza enquanto rejectState.ok é false: após recusa bem-sucedida, congela o identificador.
+  if (currentIdentifier && !rejectState.ok) lastKnownIdentifierRef.current = currentIdentifier;
+
+  // Mantém montado enquanto há notificação WhatsApp pendente de exibir ao operador.
+  const hasPostRejectWhatsapp =
+    rejectState.ok &&
+    !!captadorWhatsapp &&
+    (rejectPreset === "no_facial" || rejectPreset === "no_balance");
+
+  if (!ordered.length && !hasPostRejectWhatsapp) {
     return null;
+  }
+
+  // Após recusa de ciclo com 1 conta: ordered fica vazio mas o botão WhatsApp precisa aparecer.
+  if (!ordered.length && hasPostRejectWhatsapp) {
+    const identifier = lastKnownIdentifierRef.current;
+    const msg =
+      rejectPreset === "no_facial"
+        ? `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de verificação facial (selfie). Por favor, acesse a plataforma da casa de apostas, conclua a selfie e depois reenvie no LeadPay.`
+        : `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de saldo. Por favor, deposite o valor mínimo na plataforma e depois reenvie no LeadPay.`;
+    const link = whatsappLink(captadorWhatsapp, msg);
+    if (!link) return null;
+    return (
+      <section
+        aria-label="Ciclo operacional atual"
+        className="mt-6 rounded-[2rem] border border-[#00E07A]/25 bg-[#00E07A]/[0.06] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl"
+        role="region"
+      >
+        <p className="mb-3 text-sm font-semibold text-emerald-300">Conta recusada com motivo registrado.</p>
+        <a
+          className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366]/20 py-3 text-sm font-black text-[#25D366] ring-1 ring-[#25D366]/30 hover:bg-[#25D366]/30 transition-colors"
+          href={link}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          WhatsApp — avisar captador
+        </a>
+      </section>
+    );
   }
 
   return (
@@ -262,6 +307,25 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
           </form>
         ) : null}
 
+        {hasPostRejectWhatsapp ? (() => {
+          const identifier = lastKnownIdentifierRef.current;
+          const msg =
+            rejectPreset === "no_facial"
+              ? `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de verificação facial (selfie). Por favor, acesse a plataforma da casa de apostas, conclua a selfie e depois reenvie no LeadPay.`
+              : `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de saldo. Por favor, deposite o valor mínimo na plataforma e depois reenvie no LeadPay.`;
+          const link = whatsappLink(captadorWhatsapp, msg);
+          return link ? (
+            <a
+              className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366]/20 py-3 text-sm font-black text-[#25D366] ring-1 ring-[#25D366]/30 hover:bg-[#25D366]/30 transition-colors"
+              href={link}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              WhatsApp — avisar captador
+            </a>
+          ) : null;
+        })() : null}
+
         {canReject ? (
           <form
             action={rejectFormAction}
@@ -375,23 +439,6 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
                 {rejectState.message}
               </p>
             ) : null}
-            {rejectState.ok && captadorWhatsapp && (rejectPreset === "no_facial" || rejectPreset === "no_balance") ? (() => {
-              const identifier = ordered.find((a) => a.id === rejectedAccountId)?.account_identifier ?? ordered[0]?.account_identifier ?? "";
-              const msg = rejectPreset === "no_facial"
-                ? `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de verificação facial (selfie). Por favor, acesse a plataforma da casa de apostas, conclua a selfie e depois reenvie no LeadPay.`
-                : `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de saldo. Por favor, deposite o valor mínimo na plataforma e depois reenvie no LeadPay.`;
-              const link = whatsappLink(captadorWhatsapp, msg);
-              return link ? (
-                <a
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366]/20 py-3 text-sm font-black text-[#25D366] ring-1 ring-[#25D366]/30 hover:bg-[#25D366]/30 transition-colors"
-                  href={link}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  WhatsApp — avisar captador
-                </a>
-              ) : null;
-            })() : null}
             <DangerSubmitButton>Confirmar recusa</DangerSubmitButton>
           </form>
         ) : null}

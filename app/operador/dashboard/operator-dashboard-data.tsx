@@ -112,24 +112,22 @@ export async function OperadorDashboardData({
         </div>
       ) : null}
 
-      {/* Conta em mãos: aparece primeiro para o operador não precisar rolar */}
+      {/* Sempre montado para preservar o botão WhatsApp pós-recusa mesmo quando assignedList esvazia */}
+      <OperatorWorkPanel
+        accounts={assignedList}
+        captadorName={captadorProfile?.name ?? null}
+        captadorWhatsapp={showCaptadorWhatsapp ? (captadorProfile?.whatsapp ?? null) : null}
+      />
       {assignedList.length ? (
-        <div className="mb-6 space-y-4">
-          <OperatorWorkPanel
-            accounts={assignedList}
-            captadorName={captadorProfile?.name ?? null}
-            captadorWhatsapp={showCaptadorWhatsapp ? (captadorProfile?.whatsapp ?? null) : null}
-          />
-          <div className="grid gap-4 lg:grid-cols-2">
-            {assignedList.map((account) => (
-              <AccountCard
-                account={account}
-                accountPrintSignedUrl={printUrls.get(account.id) ?? null}
-                key={account.id}
-                operationalCredentials={operationalCredentialsFromAccount(account)}
-              />
-            ))}
-          </div>
+        <div className="mb-6 mt-4 grid gap-4 lg:grid-cols-2">
+          {assignedList.map((account) => (
+            <AccountCard
+              account={account}
+              accountPrintSignedUrl={printUrls.get(account.id) ?? null}
+              key={account.id}
+              operationalCredentials={operationalCredentialsFromAccount(account)}
+            />
+          ))}
         </div>
       ) : null}
 

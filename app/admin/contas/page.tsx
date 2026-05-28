@@ -182,12 +182,13 @@ export default async function AdminContasPage({
   const [printUrls, profilesRes] = await Promise.all([
     accountPrintSignedUrlMap(supabase, list),
     captadorIds.length
-      ? supabase.from("profiles").select("id,pix_key").in("id", captadorIds)
-      : Promise.resolve({ data: [] as { id: string; pix_key: string | null }[], error: null }),
+      ? supabase.from("profiles").select("id,name,pix_key").in("id", captadorIds)
+      : Promise.resolve({ data: [] as { id: string; name: string | null; pix_key: string | null }[], error: null }),
   ]);
 
   const captadorProfiles = profilesRes.data ?? [];
   const captadorPixMap = new Map(captadorProfiles.map((p) => [p.id, p.pix_key ?? null]));
+  const captadorNameMap = new Map(captadorProfiles.map((p) => [p.id, p.name ?? null]));
   const captadorPixQrMap = await buildPixQrCodeMap(captadorProfiles);
 
   const errorBannerHint =
@@ -277,6 +278,7 @@ export default async function AdminContasPage({
             <AccountCard
               account={account}
               accountPrintSignedUrl={printUrls.get(account.id) ?? null}
+              captadorName={captadorNameMap.get(account.captador_id) ?? null}
               captadorPixKey={captadorPixMap.get(account.captador_id) ?? null}
               captadorPixQrDataUrl={captadorPixQrMap.get(account.captador_id) ?? null}
               key={account.id}
