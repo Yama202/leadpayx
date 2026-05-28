@@ -106,9 +106,9 @@ export async function OperadorDashboardData({
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_220px]">
         <DashboardCard
-          hint="Mais de um operador pode ver os mesmos ciclos. Ao pegar lote, o ciclo é travado para evitar duplicidade."
+          hint="Tamanho real varia por oferta — ofertas sem par obrigatório atribuem 1 conta. Mais de um operador pode ver os mesmos ciclos; ao pegar lote o ciclo é travado."
           label="Lote operacional"
-          value={`${minimumBatch} contas`}
+          value={`Até ${minimumBatch} conta(s)`}
         />
         <div className="flex flex-col gap-2">
           <OperatorPickBatchForm
