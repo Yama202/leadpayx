@@ -180,16 +180,29 @@ export function CaptadorPushSettings(props: {
         </div>
       </details>
 
-      {unsupportedReason ? (
+      {showIosExtra ? (
+        <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/[0.07] px-4 py-4 text-sm text-amber-100">
+          <p className="mb-2 font-black text-amber-300">Instale o app para ativar notificações no iPhone</p>
+          <ol className="space-y-1.5 text-amber-100/90">
+            <li><span className="font-bold">1.</span> Toque no ícone <span className="font-bold">Compartilhar</span> (quadrado com seta ↑) na barra do Safari</li>
+            <li><span className="font-bold">2.</span> Escolha <span className="font-bold">"Adicionar à Tela Inicial"</span></li>
+            <li><span className="font-bold">3.</span> Confirme tocando em <span className="font-bold">"Adicionar"</span></li>
+            <li><span className="font-bold">4.</span> Abra o app pelo ícone criado e ative aqui</li>
+          </ol>
+          <p className="mt-2 text-xs text-amber-200/60">Requer iOS 16.4 ou superior.</p>
+        </div>
+      ) : unsupportedReason ? (
         <p className="mt-4 rounded-2xl border border-rose-500/35 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           {unsupportedReason}
         </p>
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-3">
-        <Button disabled={busy || Boolean(unsupportedReason)} onClick={() => void registerPush()} type="button">
-          {busy ? "Registrando…" : "Pedir permissão e guardar"}
-        </Button>
+        {!showIosExtra ? (
+          <Button disabled={busy || Boolean(unsupportedReason)} onClick={() => void registerPush()} type="button">
+            {busy ? "Registrando…" : "Pedir permissão e guardar"}
+          </Button>
+        ) : null}
         <Button disabled={busy} onClick={() => void unregisterPush()} type="button" variant="secondary">
           Remover deste dispositivo
         </Button>
