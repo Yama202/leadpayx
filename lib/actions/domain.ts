@@ -493,18 +493,22 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
   const rowById = new Map((rows ?? []).map((row) => [row.id, row]));
 
   if (loadErr || rowById.size !== orderedAccountIds.length) {
+    console.error("[completeOperatorCycle] load fail", { loadErr: loadErr?.message, found: rowById.size, expected: orderedAccountIds.length, ids: orderedAccountIds });
     redirect("/operador/dashboard?op_error=complete");
   }
 
   for (const accountId of orderedAccountIds) {
     const row = rowById.get(accountId);
     if (!row) {
+      console.error("[completeOperatorCycle] row missing", { accountId });
       redirect("/operador/dashboard?op_error=complete");
     }
     if (row.operador_id !== operatorProfile.id) {
+      console.error("[completeOperatorCycle] operador_id mismatch", { accountId, rowOperadorId: row.operador_id, profileId: operatorProfile.id });
       redirect("/operador/dashboard?op_error=complete");
     }
     if (row.status !== "assigned" && row.status !== "in_progress") {
+      console.error("[completeOperatorCycle] bad status", { accountId, status: row.status });
       redirect("/operador/dashboard?op_error=complete");
     }
   }
@@ -533,6 +537,7 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
   for (const { error } of completionResults) {
     if (error) {
       const msg = String(error.message ?? "").toLowerCase();
+      console.error("[completeOperatorCycle] rpc error", { msg: error.message, code: error.code, operatorId: operatorProfile.id });
       if (msg.includes("balance destination required")) {
         redirect("/operador/dashboard?op_error=complete_balance");
       }
