@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import {
+  adminAdjustLoanAction,
   approveLoanRepaymentClaimAction,
   createCaptadorLoanAction,
   rejectLoanRepaymentClaimAction,
@@ -90,6 +91,53 @@ function LoanRepaymentRow({
   );
 }
 
+function AdminAdjustForm({ loanId }: { loanId: string }) {
+  const [state, formAction] = useActionState(
+    adminAdjustLoanAction,
+    { ok: false, message: "" } as { ok: boolean; message: string },
+  );
+  return (
+    <form action={formAction} className="mt-3 space-y-2 border-t border-white/[0.06] pt-3">
+      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500">Registrar pagamento</p>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="text-xs text-zinc-400">Valor (R$)</span>
+          <input
+            className="mt-0.5 min-h-8 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
+            min="0.01"
+            name="amount"
+            placeholder="ex: 20.00"
+            required
+            step="0.01"
+            type="number"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-zinc-400">Nota (opcional)</span>
+          <input
+            className="mt-0.5 min-h-8 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
+            name="notes"
+            placeholder="ex: pix recebido"
+            type="text"
+          />
+        </label>
+      </div>
+      <input name="loanId" type="hidden" value={loanId} />
+      {state.message ? (
+        <p className={`text-xs font-semibold ${state.ok ? "text-emerald-300" : "text-rose-300"}`} role="status">
+          {state.message}
+        </p>
+      ) : null}
+      <button
+        className="rounded-xl bg-violet-500/15 px-3 py-1.5 text-xs font-bold text-violet-300 hover:bg-violet-500/25 transition-colors"
+        type="submit"
+      >
+        Confirmar pagamento
+      </button>
+    </form>
+  );
+}
+
 function LoanRow({
   loan,
   repayments,
@@ -130,6 +178,11 @@ function LoanRow({
           {loanReps.map((r) => (
             <LoanRepaymentRow key={r.id} loanId={loan.id} rep={r} />
           ))}
+        </div>
+      )}
+      {!isPaid && (
+        <div className="px-4 pb-3">
+          <AdminAdjustForm loanId={loan.id} />
         </div>
       )}
     </div>

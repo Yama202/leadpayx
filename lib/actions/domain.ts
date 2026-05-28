@@ -48,6 +48,7 @@ import {
   startAccountSchema,
   createLoanSchema,
   claimLoanRepaymentSchema,
+  adminAdjustLoanSchema,
   validationError,
   type ActionState,
 } from "@/lib/validation";
@@ -1937,4 +1938,32 @@ export async function rejectLoanRepaymentClaimAction(
   revalidatePath("/admin/captadores");
   revalidatePath("/captador/dashboard");
   return { ok: true, message: "Pedido rejeitado." };
+}
+
+export async function adminAdjustLoanAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const parsed = adminAdjustLoanSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return validationError("Dados inválidos.", parsed.error);
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_adjust_loan", {
+    p_loan_id: parsed.data.loanId,
+    p_amount: parsed.data.amount,
+    p_notes: parsed.data.notes ?? null,
+  });
+  if (error) {
+    if (error.message?.includes("loan already paid")) {
+      return { ok: false, message: "Este empréstimo já está quitado." };
+    }
+    if (error.message?.includes("invalid adjustment amount")) {
+      return { ok: false, message: "Valor inválido." };
+    }
+    return { ok: false, message: "Não foi possível registrar o ajuste." };
+  }
+  revalidatePath("/admin/captadores");
+  return { ok: true, message: "Ajuste registrado." };
 }

@@ -500,6 +500,15 @@ export const claimLoanRepaymentSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
+export const adminAdjustLoanSchema = z.object({
+  loanId: z.string().uuid("ID de empréstimo inválido."),
+  amount: z.preprocess(
+    (v) => Number(v),
+    z.number().positive("Valor deve ser positivo."),
+  ),
+  notes: z.string().max(500).optional(),
+});
+
 export type ActionState = {
   ok: boolean;
   message: string;
