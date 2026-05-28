@@ -1803,8 +1803,8 @@ export async function createCaptadorLoanAction(
     return validationError("Revise os dados do empréstimo.", parsed.error);
   }
   await requireRole(["admin"]);
-  const adminSupabase = await createAdminClient();
-  const { error } = await adminSupabase.rpc("create_captador_loan", {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("create_captador_loan", {
     p_captador_id: parsed.data.captadorId,
     p_amount: parsed.data.amount,
     p_notes: parsed.data.notes ?? null,
@@ -1853,8 +1853,8 @@ export async function approveLoanRepaymentClaimAction(
   if (typeof repaymentId !== "string" || !repaymentId) {
     return { ok: false, message: "ID inválido." };
   }
-  const adminSupabase = await createAdminClient();
-  const { error } = await adminSupabase.rpc("approve_loan_repayment_claim", {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("approve_loan_repayment_claim", {
     p_repayment_id: repaymentId,
   });
   if (error) {
@@ -1874,8 +1874,8 @@ export async function rejectLoanRepaymentClaimAction(
   if (typeof repaymentId !== "string" || !repaymentId) {
     return { ok: false, message: "ID inválido." };
   }
-  const adminSupabase = await createAdminClient();
-  const { error } = await adminSupabase.rpc("reject_loan_repayment_claim", {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reject_loan_repayment_claim", {
     p_repayment_id: repaymentId,
   });
   if (error) {
