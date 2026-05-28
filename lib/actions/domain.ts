@@ -119,6 +119,9 @@ function mapAccountInsertError(message: string, code?: string): string {
   if (m.includes("foreign key") || m.includes("violates foreign key") || code === "23503") {
     return "Dados de referência inválidos (perfil ou link). Atualize a página ou contate o suporte.";
   }
+  if ((m.includes("duplicate") || code === "23505") && m.includes("captador_email_offer")) {
+    return "Você já enviou este e-mail para esta casa de apostas.";
+  }
   if (m.includes("duplicate") || code === "23505") {
     return "Conflito ao registrar a conta. Atualize a página e tente novamente.";
   }
@@ -167,6 +170,24 @@ export async function submitAccountAction(
       ok: false,
       message: "A oferta selecionada não está mais disponível. Recarregue a página e tente novamente.",
       fieldErrors: { promotionOfferId: ["Oferta indisponível ou encerrada."] },
+    };
+  }
+
+  // Verifica e-mail duplicado para esta oferta/captador
+  const { count: dupCount } = await supabase
+    .from("accounts")
+    .select("id", { count: "exact", head: true })
+    .eq("captador_id", profile.id)
+    .eq("promotion_offer_id", selectedOffer.id)
+    .filter("lead_account_email", "ilike", parsed.data.leadAccountEmail);
+
+  if (dupCount && dupCount > 0) {
+    return {
+      ok: false,
+      message: `Você já enviou o e-mail "${parsed.data.leadAccountEmail}" para ${selectedOffer.name}. Cada e-mail só pode ser usado uma vez por casa de apostas.`,
+      fieldErrors: {
+        leadAccountEmail: [`Este e-mail já foi enviado para ${selectedOffer.name}.`],
+      },
     };
   }
 
