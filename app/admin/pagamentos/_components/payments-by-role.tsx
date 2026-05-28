@@ -378,10 +378,19 @@ export async function PaymentsByRoleView({
                           <p className="font-bold text-rose-300">−{toCurrency(captadorDebt)}</p>
                         </div>
                         <div>
-                          <p className="text-zinc-500">Líquido</p>
-                          <p className="font-black text-white">{toCurrency(Math.max(0, suggestedAmount - captadorDebt))}</p>
+                          <p className="text-zinc-500">{suggestedAmount - captadorDebt < 0 ? "Devedor restante" : "Líquido"}</p>
+                          <p className={`font-black ${suggestedAmount - captadorDebt < 0 ? "text-rose-300" : "text-white"}`}>
+                            {suggestedAmount - captadorDebt < 0
+                              ? `−${toCurrency(captadorDebt - suggestedAmount)}`
+                              : toCurrency(suggestedAmount - captadorDebt)}
+                          </p>
                         </div>
                       </div>
+                      {suggestedAmount - captadorDebt < 0 ? (
+                        <p className="mt-2 text-xs text-rose-200/60">
+                          Após este payout ele ainda deverá {toCurrency(captadorDebt - suggestedAmount)}.
+                        </p>
+                      ) : null}
                     </div>
                   ) : null}
                   <form action={processPayoutFormAction} className="space-y-4">
