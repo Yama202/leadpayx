@@ -17,7 +17,17 @@ import { initialActionState, type ActionState } from "@/lib/validation";
 
 type OperatorWorkPanelProps = {
   accounts: Account[];
+  captadorName: string | null;
+  captadorWhatsapp: string | null;
 };
+
+function whatsappLink(whatsapp: string | null, text: string): string | null {
+  if (!whatsapp) return null;
+  const digits = whatsapp.replace(/\D/g, "");
+  if (!digits) return null;
+  const number = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+}
 
 function DangerSubmitButton({ children }: { children: string }) {
   const { pending } = useFormStatus();
@@ -44,7 +54,7 @@ function DangerSubmitButton({ children }: { children: string }) {
 const BALANCE_PLACEHOLDER =
   "Descreva objetivamente para onde foi o saldo (ex.: conta destino, Pix, titular, instituição ou o que combinaram). Mínimo 8 caracteres.";
 
-export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
+export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: OperatorWorkPanelProps) {
   const ordered = useMemo(() => {
     return [...accounts].sort((a, b) => {
       const ta = a.assigned_at ? new Date(a.assigned_at).getTime() : 0;
@@ -63,6 +73,7 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
     rejectAccountAction,
     initialActionState as ActionState,
   );
+  const [rejectedAccountId, setRejectedAccountId] = useState<string>(() => ordered[0]?.id ?? "");
   const baseId = useId();
   const canReject = ordered.some((a) => operatorCanProgressAccount(a.status));
   const reasonLegendId = `${baseId}-reject-legend`;
@@ -98,7 +109,14 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
       className="mt-6 rounded-[2rem] border border-[#00E07A]/25 bg-[#00E07A]/[0.06] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl"
       role="region"
     >
-      <h2 className="text-base font-black tracking-tight text-white">Ciclo de operação</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-black tracking-tight text-white">Ciclo de operação</h2>
+        {captadorName ? (
+          <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-zinc-300">
+            Captador: {captadorName}
+          </span>
+        ) : null}
+      </div>
       <p className="mt-1 text-sm text-zinc-400">
         {ordered.length > 1
           ? "Com as contas do ciclo, escolhe só em qual delas ficou o saldo — a mensagem ao captador é gerada automaticamente. Recusas continuam por conta."
@@ -268,6 +286,7 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
                           defaultChecked={idx === 0}
                           id={inputId}
                           name="accountId"
+                          onChange={() => setRejectedAccountId(acc.id)}
                           required
                           type="radio"
                           value={acc.id}
@@ -356,6 +375,23 @@ export function OperatorWorkPanel({ accounts }: OperatorWorkPanelProps) {
                 {rejectState.message}
               </p>
             ) : null}
+            {rejectState.ok && captadorWhatsapp && (rejectPreset === "no_facial" || rejectPreset === "no_balance") ? (() => {
+              const identifier = ordered.find((a) => a.id === rejectedAccountId)?.account_identifier ?? ordered[0]?.account_identifier ?? "";
+              const msg = rejectPreset === "no_facial"
+                ? `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de verificação facial (selfie). Por favor, acesse a plataforma da casa de apostas, conclua a selfie e depois reenvie no LeadPay.`
+                : `Oi${captadorName ? ` ${captadorName.split(" ")[0]}` : ""}! Sua conta *${identifier}* foi recusada por falta de saldo. Por favor, deposite o valor mínimo na plataforma e depois reenvie no LeadPay.`;
+              const link = whatsappLink(captadorWhatsapp, msg);
+              return link ? (
+                <a
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366]/20 py-3 text-sm font-black text-[#25D366] ring-1 ring-[#25D366]/30 hover:bg-[#25D366]/30 transition-colors"
+                  href={link}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  WhatsApp — avisar captador
+                </a>
+              ) : null;
+            })() : null}
             <DangerSubmitButton>Confirmar recusa</DangerSubmitButton>
           </form>
         ) : null}

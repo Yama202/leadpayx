@@ -51,7 +51,7 @@ export async function OperadorDashboardData({
       supabase
         .from("app_settings")
         .select("key,value")
-        .in("key", ["operational_min_batch_size"])
+        .in("key", ["operational_min_batch_size", "show_captador_whatsapp_to_operator"])
         .returns<AppSetting[]>(),
       supabase.rpc("get_operator_cycle_queue_summary").returns<CycleQueueRow[]>(),
     ]);
@@ -66,6 +66,7 @@ export async function OperadorDashboardData({
             ? "Requisição inválida. Atualize a página e tente novamente."
             : null;
   const settingValues = Object.fromEntries((settings ?? []).map((setting) => [setting.key, setting.value]));
+  const showCaptadorWhatsapp = settingValues.show_captador_whatsapp_to_operator === true;
   const operatorPending =
     earnings?.filter((earning) => earning.status === "pending").reduce(
       (sum, earning) => sum + Number(earning.amount),
@@ -77,6 +78,18 @@ export async function OperadorDashboardData({
   const queueRows: CycleQueueRow[] = Array.isArray(cycleQueue) ? cycleQueue : [];
   const assignedList = (accounts ?? []).slice(0, Math.max(1, minimumBatch));
   const printUrls = await accountPrintSignedUrlMap(supabase, assignedList);
+
+  // Perfil do captador do ciclo atual (todos os accounts são do mesmo captador)
+  let captadorProfile: { name: string | null; whatsapp: string | null } | null = null;
+  const cycleCapId = assignedList[0]?.captador_id;
+  if (cycleCapId) {
+    const { data: capData } = await supabase
+      .from("profiles")
+      .select("name,whatsapp")
+      .eq("id", cycleCapId)
+      .maybeSingle();
+    captadorProfile = capData ?? null;
+  }
   const availableCycles = queueRows.map((cycle) => ({
     captadorId: cycle.captador_id,
     count: Number(cycle.pending_count ?? 0),
@@ -102,7 +115,11 @@ export async function OperadorDashboardData({
       {/* Conta em mãos: aparece primeiro para o operador não precisar rolar */}
       {assignedList.length ? (
         <div className="mb-6 space-y-4">
-          <OperatorWorkPanel accounts={assignedList} />
+          <OperatorWorkPanel
+            accounts={assignedList}
+            captadorName={captadorProfile?.name ?? null}
+            captadorWhatsapp={showCaptadorWhatsapp ? (captadorProfile?.whatsapp ?? null) : null}
+          />
           <div className="grid gap-4 lg:grid-cols-2">
             {assignedList.map((account) => (
               <AccountCard

@@ -215,6 +215,21 @@ export default async function AdminConfiguracoesPage({
           </label>
         </div>
 
+        <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">Operador — contato com captador</p>
+          <label className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-200">
+            <input
+              defaultChecked={values.show_captador_whatsapp_to_operator === true}
+              name="showCaptadorWhatsappToOperator"
+              type="checkbox"
+            />
+            Mostrar WhatsApp do captador ao operador (botão de contato após recusa)
+          </label>
+          <p className="text-xs text-[#A1A1AA]">
+            Quando ativo, o operador vê o nome do captador sempre. Ao recusar por facial ou sem saldo, aparece um botão de WhatsApp com mensagem pronta.
+          </p>
+        </div>
+
           <Button className="sm:col-span-2" type="submit">
             Salvar configurações
           </Button>

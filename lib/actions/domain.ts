@@ -1292,6 +1292,7 @@ export async function updateAppSettingsAction(formData: FormData): Promise<void>
   await adminClient.from("app_settings").upsert([
     { key: "require_selfie_confirmation", value: parsed.data.requireSelfieConfirmation, updated_by: null },
     { key: "selfie_confirmation_message", value: parsed.data.selfieConfirmationMessage ?? null, updated_by: null },
+    { key: "show_captador_whatsapp_to_operator", value: parsed.data.showCaptadorWhatsappToOperator, updated_by: null },
   ], { onConflict: "key" });
 
   revalidatePath("/admin/configuracoes");

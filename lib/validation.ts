@@ -304,6 +304,10 @@ export const appSettingsSchema = z.object({
     .optional()
     .transform((value) => value === "on"),
   selfieConfirmationMessage: z.string().trim().max(300).optional(),
+  showCaptadorWhatsappToOperator: z
+    .string()
+    .optional()
+    .transform((value) => value === "on"),
 });
 
 export const captadorDepositBriefSchema = z.object({
