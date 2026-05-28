@@ -313,6 +313,16 @@ export async function submitAccountAction(
   revalidatePath("/captador/enviar-conta");
   revalidatePath("/admin/contas");
 
+  try {
+    const { notifyOperatorsOnNewAccountPush } = await import("@/lib/web-push/send-new-account");
+    await notifyOperatorsOnNewAccountPush({
+      accountIdentifier: parsed.data.accountIdentifier,
+      captadorName: profile.name ?? null,
+    });
+  } catch (pushErr) {
+    console.error("[submitAccountAction] push operadores", pushErr);
+  }
+
   return { ok: true, message: "Conta enviada para a fila. Quando houver ciclo completo, um operador apto recebe o lote." };
 }
 

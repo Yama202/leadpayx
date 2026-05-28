@@ -116,6 +116,16 @@ export default async function AdminCaptadoresPage({
   const count = captadores?.length ?? 0;
   const countLabel = count === 1 ? "1 captador encontrado" : `${count} captadores encontrados`;
 
+  // Resumo de dívidas ativas
+  const debtors = (captadores ?? [])
+    .map((c) => {
+      const activeLoans = (loansByCaptadorId.get(c.id) ?? []).filter((l) => l.status === "active");
+      const remaining = activeLoans.reduce((s, l) => s + Number(l.remaining_amount ?? 0), 0);
+      return remaining > 0 ? { name: c.name?.trim() || c.email || "—", remaining } : null;
+    })
+    .filter(Boolean) as { name: string; remaining: number }[];
+  const totalDebt = debtors.reduce((s, d) => s + d.remaining, 0);
+
   return (
     <RoleBasedLayout
       description="Lista densa: abra uma linha para editar perfil, depósito no envio ou exclusão. Busca por nome ou e-mail."
@@ -159,6 +169,35 @@ export default async function AdminCaptadoresPage({
       {profileSuccess ? (
         <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
           {decodeURIComponent(profileSuccess)}
+        </div>
+      ) : null}
+
+      {totalDebt > 0 ? (
+        <div className="mb-6 rounded-[2rem] border border-violet-400/20 bg-violet-400/[0.05] p-5 shadow-lg backdrop-blur-sm">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-300">
+              Empréstimos ativos
+            </p>
+            <span className="rounded-xl border border-violet-400/20 bg-black/20 px-3 py-1 text-sm font-black text-violet-200">
+              R$ {totalDebt.toFixed(2).replace(".", ",")}
+            </span>
+          </div>
+          <p className="mb-3 mt-0.5 text-xs text-violet-100/60">
+            Total a receber de {debtors.length} captador{debtors.length !== 1 ? "es" : ""}.
+          </p>
+          <ul className="space-y-1.5">
+            {debtors.map((d) => (
+              <li
+                key={d.name}
+                className="flex items-center justify-between gap-3 rounded-xl border border-violet-400/10 bg-black/20 px-3 py-2"
+              >
+                <span className="truncate text-sm text-zinc-200">{d.name}</span>
+                <span className="shrink-0 text-sm font-bold text-violet-200">
+                  R$ {d.remaining.toFixed(2).replace(".", ",")}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 

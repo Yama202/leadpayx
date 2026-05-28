@@ -1,5 +1,6 @@
 import { AccountCard } from "@/components/domain/account-card";
 import { OperatorWorkPanel } from "@/components/domain/operator-work-panel";
+import { OperatorPushSettings } from "@/components/domain/operator-push-settings";
 import { OperatorQueueAutoRefresh } from "@/components/domain/operator-queue-auto-refresh";
 import { OperatorPickBatchForm } from "@/components/domain/operator-pick-batch-form";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
@@ -33,7 +34,7 @@ export async function OperadorDashboardData({
   // Redistribui SLA expirado (ciclo completo vai para outro operador quando aplicável).
   await supabase.rpc("reassign_expired_operator_accounts");
 
-  const [{ data: accounts }, { data: earnings }, { data: settings }, { data: cycleQueue }] =
+  const [{ data: accounts }, { data: earnings }, { data: settings }, { data: cycleQueue }, pushCountRes] =
     await Promise.all([
       supabase
         .from("accounts")
@@ -54,7 +55,16 @@ export async function OperadorDashboardData({
         .in("key", ["operational_min_batch_size", "show_captador_whatsapp_to_operator"])
         .returns<AppSetting[]>(),
       supabase.rpc("get_operator_cycle_queue_summary").returns<CycleQueueRow[]>(),
+      supabase
+        .from("operator_web_push_subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", profile.id),
     ]);
+  const pushSubscriptionCount = pushCountRes.count ?? 0;
+  const pushPublicKey =
+    typeof process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY === "string"
+      ? process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
+      : null;
   const opErrorMessage =
     opError === "complete"
       ? "Não foi possível finalizar a conta (prazo, permissão ou estado inválido). Atualize a página e tente novamente."
@@ -102,6 +112,7 @@ export async function OperadorDashboardData({
 
   return (
     <>
+      <OperatorPushSettings subscriptionCountServer={pushSubscriptionCount} vapidPublicKey={pushPublicKey} />
       <OperatorQueueAutoRefresh />
       {opErrorMessage ? (
         <div
