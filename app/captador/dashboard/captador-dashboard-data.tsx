@@ -6,6 +6,7 @@ import { CaptadorPushSettings } from "@/components/domain/captador-push-settings
 import { CaptadorNotificationsSection } from "@/components/domain/captador-notifications-section";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
+import { RequeueAccountForm } from "@/components/domain/requeue-account-form";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
@@ -42,7 +43,7 @@ type DashboardEarning = {
 
 export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
   const supabase = await createClient();
-  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, promotionOffers, whatsappUrl, notificationsRes, pushCountRes, loansRes] =
+  const [accountsPrimary, accountsCountRes, earningsRes, settingsRes, promotionOffers, whatsappUrl, notificationsRes, pushCountRes, loansRes, requeueAccountsRes] =
     await Promise.all([
       supabase
         .from("accounts")
@@ -93,6 +94,12 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
         .eq("captador_id", profile.id)
         .eq("status", "active")
         .returns<CaptadorLoan[]>(),
+      supabase
+        .from("accounts")
+        .select("id,account_identifier,status")
+        .eq("captador_id", profile.id)
+        .in("status", ["rejected_no_facial", "rejected_no_balance"])
+        .order("rejected_at", { ascending: false }),
     ]);
   let accounts = accountsPrimary.data;
 
@@ -154,6 +161,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
   }
   const pushSubscriptionCount = pushCountRes.count ?? 0;
   const activeLoans = loansRes.data ?? [];
+  const requeueAccounts = (requeueAccountsRes.data ?? []) as Array<{ id: string; account_identifier: string; status: "rejected_no_facial" | "rejected_no_balance" }>;
   const pushPublicKey =
     typeof process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY === "string"
       ? process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
@@ -167,6 +175,24 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
     <>
       {activeLoans.length > 0 ? <CaptadorDebtBanner loans={activeLoans} /> : null}
       {depositOffers.length > 0 ? <CaptadorDepositBriefBanner offers={depositOffers} /> : null}
+      {requeueAccounts.length > 0 ? (
+        <section className="mb-6 rounded-[2rem] border border-amber-400/30 bg-amber-500/[0.07] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+          <p className="text-base font-black text-amber-200">⚠ Ação necessária nas suas contas</p>
+          <p className="mt-1 text-sm text-amber-100/70">
+            {requeueAccounts.length === 1
+              ? "A conta abaixo foi recusada e precisa de ação antes de voltar à fila."
+              : `${requeueAccounts.length} contas foram recusadas e precisam de ação antes de voltar à fila.`}
+          </p>
+          <div className="mt-4 space-y-3">
+            {requeueAccounts.map((acc) => (
+              <div className="rounded-2xl border border-amber-400/20 bg-black/20 p-4" key={acc.id}>
+                <p className="font-mono text-sm font-bold text-white">{acc.account_identifier}</p>
+                <RequeueAccountForm accountId={acc.id} status={acc.status} />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <CaptadorPushSettings subscriptionCountServer={pushSubscriptionCount} vapidPublicKey={pushPublicKey} />
       <CaptadorNotificationsSection compact notifications={notificationsPreview} />
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
