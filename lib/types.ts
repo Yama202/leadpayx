@@ -194,6 +194,22 @@ export type FinancialSummary = {
   pending_payout_amount: number;
   processed_payout_amount: number;
   processed_payouts: number;
+  amount_paid_total: number;
+};
+
+export type CaptadorOfferRate = {
+  id: string;
+  captador_id: string;
+  offer_id: string;
+  commission_amount: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PromotionOfferBasic = {
+  id: string;
+  name: string;
+  status: string;
 };
 
 export type CaptadorRanking = {

@@ -49,6 +49,8 @@ import {
   createLoanSchema,
   claimLoanRepaymentSchema,
   adminAdjustLoanSchema,
+  setCaptadorOfferRateSchema,
+  deleteCaptadorOfferRateSchema,
   validationError,
   type ActionState,
 } from "@/lib/validation";
@@ -1968,4 +1970,41 @@ export async function adminAdjustLoanAction(
   }
   revalidatePath("/admin/captadores");
   return { ok: true, message: "Ajuste registrado." };
+}
+
+// ── Captador offer rate actions ───────────────────────────────────────────────
+
+export async function setCaptadorOfferRateAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const parsed = setCaptadorOfferRateSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError("Dados inválidos.", parsed.error);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_captador_offer_rate", {
+    p_captador_id: parsed.data.captadorId,
+    p_offer_id: parsed.data.offerId,
+    p_amount: parsed.data.amount,
+  });
+  if (error) return { ok: false, message: "Não foi possível salvar a taxa." };
+  revalidatePath("/admin/captadores");
+  return { ok: true, message: "Taxa salva." };
+}
+
+export async function deleteCaptadorOfferRateAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const parsed = deleteCaptadorOfferRateSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError("Dados inválidos.", parsed.error);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_captador_offer_rate", {
+    p_captador_id: parsed.data.captadorId,
+    p_offer_id: parsed.data.offerId,
+  });
+  if (error) return { ok: false, message: "Não foi possível remover a taxa." };
+  revalidatePath("/admin/captadores");
+  return { ok: true, message: "Taxa removida." };
 }

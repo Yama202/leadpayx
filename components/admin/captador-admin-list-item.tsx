@@ -1,8 +1,9 @@
 import React from "react";
 import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
-import { ProfileAdminEditor } from "@/components/admin/profile-admin-editor";
 import { CaptadorLoanPanel } from "@/components/admin/captador-loan-panel";
-import type { Account, CaptadorLoan, CaptadorLoanRepayment, Profile } from "@/lib/types";
+import { CaptadorOfferRatesPanel } from "@/components/admin/captador-offer-rates-panel";
+import { ProfileAdminEditor } from "@/components/admin/profile-admin-editor";
+import type { Account, CaptadorLoan, CaptadorLoanRepayment, CaptadorOfferRate, Profile, PromotionOfferBasic } from "@/lib/types";
 
 function statusPill(status: string | null | undefined) {
   if (status === "pending_approval") {
@@ -77,11 +78,15 @@ export function CaptadorAdminListItem({
   accounts = [],
   loans = [],
   loanRepayments = [],
+  offerRates = [],
+  offers = [],
 }: {
   profile: Profile;
   accounts?: Account[];
   loans?: CaptadorLoan[];
   loanRepayments?: CaptadorLoanRepayment[];
+  offerRates?: CaptadorOfferRate[];
+  offers?: PromotionOfferBasic[];
 }) {
   const displayName = profile.name?.trim() || profile.email || "Sem nome";
 
@@ -170,6 +175,11 @@ export function CaptadorAdminListItem({
             captadorId={profile.id}
             loans={loans}
             repayments={loanRepayments}
+          />
+          <CaptadorOfferRatesPanel
+            captadorId={profile.id}
+            offers={offers}
+            rates={offerRates}
           />
         </div>
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:p-5">

@@ -509,6 +509,20 @@ export const adminAdjustLoanSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
+export const setCaptadorOfferRateSchema = z.object({
+  captadorId: z.string().uuid(),
+  offerId: z.string().uuid(),
+  amount: z.preprocess(
+    (v) => Number(v),
+    z.number().min(0, "Valor não pode ser negativo."),
+  ),
+});
+
+export const deleteCaptadorOfferRateSchema = z.object({
+  captadorId: z.string().uuid(),
+  offerId: z.string().uuid(),
+});
+
 export type ActionState = {
   ok: boolean;
   message: string;

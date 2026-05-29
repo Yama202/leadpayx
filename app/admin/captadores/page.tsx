@@ -10,7 +10,7 @@ import {
   sanitizeIlikeSearchTerm,
 } from "@/lib/search-utils";
 import { Suspense } from "react";
-import type { CaptadorLoan, CaptadorLoanRepayment } from "@/lib/types";
+import type { CaptadorLoan, CaptadorLoanRepayment, CaptadorOfferRate, PromotionOfferBasic } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +103,29 @@ export default async function AdminCaptadoresPage({
       list.push(loan as CaptadorLoan);
       loansByCaptadorId.set(loan.captador_id, list);
     }
+  }
+
+  // Offer rates + active offers (para o painel de comissões por oferta)
+  const offerRatesByCaptadorId = new Map<string, CaptadorOfferRate[]>();
+  let activeOffers: PromotionOfferBasic[] = [];
+  if (captadorIds.length > 0) {
+    const [{ data: rateRows }, { data: offerRows }] = await Promise.all([
+      supabase
+        .from("captador_offer_rates")
+        .select("id,captador_id,offer_id,commission_amount,created_at,updated_at")
+        .in("captador_id", captadorIds),
+      supabase
+        .from("promotion_offers")
+        .select("id,name,status")
+        .eq("status", "active")
+        .order("name"),
+    ]);
+    for (const rate of rateRows ?? []) {
+      const list = offerRatesByCaptadorId.get(rate.captador_id) ?? [];
+      list.push(rate as CaptadorOfferRate);
+      offerRatesByCaptadorId.set(rate.captador_id, list);
+    }
+    activeOffers = (offerRows ?? []) as PromotionOfferBasic[];
   }
 
   // Ordena: captadores com contas primeiro, depois por data de criação desc
@@ -270,6 +293,8 @@ export default async function AdminCaptadoresPage({
                 (r) => (loansByCaptadorId.get(captador.id) ?? []).some((l) => l.id === r.loan_id),
               )}
               loans={loansByCaptadorId.get(captador.id) ?? []}
+              offerRates={offerRatesByCaptadorId.get(captador.id) ?? []}
+              offers={activeOffers}
               profile={captador}
             />
           ))}

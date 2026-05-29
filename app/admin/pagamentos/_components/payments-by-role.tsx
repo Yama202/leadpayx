@@ -47,7 +47,7 @@ export async function PaymentsByRoleView({
   const financialRows = financialRowsAll.filter((row) => row.role === role);
   const financialError = financialRpc.error?.message ?? null;
   const pendingTotal = financialRows.reduce((sum, row) => sum + Number(row.pending_amount), 0);
-  const paidTotal = financialRows.reduce((sum, row) => sum + Number(row.paid_amount), 0);
+  const paidTotal = financialRows.reduce((sum, row) => sum + Number(row.amount_paid_total ?? row.paid_amount), 0);
   const payoutRowsByRole = payoutRows.filter(
     (payout) => payoutProfileMap.get(payout.user_id)?.role === role,
   );
@@ -167,7 +167,7 @@ export async function PaymentsByRoleView({
       .from("earnings")
       .select("user_id, amount")
       .eq("status", "pending")
-      .eq("type", "account_completed");
+      .in("type", ["account_completed", "referral_bonus"]);
 
     const earningsByUser = new Map<string, number>();
     for (const e of pendingEarningRows ?? []) {
@@ -241,8 +241,8 @@ export async function PaymentsByRoleView({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DashboardCard label={`Pendente (${roleLabel})`} value={toCurrency(pendingTotal)} />
-        <DashboardCard label={`Pago (${roleLabel})`} value={toCurrency(paidTotal)} />
+        <DashboardCard label={`Comissões pendentes (${roleLabel})`} value={toCurrency(pendingTotal)} />
+        <DashboardCard label={`Pix enviados (${roleLabel})`} value={toCurrency(paidTotal)} />
       </div>
 
       <section className="mt-5 rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80">
@@ -256,13 +256,16 @@ export async function PaymentsByRoleView({
                 <th className="py-3">Pessoa</th>
                 <th>Perfil</th>
                 <th>Pendente</th>
-                <th>Pago</th>
+                <th>Pago (pix)</th>
+                <th>Comissões pagas</th>
                 <th>Pix processados</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-white/10">
               {financialRows.length > 0 ? (
-                financialRows.map((row) => (
+                financialRows.map((row) => {
+                  const amountPaidTotal = Number(row.amount_paid_total ?? row.paid_amount);
+                  return (
                   <tr key={row.user_id}>
                     <td className="py-3 font-bold text-slate-950 dark:text-white">
                       {row.name ?? row.email ?? row.user_id}
@@ -272,16 +275,20 @@ export async function PaymentsByRoleView({
                       {toCurrency(row.pending_amount)}
                     </td>
                     <td className="font-bold text-emerald-700 dark:text-emerald-200">
+                      {toCurrency(amountPaidTotal)}
+                    </td>
+                    <td className="text-slate-500 dark:text-slate-400">
                       {toCurrency(row.paid_amount)}
                     </td>
                     <td className="text-slate-500 dark:text-slate-400">
                       {row.processed_payouts}
                     </td>
                   </tr>
-                ))
+                  );
+                })
               ) : (
                 <tr>
-                  <td className="py-5 text-sm text-slate-500 dark:text-slate-400" colSpan={5}>
+                  <td className="py-5 text-sm text-slate-500 dark:text-slate-400" colSpan={6}>
                     {financialError
                       ? "Não foi possível carregar os dados financeiros agora."
                       : "Nenhum operador/captador encontrado para o período selecionado."}
