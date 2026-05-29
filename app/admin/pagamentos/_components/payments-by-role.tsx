@@ -343,6 +343,11 @@ export async function PaymentsByRoleView({
           const balanceAdj = payoutBalanceMap.get(payout.id) ?? 0;
           const captadorDebt = role === "captador" ? (debtByUserId.get(payout.user_id) ?? 0) : 0;
           const suggestedAmount = Number(payout.amount) + balanceAdj;
+          // Conta vinculada com saldo inicial/final (para exibição clara)
+          const linkedAccounts = payoutAccountsMap.get(payout.id) ?? [];
+          const acctWithBalance = linkedAccounts.find(
+            (a) => a.balance_initial_brl != null && a.balance_final_brl != null,
+          );
           const displayAmount = payout.amount_paid != null ? Number(payout.amount_paid) : Number(payout.amount);
 
           return (
@@ -417,30 +422,42 @@ export async function PaymentsByRoleView({
 
               {payout.status === "pending" ? (
                 <div className="mt-5">
-                  {role === "captador" && balanceAdj !== 0 ? (
-                    <div className="mb-4 rounded-2xl border border-amber-400/25 bg-amber-500/8 px-4 py-3 text-sm">
-                      <p className="font-black text-amber-200">Ajuste de saldo</p>
-                      <p className="mt-1 text-xs text-amber-100/80">
-                        Saldo inicial − final das contas vinculadas a este payout.
-                      </p>
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <p className="text-zinc-500">Calculado</p>
-                          <p className="font-bold text-white">{toCurrency(payout.amount)}</p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-500">Ajuste</p>
-                          <p className={`font-bold ${balanceAdj >= 0 ? "text-[#16F28A]" : "text-rose-300"}`}>
-                            {balanceAdj >= 0 ? "+" : ""}{toCurrency(balanceAdj)}
+                  {role === "captador" && balanceAdj !== 0 ? (() => {
+                    const accountProfit = -balanceAdj; // balanceAdj = initial-final, então profit = final-initial = -balanceAdj
+                    const accountGained = accountProfit > 0;
+                    return (
+                      <div className="mb-4 rounded-2xl border border-amber-400/25 bg-amber-500/8 px-4 py-3 text-sm">
+                        <p className="font-black text-amber-200">Ajuste de saldo da conta</p>
+                        <p className="mt-1 text-xs text-amber-100/70 leading-5">
+                          {accountGained
+                            ? <>A conta <span className="font-bold text-[#16F28A]">lucrou {toCurrency(accountProfit)}</span> — o admin já recuperou esse valor via conta, então é descontado da comissão.</>
+                            : <>A conta <span className="font-bold text-rose-300">perdeu {toCurrency(-accountProfit)}</span> — esse valor é adicionado à comissão.</>
+                          }
+                        </p>
+                        {acctWithBalance ? (
+                          <p className="mt-1.5 text-xs text-zinc-500">
+                            Movimentação: {toCurrency(Number(acctWithBalance.balance_initial_brl))} → {toCurrency(Number(acctWithBalance.balance_final_brl))}
                           </p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-500">Sugerido</p>
-                          <p className="font-black text-white">{toCurrency(suggestedAmount)}</p>
+                        ) : null}
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <p className="text-zinc-500">Comissão base</p>
+                            <p className="font-bold text-white">{toCurrency(payout.amount)}</p>
+                          </div>
+                          <div>
+                            <p className="text-zinc-500">{accountGained ? "Desconto (lucro)" : "Acréscimo (perda)"}</p>
+                            <p className={`font-bold ${accountGained ? "text-rose-300" : "text-amber-300"}`}>
+                              {accountGained ? "−" : "+"}{toCurrency(Math.abs(balanceAdj))}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-zinc-500">Comissão real</p>
+                            <p className="font-black text-white">{toCurrency(suggestedAmount)}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : null}
+                    );
+                  })() : null}
                   {captadorDebt > 0 ? (
                     <div className="mb-4 rounded-2xl border border-rose-400/25 bg-rose-500/8 px-4 py-3 text-sm">
                       <p className="font-black text-rose-300">Dívida do captador</p>
