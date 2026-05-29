@@ -23,8 +23,10 @@ export async function notifyCaptadorPayoutCompletedPush(
   const valueStr = toCurrency(amountPaid);
 
   const payload = JSON.stringify({
-    title: "💸 Pagamento Confirmado!",
-    body: `Seu pagamento de ${valueStr} foi processado com sucesso. Confira no app.`,
+    title: "💸 Pagamento enviado!",
+    body: amountPaid > 0
+      ? `Sua comissão de ${valueStr} foi enviada via Pix. Confira no app.`
+      : `Sua comissão foi registrada. Confira no app.`,
     data: {
       url: "/captador/pagamentos",
       tag: "payout-completed",
