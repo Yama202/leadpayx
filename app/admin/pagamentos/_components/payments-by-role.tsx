@@ -489,49 +489,79 @@ export async function PaymentsByRoleView({
                       ) : null}
                     </div>
                   ) : null}
-                  <form action={processPayoutFormAction} className="space-y-4">
-                    <input name="payoutId" type="hidden" value={payout.id} />
-                    {/* effectiveAmount = calculado + ajuste; nunca negativo (schema min(0)) */}
-                    <input name="effectiveAmount" type="hidden" value={Math.max(0, suggestedAmount).toFixed(2)} />
-                    <label className="block">
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                        Valor pago (R$)
-                      </span>
-                      <input
-                        className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
-                        defaultValue={Math.max(0, suggestedAmount - captadorDebt).toFixed(2)}
-                        min="0"
-                        name="amountPaid"
-                        step="0.01"
-                        type="number"
-                      />
-                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                        Valor calculado pelo sistema: {toCurrency(payout.amount)}.
-                        {balanceAdj !== 0 && role === "captador"
-                          ? ` Sugerido com ajuste: ${toCurrency(suggestedAmount)}.`
-                          : ""}
-                        {captadorDebt > 0 && role === "captador"
-                          ? ` Após dedução da dívida (${toCurrency(captadorDebt)}): ${toCurrency(Math.max(0, suggestedAmount - captadorDebt))}.`
-                          : ""}
-                      </span>
-                    </label>
-                    <Field
-                      label="Notas"
-                      name="notes"
-                      placeholder="Referência interna do pagamento"
-                    />
-                    <label className="block">
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                        Comprovante
-                      </span>
-                      <input
-                        className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
-                        name="proof"
-                        type="file"
-                      />
-                    </label>
-                    <SubmitButton>Confirmar pagamento</SubmitButton>
-                  </form>
+                  {(() => {
+                    const netToPay = Math.max(0, suggestedAmount - captadorDebt);
+                    const debtCoversAll = role === "captador" && captadorDebt > 0 && netToPay === 0;
+                    return (
+                      <form action={processPayoutFormAction} className="space-y-4">
+                        <input name="payoutId" type="hidden" value={payout.id} />
+                        {/* effectiveAmount = calculado + ajuste; nunca negativo (schema min(0)) */}
+                        <input name="effectiveAmount" type="hidden" value={Math.max(0, suggestedAmount).toFixed(2)} />
+
+                        {debtCoversAll ? (
+                          <div className="rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] px-4 py-3">
+                            <p className="text-sm font-black text-sky-200">Nada a pagar via Pix</p>
+                            <p className="mt-0.5 text-xs text-sky-100/70">
+                              A dívida cobre o total. Não envie Pix — só confirme para registrar e abater{" "}
+                              <span className="font-bold text-sky-200">{toCurrency(Math.min(suggestedAmount, captadorDebt))}</span> da dívida.
+                            </p>
+                          </div>
+                        ) : null}
+
+                        <label className="block">
+                          <span className={`text-sm font-bold ${debtCoversAll ? "text-zinc-500" : "text-slate-700 dark:text-slate-200"}`}>
+                            Valor pago (R$)
+                          </span>
+                          <input
+                            className={`mt-2 min-h-12 w-full rounded-2xl border px-4 text-base ${debtCoversAll ? "border-white/[0.06] bg-white/[0.03] text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.03]" : "border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950/70 dark:text-white"}`}
+                            defaultValue={netToPay.toFixed(2)}
+                            min="0"
+                            name="amountPaid"
+                            step="0.01"
+                            type="number"
+                          />
+                          <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                            Valor calculado pelo sistema: {toCurrency(payout.amount)}.
+                            {balanceAdj !== 0 && role === "captador"
+                              ? ` Sugerido com ajuste: ${toCurrency(suggestedAmount)}.`
+                              : ""}
+                            {captadorDebt > 0 && role === "captador"
+                              ? ` Após dedução da dívida (${toCurrency(captadorDebt)}): ${toCurrency(netToPay)}.`
+                              : ""}
+                          </span>
+                        </label>
+                        <Field
+                          label="Notas"
+                          name="notes"
+                          placeholder="Referência interna do pagamento"
+                        />
+                        {!debtCoversAll ? (
+                          <label className="block">
+                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                              Comprovante
+                            </span>
+                            <input
+                              className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-slate-950/70 dark:text-white"
+                              name="proof"
+                              type="file"
+                            />
+                          </label>
+                        ) : (
+                          <input name="proof" type="hidden" value="" />
+                        )}
+                        {debtCoversAll ? (
+                          <button
+                            className="min-h-12 w-full rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] px-4 text-sm font-black text-sky-200 transition hover:bg-sky-400/[0.14]"
+                            type="submit"
+                          >
+                            Registrar sem Pix — abater dívida
+                          </button>
+                        ) : (
+                          <SubmitButton>Confirmar pagamento</SubmitButton>
+                        )}
+                      </form>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
