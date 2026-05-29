@@ -2,12 +2,16 @@ import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { PromotionOfferGrid } from "@/components/domain/promotion-offer-grid";
 import { requireRole } from "@/lib/auth";
 import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
+import { getWhatsappGroupUrl } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function CaptadorOfertasPage() {
   const profile = await requireRole(["captador"]);
-  const promotionOffers = await fetchActivePromotionOffers();
+  const [promotionOffers, whatsappGroupUrl] = await Promise.all([
+    fetchActivePromotionOffers(),
+    getWhatsappGroupUrl(),
+  ]);
 
   return (
     <RoleBasedLayout
@@ -44,7 +48,7 @@ export default async function CaptadorOfertasPage() {
           Campanhas ativas
         </p>
         <div className="mt-4">
-          <PromotionOfferGrid offers={promotionOffers} variant="captador" />
+          <PromotionOfferGrid offers={promotionOffers} variant="captador" whatsappGroupUrl={whatsappGroupUrl} />
         </div>
       </section>
     </RoleBasedLayout>

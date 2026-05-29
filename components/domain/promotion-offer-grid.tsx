@@ -4,12 +4,16 @@ import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { LinkButton } from "@/components/ui/button";
 import type { PromotionOffer } from "@/lib/types";
 
-function ShareOfferButton({ url, name }: { url: string; name: string }) {
+function ShareOfferButton({ url, name, whatsappGroupUrl }: { url: string; name: string; whatsappGroupUrl?: string | null }) {
   async function handleShare() {
-    const text = `Confere essa oferta: ${name}\n${url}`;
+    const text = whatsappGroupUrl
+      ? `Confere essa oferta: ${name}\n${url}\n\nEntra no grupo do WhatsApp também:\n${whatsappGroupUrl}`
+      : `Confere essa oferta: ${name}\n${url}`;
+
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: name, url, text });
+        // Passa só text (sem url separado) para evitar duplicação
+        await navigator.share({ title: name, text });
         return;
       } catch {
         // cancelado ou sem suporte
@@ -37,9 +41,11 @@ type Variant = "captador" | "operator";
 export function PromotionOfferGrid({
   offers,
   variant = "captador",
+  whatsappGroupUrl,
 }: {
   offers: PromotionOffer[];
   variant?: Variant;
+  whatsappGroupUrl?: string | null;
 }) {
   const isOperator = variant === "operator";
 
@@ -257,7 +263,7 @@ export function PromotionOfferGrid({
               url={offer.promotion_url}
             />
             {!isOperator ? (
-              <ShareOfferButton name={offer.name} url={offer.promotion_url} />
+              <ShareOfferButton name={offer.name} url={offer.promotion_url} whatsappGroupUrl={whatsappGroupUrl} />
             ) : null}
           </div>
         </article>
