@@ -110,7 +110,7 @@ export async function PaymentsByRoleView({
           if (pendingPayoutIds.includes(pe.payout_id)) {
             const acct = accountMap.get(accountId);
             if (acct?.balance_initial_brl != null && acct?.balance_final_brl != null) {
-              const delta = Number(acct.balance_final_brl) - Number(acct.balance_initial_brl);
+              const delta = Number(acct.balance_initial_brl) - Number(acct.balance_final_brl);
               payoutBalanceMap.set(pe.payout_id, (payoutBalanceMap.get(pe.payout_id) ?? 0) + delta);
             }
           }
