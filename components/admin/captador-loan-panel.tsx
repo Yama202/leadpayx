@@ -138,6 +138,39 @@ function AdminAdjustForm({ loanId }: { loanId: string }) {
   );
 }
 
+function QuitarForm({ loanId, remaining }: { loanId: string; remaining: number }) {
+  const [state, formAction] = useActionState(
+    adminAdjustLoanAction,
+    { ok: false, message: "" } as { ok: boolean; message: string },
+  );
+  return (
+    <form
+      action={formAction}
+      className="border-t border-white/[0.06] pt-3"
+      onSubmit={(e) => {
+        if (!window.confirm(`Quitar R$ ${remaining.toFixed(2).replace(".", ",")} de uma vez? Isso marca o empréstimo como quitado.`)) {
+          e.preventDefault();
+        }
+      }}
+    >
+      <input name="loanId" type="hidden" value={loanId} />
+      <input name="amount" type="hidden" value={remaining.toFixed(2)} />
+      <input name="notes" type="hidden" value="Quitação direta — captador pagou pessoalmente" />
+      {state.message ? (
+        <p className={`mb-2 text-xs font-semibold ${state.ok ? "text-emerald-300" : "text-rose-300"}`}>
+          {state.message}
+        </p>
+      ) : null}
+      <button
+        className="w-full rounded-xl border border-[#00E07A]/30 bg-[#00E07A]/[0.08] px-3 py-2 text-xs font-black text-[#16F28A] transition hover:bg-[#00E07A]/[0.15]"
+        type="submit"
+      >
+        Quitar tudo — {fmtBrl(remaining)} recebido pessoalmente
+      </button>
+    </form>
+  );
+}
+
 function LoanRow({
   loan,
   repayments,
@@ -181,8 +214,9 @@ function LoanRow({
         </div>
       )}
       {!isPaid && (
-        <div className="px-4 pb-3">
+        <div className="px-4 pb-3 space-y-3">
           <AdminAdjustForm loanId={loan.id} />
+          <QuitarForm loanId={loan.id} remaining={loan.remaining_amount} />
         </div>
       )}
     </div>
