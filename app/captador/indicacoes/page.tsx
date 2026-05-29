@@ -31,12 +31,15 @@ export default async function IndicacoesPage() {
         "referral_utm_source",
         "referral_utm_medium",
         "referral_utm_campaign",
+        "whatsapp_group_url",
       ])
       .returns<AppSetting[]>(),
   ]);
   const referralRows = (referrals ?? []) as ReferralSummary[];
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
   const referralSettings = getReferralSettings(settings);
+  const whatsappGroupUrlRaw = (settings ?? []).find((s) => s.key === "whatsapp_group_url")?.value;
+  const whatsappGroupUrl = typeof whatsappGroupUrlRaw === "string" ? whatsappGroupUrlRaw : null;
 
   return (
     <RoleBasedLayout
@@ -56,6 +59,7 @@ export default async function IndicacoesPage() {
           utmCampaign={referralSettings.utmCampaign}
           utmMedium={referralSettings.utmMedium}
           utmSource={referralSettings.utmSource}
+          whatsappGroupUrl={whatsappGroupUrl}
         />
       </div>
 
