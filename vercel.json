@@ -1,5 +1,8 @@
 {
   "crons": [
-    { "path": "/api/cron/reassign-sla", "schedule": "0 3 * * *" }
+    { "path": "/api/cron/reassign-sla", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/daily-commission", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/daily-ranking", "schedule": "0 1 * * *" },
+    { "path": "/api/cron/weekly-commission", "schedule": "0 23 * * 5" }
   ]
 }

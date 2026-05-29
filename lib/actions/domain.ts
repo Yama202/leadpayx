@@ -2118,3 +2118,43 @@ export async function deleteCaptadorOfferRateAction(
   revalidatePath("/admin/captadores");
   return { ok: true, message: "Taxa removida." };
 }
+
+// ── Daily prize ───────────────────────────────────────────────────────────────
+
+export async function setDailyPrizeAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+
+  const activeRaw = formData.get("active");
+  const active = activeRaw === "on" || activeRaw === "true";
+  const description = String(formData.get("description") ?? "").trim().slice(0, 200);
+
+  const adminClient = createAdminClient();
+  const { error } = await adminClient.from("app_settings").upsert(
+    [
+      { key: "daily_prize_active", value: active ? "true" : "false", updated_by: null },
+      { key: "daily_prize_description", value: description, updated_by: null },
+    ],
+    { onConflict: "key" },
+  );
+
+  if (error) {
+    return { ok: false, message: "Não foi possível salvar o prêmio." };
+  }
+
+  if (active && description) {
+    try {
+      const { notifyAllCaptadoresPrize } = await import("@/lib/web-push/send-captador-daily-stats");
+      await notifyAllCaptadoresPrize(description);
+    } catch (pushErr) {
+      console.error("[setDailyPrizeAction] push failed", pushErr);
+    }
+  }
+
+  revalidatePath("/admin/configuracoes");
+  revalidatePath("/captador/dashboard");
+
+  return { ok: true, message: active ? "Prêmio ativado e captadores notificados." : "Prêmio desativado." };
+}

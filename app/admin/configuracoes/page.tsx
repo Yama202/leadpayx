@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminPushSettings } from "@/components/admin/admin-push-settings";
+import { DailyPrizeForm } from "@/components/admin/daily-prize-form";
 import { PrefixTestAccountsPurgePanel } from "@/components/admin/prefix-test-accounts-purge";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,8 @@ export default async function AdminConfiguracoesPage({
     (settings ?? []).map((setting) => [setting.key, setting.value]),
   );
   const referralSettings = getReferralSettings(settings);
+  const prizeActive = String(values.daily_prize_active ?? "") === "true";
+  const prizeDescription = String(values.daily_prize_description ?? "");
 
   return (
     <RoleBasedLayout
@@ -246,7 +249,9 @@ export default async function AdminConfiguracoesPage({
           </Button>
         </form>
 
-        <aside className="rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80">
+        <aside className="space-y-4">
+          <DailyPrizeForm active={prizeActive} description={prizeDescription} />
+          <div className="rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80">
           <p className="text-lg font-black text-slate-950 dark:text-white">Histórico recente</p>
           <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
             Auditoria básica das mudanças de configuração.
@@ -277,6 +282,7 @@ export default async function AdminConfiguracoesPage({
                 Nenhuma alteração recente registrada.
               </p>
             )}
+          </div>
           </div>
         </aside>
 

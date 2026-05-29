@@ -6,7 +6,7 @@ import { CaptadorPushSettings } from "@/components/domain/captador-push-settings
 import { CaptadorNotificationsSection } from "@/components/domain/captador-notifications-section";
 import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit-brief-banner";
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
-import { CaptadorRankBadge } from "@/components/domain/captador-rank-badge";
+import { CaptadorRankingWidget } from "@/components/domain/captador-ranking-widget";
 import { RequeueAccountForm } from "@/components/domain/requeue-account-form";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
@@ -220,8 +220,8 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
         ))}
       </section>
       <CaptadorWhatsappGroupAlert whatsappUrl={whatsappUrl} />
-      <div className="mb-4 grid gap-4 sm:grid-cols-2">
-        <CaptadorRankBadge profileId={profile.id} />
+      <div className="mb-4">
+        <CaptadorRankingWidget profileId={profile.id} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <DashboardCard label="Contas enviadas" value={String(submittedAccountsCount)} />
