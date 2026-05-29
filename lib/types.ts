@@ -7,7 +7,8 @@ export type AccountStatus =
   | "completed"
   | "rejected"
   | "rejected_no_balance"
-  | "rejected_no_facial";
+  | "rejected_no_facial"
+  | "wrong_password";
 export type EarningStatus = "pending" | "paid" | "canceled";
 export type PayoutStatus = "pending" | "processed";
 
@@ -51,6 +52,7 @@ export type Account = {
   reassign_reason: string | null;
   last_operator_id: string | null;
   rejection_reason: string | null;
+  wrong_password_at: string | null;
   created_at: string;
   assigned_at: string | null;
   started_at: string | null;

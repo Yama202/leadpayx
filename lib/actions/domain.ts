@@ -40,6 +40,8 @@ import {
   promotionOfferDeleteSchema,
   promotionOfferStatusSchema,
   rejectAccountSchema,
+  markWrongPasswordSchema,
+  resubmitCorrectedAccountSchema,
   completeAccountSchema,
   completeOperatorCycleSchema,
   registrationLinkSchema,
@@ -718,6 +720,69 @@ export async function rejectAccountAction(
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/avisos");
   return { ok: true, message: "Conta recusada com motivo registrado." };
+}
+
+export async function markAccountWrongPasswordAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  const formData = maybeFormData ?? (stateOrFormData as FormData);
+  await requireRole(["operator"]);
+  const parsed = markWrongPasswordSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError("Conta inválida.", parsed.error);
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("mark_account_wrong_password", {
+    target_account_id: parsed.data.accountId,
+  });
+
+  if (error) return { ok: false, message: "Não foi possível marcar a senha incorreta." };
+
+  try {
+    const { notifyCaptadorOnWrongPasswordPush } = await import("@/lib/web-push/send-wrong-password");
+    await notifyCaptadorOnWrongPasswordPush(parsed.data.accountId);
+  } catch (pushErr) {
+    console.error("[markAccountWrongPasswordAction] push", pushErr);
+  }
+
+  revalidatePath("/operador/dashboard");
+  revalidatePath("/operador/contas");
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/avisos");
+  return { ok: true, message: "Captador notificado para corrigir a senha." };
+}
+
+export async function resubmitCorrectedAccountAction(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
+  const formData = maybeFormData ?? (stateOrFormData as FormData);
+  const profile = await requireRole(["captador"]);
+  const parsed = resubmitCorrectedAccountSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return validationError("Informe a nova senha.", parsed.error);
+
+  const { encryptAccountPassword } = await import("@/lib/account-credentials-crypto");
+  const cipher = encryptAccountPassword(parsed.data.newPassword);
+
+  const supabase = await createClient();
+  const { error: updateError } = await supabase
+    .from("accounts")
+    .update({ lead_account_secret_cipher: cipher })
+    .eq("id", parsed.data.accountId)
+    .eq("captador_id", profile.id)
+    .eq("status", "wrong_password");
+
+  if (updateError) return { ok: false, message: "Não foi possível atualizar a senha." };
+
+  const { error: rpcError } = await supabase.rpc("resubmit_corrected_account", {
+    target_account_id: parsed.data.accountId,
+  });
+
+  if (rpcError) return { ok: false, message: "Não foi possível reenviar a conta." };
+
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
+  return { ok: true, message: "Senha atualizada. Conta voltou para a fila." };
 }
 
 export async function requeueAccountAction(

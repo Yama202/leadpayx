@@ -35,6 +35,7 @@ const ACCOUNT_STATUS_LABEL: Record<string, string> = {
   rejected: "Rejeitada",
   rejected_no_balance: "Sem saldo",
   rejected_no_facial: "Selfie pendente",
+  wrong_password: "Senha incorreta",
 };
 
 const ACCOUNT_STATUS_CLASS: Record<string, string> = {
@@ -45,6 +46,7 @@ const ACCOUNT_STATUS_CLASS: Record<string, string> = {
   rejected: "bg-rose-500/12 text-rose-300 ring-1 ring-rose-400/20",
   rejected_no_balance: "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/25",
   rejected_no_facial: "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/25",
+  wrong_password: "bg-orange-500/15 text-orange-300 ring-1 ring-orange-400/25",
 };
 
 function accountSummary(accounts: Account[]) {
@@ -60,6 +62,7 @@ function accountSummary(accounts: Account[]) {
     ["rejected", "Rejeitada", "text-rose-400"],
     ["rejected_no_balance", "Sem saldo", "text-amber-400"],
     ["rejected_no_facial", "Selfie pend.", "text-amber-400"],
+    ["wrong_password", "Senha inc.", "text-orange-400"],
   ];
   for (const [status, label, cls] of order) {
     if (counts[status]) {

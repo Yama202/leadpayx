@@ -9,6 +9,10 @@ export function isTerminalAccountStatus(status: AccountStatus): boolean {
   );
 }
 
+export function isWrongPasswordStatus(status: AccountStatus): boolean {
+  return status === "wrong_password";
+}
+
 /** Contas que o operador ainda pode iniciar ou concluir no fluxo normal. */
 export function operatorCanProgressAccount(status: AccountStatus): boolean {
   return status === "assigned" || status === "in_progress";

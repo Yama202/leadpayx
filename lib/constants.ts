@@ -22,6 +22,7 @@ export const accountStatusLabel: Record<AccountStatus, string> = {
   rejected: "Recusada",
   rejected_no_balance: "Sem saldo",
   rejected_no_facial: "Selfie pendente",
+  wrong_password: "Senha incorreta",
 };
 
 export const earningStatusLabel: Record<EarningStatus, string> = {

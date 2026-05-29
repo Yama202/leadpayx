@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import {
   completeOperatorCycleAction,
   rejectAccountAction,
+  markAccountWrongPasswordAction,
 } from "@/lib/actions/domain";
 import { operatorCanProgressAccount } from "@/lib/account-operation";
 import type { Account } from "@/lib/types";
@@ -73,6 +74,11 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
     rejectAccountAction,
     initialActionState as ActionState,
   );
+  const [wrongPwState, wrongPwFormAction] = useActionState(
+    markAccountWrongPasswordAction,
+    initialActionState as ActionState,
+  );
+  const [wrongPwAccountId, setWrongPwAccountId] = useState<string>(() => ordered[0]?.id ?? "");
   const [rejectedAccountId, setRejectedAccountId] = useState<string>(() => ordered[0]?.id ?? "");
   const baseId = useId();
   const canReject = ordered.some((a) => operatorCanProgressAccount(a.status));
@@ -463,6 +469,52 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
               </p>
             ) : null}
             <DangerSubmitButton>Confirmar recusa</DangerSubmitButton>
+          </form>
+        ) : null}
+
+        {/* ── Senha incorreta ── */}
+        {canReject ? (
+          <form
+            action={wrongPwFormAction}
+            className="space-y-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-4"
+          >
+            <div className="text-sm font-bold text-amber-200">Senha incorreta</div>
+            <p className="text-xs text-amber-100/60">
+              A senha da conta está errada. O captador será notificado para corrigir e a conta volta para a fila.
+            </p>
+            {ordered.length > 1 ? (
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-semibold text-zinc-400">Qual conta tem senha incorreta?</legend>
+                <div className="space-y-2">
+                  {ordered.map((acc, idx) => (
+                    <label
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 has-[:checked]:border-amber-400/40"
+                      key={acc.id}
+                    >
+                      <input
+                        className="accent-amber-400"
+                        defaultChecked={idx === 0}
+                        name="accountId"
+                        onChange={() => setWrongPwAccountId(acc.id)}
+                        type="radio"
+                        value={acc.id}
+                      />
+                      <span className="font-mono text-sm text-zinc-200">{acc.account_identifier}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : (
+              <input name="accountId" type="hidden" value={ordered[0]?.id ?? ""} />
+            )}
+            {wrongPwState.message ? (
+              <p className={`text-xs font-semibold ${wrongPwState.ok ? "text-emerald-300" : "text-rose-300"}`}>
+                {wrongPwState.message}
+              </p>
+            ) : null}
+            <Button className="w-full" type="submit" variant="secondary">
+              Notificar captador — senha incorreta
+            </Button>
           </form>
         ) : null}
       </div>

@@ -128,6 +128,15 @@ export const rejectAccountSchema = z
         : "permanent",
   }));
 
+export const markWrongPasswordSchema = z.object({
+  accountId: z.string().uuid(),
+});
+
+export const resubmitCorrectedAccountSchema = z.object({
+  accountId: z.string().uuid(),
+  newPassword: z.string().trim().min(1, "Informe a nova senha."),
+});
+
 export const accountIdSchema = z.object({
   accountId: z.string().uuid(),
 });

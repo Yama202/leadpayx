@@ -1,5 +1,6 @@
 import { AccountCard } from "@/components/domain/account-card";
 import { RequeueAccountForm } from "@/components/domain/requeue-account-form";
+import { WrongPasswordCorrectionForm } from "@/components/domain/wrong-password-correction-form";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { EmptyState } from "@/components/ui/cards";
 import { requireRole } from "@/lib/auth";
@@ -62,6 +63,8 @@ export default async function MinhasContasPage() {
                   accountId={account.id}
                   status={account.status}
                 />
+              ) : account.status === "wrong_password" ? (
+                <WrongPasswordCorrectionForm accountId={account.id} />
               ) : null}
             </AccountCard>
           ))
