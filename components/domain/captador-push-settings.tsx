@@ -93,6 +93,10 @@ export function CaptadorPushSettings(props: {
           return;
         }
 
+        // Se já existe subscrição com chave diferente, remove antes de criar nova.
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) await existing.unsubscribe();
+
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapid) as BufferSource,
