@@ -49,8 +49,9 @@ export async function CaptadorRankingWidget({ profileId }: { profileId: string }
   ]);
 
   const settings = settingsRes.data ?? [];
-  const prizeActive = String(settings.find((s) => s.key === "daily_prize_active")?.value ?? "") === "true";
-  const prizeDesc = String(settings.find((s) => s.key === "daily_prize_description")?.value ?? "").trim();
+  const prizeRaw = settings.find((s) => s.key === "daily_prize_active")?.value;
+  const prizeActive = prizeRaw === true || prizeRaw === "true";
+  const prizeDesc = String(settings.find((s) => s.key === "daily_prize_description")?.value ?? "").replace(/^"|"$/g, "").trim();
 
   const todayRanking = ((todayRes.data ?? []) as CaptadorRanking[])
     .filter((r) => Number(r.completed_accounts) > 0)
@@ -99,7 +100,7 @@ export async function CaptadorRankingWidget({ profileId }: { profileId: string }
                   <li className={`flex items-center gap-2 rounded-2xl border px-3 py-2 ${style.bg} ${style.border}`} key={r.captador_id}>
                     <span className="text-lg">{MEDALS[i]}</span>
                     <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm font-black ${style.text}`}>{r.name ?? "—"}</p>
+                      <p className={`truncate text-sm font-black ${style.text}`}>{r.name?.split(" ")[0] ?? "—"}</p>
                       <p className={`text-xs font-bold ${style.count}`}>
                         {completed} conta{completed !== 1 ? "s" : ""}
                       </p>
@@ -130,7 +131,7 @@ export async function CaptadorRankingWidget({ profileId }: { profileId: string }
                   <li className={`flex items-center gap-2 rounded-2xl border px-3 py-2 ${style.bg} ${style.border}`} key={r.captador_id}>
                     <span className="text-lg">{MEDALS[i]}</span>
                     <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm font-black ${style.text}`}>{r.name ?? "—"}</p>
+                      <p className={`truncate text-sm font-black ${style.text}`}>{r.name?.split(" ")[0] ?? "—"}</p>
                       <p className={`text-xs font-bold ${style.count}`}>
                         {completed} conta{completed !== 1 ? "s" : ""}
                       </p>

@@ -75,7 +75,7 @@ function RankingSection({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className={`truncate font-black ${m.name} ${m.size}`}>
-                    {row.name?.trim() || row.email || "—"}
+                    {row.name?.trim().split(" ")[0] || row.email?.split("@")[0] || "—"}
                   </p>
                   <p className={`text-xs font-bold ${m.countColor}`}>
                     {row.completed_accounts} conta{row.completed_accounts !== 1 ? "s" : ""} concluída{row.completed_accounts !== 1 ? "s" : ""}
