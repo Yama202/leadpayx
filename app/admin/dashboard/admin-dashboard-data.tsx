@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard } from "@/components/ui/cards";
+import { CaptadorTopRanking } from "@/components/admin/captador-top-ranking";
 import { toCurrency } from "@/lib/payments";
 import { createClient } from "@/lib/supabase/server";
 import type { CaptadorRanking, FinancialSummary } from "@/lib/types";
@@ -91,6 +92,7 @@ export async function AdminDashboardData({ periodParam }: { periodParam: string 
         <DashboardCard label="Total pendente geral" value={toCurrency(pendingTotal)} />
         <DashboardCard label="Total pago geral" value={toCurrency(paidTotal)} />
       </div>
+      <CaptadorTopRanking />
       <section className="mt-6 rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 backdrop-blur dark:border-white/10 dark:bg-slate-900/80">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
