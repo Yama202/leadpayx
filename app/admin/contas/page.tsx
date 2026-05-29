@@ -8,6 +8,7 @@ import { operationalCredentialsFromAccount } from "@/lib/account-operational";
 import { ACCOUNT_SELECT_CAPTADOR, ACCOUNT_SELECT_WITH_SECRET } from "@/lib/account-columns";
 import { accountPrintSignedUrlMap } from "@/lib/account-print-signed-url";
 import { requireRole } from "@/lib/auth";
+import { buildPixQrCodeMap } from "@/lib/pix-qr.server";
 import { publicPostgrestSelectHint } from "@/lib/postgrest-select-error";
 import { createClient } from "@/lib/supabase/server";
 import type { Account } from "@/lib/types";
@@ -40,35 +41,6 @@ function contasPaginationHref(page: number, q: string) {
   }
   const qs = params.toString();
   return qs ? `/admin/contas?${qs}` : "/admin/contas";
-}
-
-const PIX_QR_BATCH = 8;
-
-async function buildPixQrCodeMap(captadorPixEntries: Array<{ id: string; pix_key: string | null }>) {
-  const map = new Map<string, string>();
-  const QRCode = (await import("qrcode")).default;
-  for (let i = 0; i < captadorPixEntries.length; i += PIX_QR_BATCH) {
-    const slice = captadorPixEntries.slice(i, i + PIX_QR_BATCH);
-    await Promise.all(
-      slice.map(async (entry) => {
-        const pix = entry.pix_key?.trim();
-        if (!pix) {
-          return;
-        }
-        try {
-          const dataUrl = await QRCode.toDataURL(pix, {
-            errorCorrectionLevel: "M",
-            margin: 1,
-            width: 220,
-          });
-          map.set(entry.id, dataUrl);
-        } catch (error) {
-          console.error("[admin/contas] falha ao gerar QR Pix", { captadorId: entry.id, error });
-        }
-      }),
-    );
-  }
-  return map;
 }
 
 export default async function AdminContasPage({

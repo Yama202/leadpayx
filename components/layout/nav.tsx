@@ -26,7 +26,6 @@ const navItems: Record<UserRole, { href: string; label: string }[]> = {
     { href: "/admin/captadores", label: "Captadores" },
     { href: "/admin/operadores", label: "Operadores" },
     { href: "/admin/administradores", label: "Admins" },
-    { href: "/admin/contas", label: "Contas" },
     { href: "/admin/pagamentos/captadores", label: "Pag. Captadores" },
     { href: "/admin/pagamentos/operadores", label: "Pag. Operadores" },
     { href: "/admin/ofertas", label: "Ofertas" },

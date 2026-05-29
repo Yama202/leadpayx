@@ -4,7 +4,13 @@ import { useCallback, useState } from "react";
 
 import { maskPixKeyForAdmin } from "@/lib/pix-key";
 
-export function AdminPixKeyActions({ pixKey }: { pixKey: string | null | undefined }) {
+export function AdminPixKeyActions({
+  pixKey,
+  pixQrDataUrl,
+}: {
+  pixKey: string | null | undefined;
+  pixQrDataUrl?: string | null;
+}) {
   const trimmed = pixKey?.trim() ?? "";
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -64,6 +70,15 @@ export function AdminPixKeyActions({ pixKey }: { pixKey: string | null | undefin
         <p aria-live="polite" className="text-xs font-semibold text-emerald-600 dark:text-emerald-300">
           Chave PIX copiada para a área de transferência.
         </p>
+      ) : null}
+      {pixQrDataUrl ? (
+        <img
+          alt="QR Code PIX"
+          className="mt-2 rounded-xl border border-white/10 bg-white p-1"
+          height={110}
+          src={pixQrDataUrl}
+          width={110}
+        />
       ) : null}
     </div>
   );

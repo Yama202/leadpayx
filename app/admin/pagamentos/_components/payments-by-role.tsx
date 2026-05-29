@@ -6,6 +6,7 @@ import { adminInitiatePayoutFormAction, processPayoutFormAction } from "@/lib/ac
 import { requireRole } from "@/lib/auth";
 import { parsePeriod, toCurrency } from "@/lib/payments";
 import { getPaymentProofUrls } from "@/lib/payments.server";
+import { buildPixQrCodeMap } from "@/lib/pix-qr.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { FinancialSummary, Payout } from "@/lib/types";
@@ -57,18 +58,27 @@ export async function PaymentsByRoleView({
   const captadorHref = new URLSearchParams(baseQuery);
   const operatorHref = new URLSearchParams(baseQuery);
 
-  // ── Balance adjustment per pending payout (captador only) ──────────────
-  const pendingPayoutIds = payoutRowsByRole
-    .filter((p) => p.status === "pending")
-    .map((p) => p.id);
-
+  // ── Accounts + balance per payout (captador only) ─────────────────────
   const payoutBalanceMap = new Map<string, number>();
+  type AccountSummary = {
+    id: string;
+    account_identifier: string | null;
+    lead_account_email: string | null;
+    status: string;
+    promotion_offer_name: string | null;
+    balance_initial_brl: number | null;
+    balance_final_brl: number | null;
+  };
+  const payoutAccountsMap = new Map<string, AccountSummary[]>();
 
-  if (role === "captador" && pendingPayoutIds.length > 0) {
+  if (role === "captador" && payoutRowsByRole.length > 0) {
+    const allPayoutIds = payoutRowsByRole.map((p) => p.id);
+    const pendingPayoutIds = payoutRowsByRole.filter((p) => p.status === "pending").map((p) => p.id);
+
     const { data: peRows } = await supabase
       .from("payout_earnings")
       .select("payout_id, earning_id")
-      .in("payout_id", pendingPayoutIds);
+      .in("payout_id", allPayoutIds);
 
     const earningIds = [...new Set((peRows ?? []).map((r) => r.earning_id))];
 
@@ -79,31 +89,52 @@ export async function PaymentsByRoleView({
         .in("id", earningIds)
         .eq("type", "account_completed");
 
-      const accountIds = [...new Set((earningRows ?? []).filter((e) => e.account_id).map((e) => e.account_id as string))];
+      const accountIds = [...new Set(
+        (earningRows ?? []).filter((e) => e.account_id).map((e) => e.account_id as string),
+      )];
 
       if (accountIds.length > 0) {
         const { data: accountRows } = await supabase
           .from("accounts")
-          .select("id, balance_initial_brl, balance_final_brl")
+          .select("id, account_identifier, lead_account_email, status, promotion_offer_name, balance_initial_brl, balance_final_brl")
           .in("id", accountIds);
 
-        const accountBalanceMap = new Map(
-          (accountRows ?? [])
-            .filter((a) => a.balance_initial_brl != null && a.balance_final_brl != null)
-            .map((a) => [a.id, Number(a.balance_initial_brl) - Number(a.balance_final_brl)]),
-        );
-
+        const accountMap = new Map((accountRows ?? []).map((a) => [a.id, a as AccountSummary]));
         const earningAccountMap = new Map((earningRows ?? []).map((e) => [e.id, e.account_id as string]));
 
         for (const pe of peRows ?? []) {
           const accountId = earningAccountMap.get(pe.earning_id);
           if (!accountId) continue;
-          const delta = accountBalanceMap.get(accountId);
-          if (delta == null) continue;
-          payoutBalanceMap.set(pe.payout_id, (payoutBalanceMap.get(pe.payout_id) ?? 0) + delta);
+
+          // Balance adjustment — only for pending payouts
+          if (pendingPayoutIds.includes(pe.payout_id)) {
+            const acct = accountMap.get(accountId);
+            if (acct?.balance_initial_brl != null && acct?.balance_final_brl != null) {
+              const delta = Number(acct.balance_initial_brl) - Number(acct.balance_final_brl);
+              payoutBalanceMap.set(pe.payout_id, (payoutBalanceMap.get(pe.payout_id) ?? 0) + delta);
+            }
+          }
+
+          // Accounts list — for all payouts (deduplicated)
+          const acct = accountMap.get(accountId);
+          if (acct) {
+            const list = payoutAccountsMap.get(pe.payout_id) ?? [];
+            if (!list.some((a) => a.id === accountId)) list.push(acct);
+            payoutAccountsMap.set(pe.payout_id, list);
+          }
         }
       }
     }
+  }
+
+  // ── PIX QR codes (captador only) ───────────────────────────────────────
+  const pixQrMap = new Map<string, string>();
+  if (role === "captador") {
+    const captadorPixEntries = [...payoutProfileMap.entries()]
+      .filter(([, p]) => p.role === "captador" && p.pix_key)
+      .map(([id, p]) => ({ id, pix_key: p.pix_key }));
+    const generated = await buildPixQrCodeMap(captadorPixEntries);
+    for (const [k, v] of generated) pixQrMap.set(k, v);
   }
 
   // ── Loan debt per captador (todos os payouts visíveis, não só pendentes) ──
@@ -332,7 +363,50 @@ export async function PaymentsByRoleView({
                 · {payoutProfileMap.get(payout.user_id)?.role ?? "perfil"} ·{" "}
                 {new Date(payout.created_at).toLocaleString("pt-BR")}
               </p>
-              <AdminPixKeyActions pixKey={payoutProfileMap.get(payout.user_id)?.pix_key ?? null} />
+              <AdminPixKeyActions
+                pixKey={payoutProfileMap.get(payout.user_id)?.pix_key ?? null}
+                pixQrDataUrl={pixQrMap.get(payout.user_id) ?? null}
+              />
+              {(() => {
+                const accts = payoutAccountsMap.get(payout.id) ?? [];
+                if (!accts.length) return null;
+                const STATUS_LABEL: Record<string, string> = {
+                  completed: "Concluída",
+                  pending: "Pendente",
+                  assigned: "Atribuída",
+                  in_progress: "Andamento",
+                  rejected: "Recusada",
+                  rejected_no_balance: "Sem saldo",
+                  rejected_no_facial: "Selfie pend.",
+                };
+                return (
+                  <details className="mt-3 rounded-2xl border border-white/[0.08] bg-black/20">
+                    <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-bold text-zinc-400 hover:text-zinc-200">
+                      {accts.length} conta{accts.length !== 1 ? "s" : ""} vinculada{accts.length !== 1 ? "s" : ""} ▾
+                    </summary>
+                    <div className="divide-y divide-white/[0.05] px-4 pb-3">
+                      {accts.map((acc) => (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5" key={acc.id}>
+                          <span className="font-mono text-sm font-bold text-white">
+                            {acc.account_identifier ?? "—"}
+                          </span>
+                          {acc.promotion_offer_name ? (
+                            <span className="inline-flex items-center rounded-full bg-[#00E07A]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#16F28A] ring-1 ring-[#00E07A]/20">
+                              {acc.promotion_offer_name}
+                            </span>
+                          ) : null}
+                          <span className="text-xs text-zinc-500">
+                            {STATUS_LABEL[acc.status] ?? acc.status}
+                          </span>
+                          {acc.lead_account_email ? (
+                            <span className="text-xs text-zinc-600">{acc.lead_account_email}</span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                );
+              })()}
 
               {payout.status === "pending" ? (
                 <div className="mt-5">
