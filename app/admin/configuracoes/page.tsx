@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { AdminPushSettings } from "@/components/admin/admin-push-settings";
 import { DailyPrizeForm } from "@/components/admin/daily-prize-form";
+import { WeeklyPrizeForm } from "@/components/admin/weekly-prize-form";
+import { WeeklyGoalForm } from "@/components/admin/weekly-goal-form";
 import { PrefixTestAccountsPurgePanel } from "@/components/admin/prefix-test-accounts-purge";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { Button } from "@/components/ui/button";
@@ -54,8 +56,14 @@ export default async function AdminConfiguracoesPage({
     (settings ?? []).map((setting) => [setting.key, setting.value]),
   );
   const referralSettings = getReferralSettings(settings);
-  const prizeActive = String(values.daily_prize_active ?? "") === "true";
-  const prizeDescription = String(values.daily_prize_description ?? "");
+  const prizeActive = values.daily_prize_active === true || String(values.daily_prize_active ?? "") === "true";
+  const prizeDescription = String(values.daily_prize_description ?? "").replace(/^"|"$/g, "");
+  const weeklyPrizeActive = values.weekly_prize_active === true || String(values.weekly_prize_active ?? "") === "true";
+  const weeklyPrizeDescription = String(values.weekly_prize_description ?? "").replace(/^"|"$/g, "");
+  const weeklyGoalActive = values.weekly_goal_active === true || String(values.weekly_goal_active ?? "") === "true";
+  const weeklyGoalMinAccounts = Number(values.weekly_goal_min_accounts ?? 10);
+  const weeklyGoalMinReferrals = Number(values.weekly_goal_min_referrals ?? 3);
+  const weeklyGoalDescription = String(values.weekly_goal_prize_description ?? "").replace(/^"|"$/g, "");
 
   return (
     <RoleBasedLayout
@@ -251,6 +259,13 @@ export default async function AdminConfiguracoesPage({
 
         <aside className="space-y-4">
           <DailyPrizeForm active={prizeActive} description={prizeDescription} />
+          <WeeklyPrizeForm active={weeklyPrizeActive} description={weeklyPrizeDescription} />
+          <WeeklyGoalForm
+            active={weeklyGoalActive}
+            description={weeklyGoalDescription}
+            minAccounts={weeklyGoalMinAccounts}
+            minReferrals={weeklyGoalMinReferrals}
+          />
           <div className="rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80">
           <p className="text-lg font-black text-slate-950 dark:text-white">Histórico recente</p>
           <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">

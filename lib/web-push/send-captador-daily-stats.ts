@@ -154,3 +154,51 @@ export async function notifyAllCaptadoresWeeklyCommission(
     }
   }
 }
+
+export async function notifyAllCaptadoresWeeklyPrize(description: string): Promise<void> {
+  const vapid = webPushConfiguredFromEnv();
+  if (!vapid) return;
+
+  const admin = createAdminClient();
+  const { data: subs } = await admin.from("captador_web_push_subscriptions").select("id,endpoint,p256dh,auth");
+  if (!subs?.length) return;
+
+  const payload = JSON.stringify({
+    title: "🏆 Prêmio semanal ativado!",
+    body: description + "\nQuem trouxer mais contas esta semana ganha!",
+    data: { url: "/captador/dashboard" },
+  });
+
+  webpush.setVapidDetails(vapid.contact, vapid.publicKey, vapid.privateKey);
+
+  for (const sub of subs) {
+    const result = await sendToOneSubscriber(sub, payload);
+    if (result === "expired") {
+      await admin.from("captador_web_push_subscriptions").delete().eq("id", sub.id);
+    }
+  }
+}
+
+export async function notifyAllCaptadoresWeeklyGoal(prizeDescription: string, minAccounts: number, minReferrals: number): Promise<void> {
+  const vapid = webPushConfiguredFromEnv();
+  if (!vapid) return;
+
+  const admin = createAdminClient();
+  const { data: subs } = await admin.from("captador_web_push_subscriptions").select("id,endpoint,p256dh,auth");
+  if (!subs?.length) return;
+
+  const payload = JSON.stringify({
+    title: "🎯 Meta semanal ativada!",
+    body: `Traga ${minAccounts} contas e ${minReferrals} indicações validadas esta semana e ganhe: ${prizeDescription}`,
+    data: { url: "/captador/dashboard" },
+  });
+
+  webpush.setVapidDetails(vapid.contact, vapid.publicKey, vapid.privateKey);
+
+  for (const sub of subs) {
+    const result = await sendToOneSubscriber(sub, payload);
+    if (result === "expired") {
+      await admin.from("captador_web_push_subscriptions").delete().eq("id", sub.id);
+    }
+  }
+}

@@ -42,16 +42,44 @@ export async function CaptadorRankingWidget({ profileId }: { profileId: string }
   const todayStart = startOfTodayUtc().toISOString();
   const weekStart = startOfWeekUtc().toISOString();
 
-  const [todayRes, weekRes, settingsRes] = await Promise.all([
+  const [todayRes, weekRes, settingsRes, referralRes] = await Promise.all([
     supabase.rpc("get_captador_ranking", { period_start: todayStart, period_end: now }),
     supabase.rpc("get_captador_ranking", { period_start: weekStart, period_end: now }),
-    supabase.from("app_settings").select("key,value").in("key", ["daily_prize_active", "daily_prize_description"]),
+    supabase.from("app_settings").select("key,value").in("key", [
+      "daily_prize_active", "daily_prize_description",
+      "weekly_prize_active", "weekly_prize_description",
+      "weekly_goal_active", "weekly_goal_min_accounts", "weekly_goal_min_referrals", "weekly_goal_prize_description",
+    ]),
+    supabase.rpc("get_validated_referral_ranking", { period_start: weekStart, period_end: now }),
   ]);
 
   const settings = settingsRes.data ?? [];
-  const prizeRaw = settings.find((s) => s.key === "daily_prize_active")?.value;
-  const prizeActive = prizeRaw === true || prizeRaw === "true";
-  const prizeDesc = String(settings.find((s) => s.key === "daily_prize_description")?.value ?? "").replace(/^"|"$/g, "").trim();
+
+  function settingBool(key: string) {
+    const v = settings.find((s) => s.key === key)?.value;
+    return v === true || v === "true";
+  }
+  function settingStr(key: string) {
+    return String(settings.find((s) => s.key === key)?.value ?? "").replace(/^"|"$/g, "").trim();
+  }
+  function settingNum(key: string, fallback: number) {
+    const v = Number(settings.find((s) => s.key === key)?.value ?? fallback);
+    return isNaN(v) ? fallback : v;
+  }
+
+  const prizeActive = settingBool("daily_prize_active");
+  const prizeDesc = settingStr("daily_prize_description");
+  const weeklyPrizeActive = settingBool("weekly_prize_active");
+  const weeklyPrizeDesc = settingStr("weekly_prize_description");
+  const goalActive = settingBool("weekly_goal_active");
+  const goalMinAccounts = settingNum("weekly_goal_min_accounts", 10);
+  const goalMinReferrals = settingNum("weekly_goal_min_referrals", 3);
+  const goalPrizeDesc = settingStr("weekly_goal_prize_description");
+
+  // My validated referrals this week
+  const referrals = (referralRes as { data: { captador_id: string; total_validated: number }[] | null }).data ?? [];
+  const myReferrals = referrals.find((r) => r.captador_id === profileId);
+  const myWeekReferrals = myReferrals ? Number(myReferrals.total_validated) : 0;
 
   const todayRanking = ((todayRes.data ?? []) as CaptadorRanking[])
     .filter((r) => Number(r.completed_accounts) > 0)
@@ -64,6 +92,7 @@ export async function CaptadorRankingWidget({ profileId }: { profileId: string }
   const myWeekPos = weekRanking.findIndex((r) => r.captador_id === profileId) + 1;
   const myWeekRow = weekRanking.find((r) => r.captador_id === profileId);
   const myWeekCompleted = myWeekRow ? Number(myWeekRow.completed_accounts) : 0;
+  const goalMet = goalActive && myWeekCompleted >= goalMinAccounts && myWeekReferrals >= goalMinReferrals;
 
   const todayTop3 = todayRanking.slice(0, 3);
   const weekTop3 = weekRanking.slice(0, 3);
@@ -76,6 +105,51 @@ export async function CaptadorRankingWidget({ profileId }: { profileId: string }
           <p className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-400">Prêmio de hoje</p>
           <p className="mt-1 text-base font-black text-white">🎁 {prizeDesc}</p>
           <p className="mt-1 text-xs font-semibold text-emerald-300">Quem trouxer mais contas hoje ganha!</p>
+        </div>
+      ) : null}
+
+      {/* Weekly prize banner */}
+      {weeklyPrizeActive && weeklyPrizeDesc ? (
+        <div className="rounded-[2rem] border border-violet-400/40 bg-gradient-to-br from-violet-500/20 to-purple-600/10 px-5 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-violet-400">Prêmio da semana</p>
+          <p className="mt-1 text-base font-black text-white">🏆 {weeklyPrizeDesc}</p>
+          <p className="mt-1 text-xs font-semibold text-violet-300">Quem trouxer mais contas esta semana ganha!</p>
+        </div>
+      ) : null}
+
+      {/* Weekly goal */}
+      {goalActive && goalPrizeDesc ? (
+        <div className={`rounded-[2rem] border px-5 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl ${
+          goalMet
+            ? "border-[#00E07A]/40 bg-gradient-to-br from-[#00E07A]/20 to-emerald-600/10"
+            : "border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-amber-700/5"
+        }`}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-amber-400">Meta da semana</p>
+              <p className="mt-1 text-sm font-black text-white">
+                {goalMet ? "✅ Meta batida!" : "🎯 Bata a meta e ganhe"}
+              </p>
+              <p className="mt-0.5 text-xs font-bold text-amber-200">{goalPrizeDesc}</p>
+            </div>
+            {goalMet ? (
+              <span className="shrink-0 rounded-full bg-[#00E07A]/20 px-3 py-1 text-xs font-black text-[#16F28A]">CONQUISTADO</span>
+            ) : null}
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className={`rounded-2xl border px-3 py-2 text-center ${myWeekCompleted >= goalMinAccounts ? "border-[#00E07A]/30 bg-[#00E07A]/10" : "border-white/[0.08] bg-white/[0.04]"}`}>
+              <p className={`text-lg font-black ${myWeekCompleted >= goalMinAccounts ? "text-[#16F28A]" : "text-white"}`}>
+                {myWeekCompleted}/{goalMinAccounts}
+              </p>
+              <p className="text-[10px] font-bold text-zinc-500">contas</p>
+            </div>
+            <div className={`rounded-2xl border px-3 py-2 text-center ${myWeekReferrals >= goalMinReferrals ? "border-[#00E07A]/30 bg-[#00E07A]/10" : "border-white/[0.08] bg-white/[0.04]"}`}>
+              <p className={`text-lg font-black ${myWeekReferrals >= goalMinReferrals ? "text-[#16F28A]" : "text-white"}`}>
+                {myWeekReferrals}/{goalMinReferrals}
+              </p>
+              <p className="text-[10px] font-bold text-zinc-500">indicações</p>
+            </div>
+          </div>
         </div>
       ) : null}
 

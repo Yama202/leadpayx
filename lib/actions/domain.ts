@@ -2158,3 +2158,77 @@ export async function setDailyPrizeAction(
 
   return { ok: true, message: active ? "Prêmio ativado e captadores notificados." : "Prêmio desativado." };
 }
+
+export async function setWeeklyPrizeAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+
+  const activeRaw = formData.get("active");
+  const active = activeRaw === "on" || activeRaw === "true";
+  const description = String(formData.get("description") ?? "").trim().slice(0, 200);
+
+  const adminClient = createAdminClient();
+  const { error } = await adminClient.from("app_settings").upsert(
+    [
+      { key: "weekly_prize_active", value: active ? "true" : "false", updated_by: null },
+      { key: "weekly_prize_description", value: description, updated_by: null },
+    ],
+    { onConflict: "key" },
+  );
+
+  if (error) return { ok: false, message: "Não foi possível salvar o prêmio semanal." };
+
+  if (active && description) {
+    try {
+      const { notifyAllCaptadoresWeeklyPrize } = await import("@/lib/web-push/send-captador-daily-stats");
+      await notifyAllCaptadoresWeeklyPrize(description);
+    } catch (pushErr) {
+      console.error("[setWeeklyPrizeAction] push failed", pushErr);
+    }
+  }
+
+  revalidatePath("/admin/configuracoes");
+  revalidatePath("/captador/dashboard");
+  return { ok: true, message: active ? "Prêmio semanal ativado e captadores notificados." : "Prêmio semanal desativado." };
+}
+
+export async function setWeeklyGoalAction(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+
+  const activeRaw = formData.get("active");
+  const active = activeRaw === "on" || activeRaw === "true";
+  const minAccounts = Math.max(1, Number(formData.get("minAccounts") ?? 10));
+  const minReferrals = Math.max(0, Number(formData.get("minReferrals") ?? 3));
+  const description = String(formData.get("description") ?? "").trim().slice(0, 200);
+
+  const adminClient = createAdminClient();
+  const { error } = await adminClient.from("app_settings").upsert(
+    [
+      { key: "weekly_goal_active", value: active ? "true" : "false", updated_by: null },
+      { key: "weekly_goal_min_accounts", value: String(minAccounts), updated_by: null },
+      { key: "weekly_goal_min_referrals", value: String(minReferrals), updated_by: null },
+      { key: "weekly_goal_prize_description", value: description, updated_by: null },
+    ],
+    { onConflict: "key" },
+  );
+
+  if (error) return { ok: false, message: "Não foi possível salvar a meta semanal." };
+
+  if (active && description) {
+    try {
+      const { notifyAllCaptadoresWeeklyGoal } = await import("@/lib/web-push/send-captador-daily-stats");
+      await notifyAllCaptadoresWeeklyGoal(description, minAccounts, minReferrals);
+    } catch (pushErr) {
+      console.error("[setWeeklyGoalAction] push failed", pushErr);
+    }
+  }
+
+  revalidatePath("/admin/configuracoes");
+  revalidatePath("/captador/dashboard");
+  return { ok: true, message: active ? "Meta semanal ativada e captadores notificados." : "Meta semanal desativada." };
+}
