@@ -80,6 +80,8 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
   );
   const [wrongPwAccountId, setWrongPwAccountId] = useState<string>(() => ordered[0]?.id ?? "");
   const [rejectedAccountId, setRejectedAccountId] = useState<string>(() => ordered[0]?.id ?? "");
+  const [balanceInitial, setBalanceInitial] = useState("");
+  const [balanceFinal, setBalanceFinal] = useState("");
   const baseId = useId();
   const canReject = ordered.some((a) => operatorCanProgressAccount(a.status));
   const reasonLegendId = `${baseId}-reject-legend`;
@@ -280,36 +282,59 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
                   required
                   rows={4}
                 />
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3 space-y-3">
-                  <p className="text-xs font-bold text-zinc-400">Saldo da conta (opcional)</p>
-                  <p className="text-xs text-zinc-600 leading-5">
-                    Preenche se houve diferença entre o depósito inicial e o saldo final. O admin usa para calcular o valor justo a pagar.
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="block">
-                      <span className="text-xs font-semibold text-zinc-300">Saldo inicial (R$)</span>
-                      <input
-                        className="mt-1.5 min-h-10 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
-                        min="0"
-                        name="balanceInitialBrl"
-                        placeholder="ex: 60.00"
-                        step="0.01"
-                        type="number"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-semibold text-zinc-300">Saldo após operação (R$)</span>
-                      <input
-                        className="mt-1.5 min-h-10 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
-                        min="0"
-                        name="balanceFinalBrl"
-                        placeholder="ex: 70.00"
-                        step="0.01"
-                        type="number"
-                      />
-                    </label>
-                  </div>
-                </div>
+                {(() => {
+                  const ini = parseFloat(balanceInitial);
+                  const fin = parseFloat(balanceFinal);
+                  const diff = !isNaN(ini) && !isNaN(fin) ? fin - ini : null;
+                  return (
+                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3 space-y-3">
+                      <p className="text-xs font-bold text-zinc-400">Saldo da conta (opcional)</p>
+                      <div className="rounded-xl border border-sky-400/20 bg-sky-400/[0.06] px-3 py-2.5 text-xs leading-5 text-sky-200/80 space-y-1">
+                        <p className="font-bold text-sky-200">Como preencher:</p>
+                        <p>• <span className="font-semibold text-white">Saldo inicial</span> = quanto estava na conta quando você começou a operar</p>
+                        <p>• <span className="font-semibold text-white">Saldo após operação</span> = quanto ficou na conta depois de todas as apostas</p>
+                        <p className="pt-0.5 text-sky-300/70">Ex: começou com R$ 65 e terminou com R$ 81 → o admin vê ajuste de <span className="font-black text-[#16F28A]">+R$ 16</span> e paga o captador correto.</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="block">
+                          <span className="text-xs font-semibold text-zinc-300">Saldo inicial (R$)</span>
+                          <input
+                            className="mt-1.5 min-h-10 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
+                            min="0"
+                            name="balanceInitialBrl"
+                            onChange={(e) => setBalanceInitial(e.target.value)}
+                            placeholder="ex: 65.00"
+                            step="0.01"
+                            type="number"
+                            value={balanceInitial}
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-xs font-semibold text-zinc-300">Saldo após operação (R$)</span>
+                          <input
+                            className="mt-1.5 min-h-10 w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#00E07A] focus:ring-2 focus:ring-[#00E07A]/10"
+                            min="0"
+                            name="balanceFinalBrl"
+                            onChange={(e) => setBalanceFinal(e.target.value)}
+                            placeholder="ex: 81.00"
+                            step="0.01"
+                            type="number"
+                            value={balanceFinal}
+                          />
+                        </label>
+                      </div>
+                      {diff !== null ? (
+                        <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-black ${diff >= 0 ? "border-[#00E07A]/25 bg-[#00E07A]/[0.07] text-[#16F28A]" : "border-rose-400/25 bg-rose-400/[0.07] text-rose-300"}`}>
+                          <span>Ajuste calculado:</span>
+                          <span>{diff >= 0 ? "+" : ""}R$ {diff.toFixed(2).replace(".", ",")}</span>
+                          <span className="font-normal text-zinc-500 ml-1">
+                            {diff > 0 ? "← conta lucrou ✓" : diff < 0 ? "← conta perdeu" : "← sem diferença"}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()}
               </fieldset>
             )}
             <SubmitButton pendingLabel="A finalizar ciclo…">Finalizar ciclo</SubmitButton>
