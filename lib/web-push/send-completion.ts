@@ -62,16 +62,19 @@ export async function buildCaptadorCompletionPushPayload(accountId: string, capt
 
   const { data: accountRow } = await admin
     .from("accounts")
-    .select("account_identifier")
+    .select("account_identifier,promotion_offer_name")
     .eq("id", accountId)
     .maybeSingle();
 
   const label = accountRow?.account_identifier?.trim() || "—";
+  const offerName = (accountRow as { promotion_offer_name?: string | null } | null)?.promotion_offer_name?.trim() || null;
   const valueStr = toCurrency(resolved);
 
   return {
-    title: "💚 Comissão creditada!",
-    body: `${valueStr} na conta · ${label} · valor da sua comissão confirmado pela operação.`,
+    title: "💰 Comissão Creditada!",
+    body: offerName
+      ? `Você recebeu ${valueStr} de comissão CPA na ${offerName.toUpperCase()}! Conta: ${label}`
+      : `Você recebeu ${valueStr} de comissão! Conta: ${label}`,
     data: {
       accountId,
       commissionBrl: resolved,
@@ -137,10 +140,20 @@ export async function notifyCaptadorOnAccountCompletionPush(opts: {
     return;
   }
 
-  const payload = await buildCaptadorCompletionPushPayload(opts.accountId, captadorId);
-  if (!payload) {
+  const commissionPayload = await buildCaptadorCompletionPushPayload(opts.accountId, captadorId);
+  if (!commissionPayload) {
     return;
   }
+
+  // "Conta operada" notification — sent first, before commission
+  const accountOperadaPayload = JSON.stringify({
+    title: "✅ Conta Operada!",
+    body: `${commissionPayload.data.accountIdentifier ?? "—"} foi finalizada pela operação. Acesse o app para solicitar pagamento.`,
+    data: {
+      url: commissionPayload.data.url,
+      tag: `account-operada-${opts.accountId}`,
+    },
+  });
 
   webpush.setVapidDetails(vapid.contact, vapid.publicKey, vapid.privateKey);
 
@@ -154,7 +167,7 @@ export async function notifyCaptadorOnAccountCompletionPush(opts: {
     return;
   }
 
-  const body = JSON.stringify(payload);
+  const body = JSON.stringify(commissionPayload);
   const targeted = subscriptions?.length ?? 0;
 
   for (const row of subscriptions ?? []) {
@@ -166,6 +179,12 @@ export async function notifyCaptadorOnAccountCompletionPush(opts: {
       },
     };
 
+    // 1st push: conta operada
+    try {
+      await webpush.sendNotification(pushSub as webpush.PushSubscription, accountOperadaPayload, { TTL: 86_400 });
+    } catch { /* silent — commission push below is the critical one */ }
+
+    // 2nd push: comissão creditada
     try {
       await webpush.sendNotification(pushSub as webpush.PushSubscription, body, {
         TTL: 86_400,

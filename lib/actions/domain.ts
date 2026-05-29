@@ -797,6 +797,8 @@ export async function processPayoutAction(
       p_payout_amount: effectivePayout,
       p_amount_paid: amountPaid,
     });
+    const { notifyCaptadorPayoutCompletedPush } = await import("@/lib/web-push/send-payout-completion");
+    await notifyCaptadorPayoutCompletedPush(payoutRow.user_id, amountPaid).catch(() => {});
   }
 
   revalidatePath("/admin/pagamentos");
