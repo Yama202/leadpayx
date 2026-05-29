@@ -14,8 +14,21 @@ create index if not exists operator_web_push_subscriptions_user_id_idx
 
 alter table public.operator_web_push_subscriptions enable row level security;
 
-create policy "operator own push subscriptions"
-  on public.operator_web_push_subscriptions
-  for all to authenticated
-  using (user_id = auth.uid() and public.current_user_role() in ('operator', 'admin'))
-  with check (user_id = auth.uid() and public.current_user_role() in ('operator', 'admin'));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'operator_web_push_subscriptions'
+      and policyname = 'operator own push subscriptions'
+  ) then
+    execute $p$
+      create policy "operator own push subscriptions"
+        on public.operator_web_push_subscriptions
+        for all to authenticated
+        using (user_id = auth.uid() and public.current_user_role() in ('operator', 'admin'))
+        with check (user_id = auth.uid() and public.current_user_role() in ('operator', 'admin'))
+    $p$;
+  end if;
+end;
+$$;

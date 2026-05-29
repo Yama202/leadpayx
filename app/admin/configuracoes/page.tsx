@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdminPushSettings } from "@/components/admin/admin-push-settings";
 import { PrefixTestAccountsPurgePanel } from "@/components/admin/prefix-test-accounts-purge";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,16 @@ export default async function AdminConfiguracoesPage({
         created_at: string;
       }[]
     >();
+  const { count: pushSubscriptionCount } = await supabase
+    .from("admin_web_push_subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", profile.id);
+
+  const pushPublicKey =
+    typeof process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY === "string"
+      ? process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
+      : null;
+
   const values = Object.fromEntries(
     (settings ?? []).map((setting) => [setting.key, setting.value]),
   );
@@ -269,7 +280,11 @@ export default async function AdminConfiguracoesPage({
           </div>
         </aside>
 
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-2 space-y-4">
+          <AdminPushSettings
+            subscriptionCountServer={pushSubscriptionCount ?? 0}
+            vapidPublicKey={pushPublicKey}
+          />
           <PrefixTestAccountsPurgePanel />
         </div>
       </div>

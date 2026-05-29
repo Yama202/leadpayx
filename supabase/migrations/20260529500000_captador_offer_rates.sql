@@ -10,7 +10,7 @@ alter table public.registration_links
   check (captador_commission_override is null or captador_commission_override > 0);
 
 -- ── Tabela ────────────────────────────────────────────────────────────────────
-create table public.captador_offer_rates (
+create table if not exists public.captador_offer_rates (
   id           uuid primary key default gen_random_uuid(),
   captador_id  uuid not null references public.profiles(id) on delete cascade,
   offer_id     uuid not null references public.promotion_offers(id) on delete cascade,
@@ -21,17 +21,30 @@ create table public.captador_offer_rates (
   constraint captador_offer_rates_unique unique (captador_id, offer_id)
 );
 
-create index captador_offer_rates_captador_idx on public.captador_offer_rates(captador_id);
+create index if not exists captador_offer_rates_captador_idx on public.captador_offer_rates(captador_id);
 
 -- ── RLS ───────────────────────────────────────────────────────────────────────
 alter table public.captador_offer_rates enable row level security;
 
-create policy "admin full access"
-  on public.captador_offer_rates
-  for all
-  to authenticated
-  using (public.is_admin())
-  with check (public.is_admin());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'captador_offer_rates'
+      and policyname = 'admin full access'
+  ) then
+    execute $p$
+      create policy "admin full access"
+        on public.captador_offer_rates
+        for all
+        to authenticated
+        using (public.is_admin())
+        with check (public.is_admin())
+    $p$;
+  end if;
+end;
+$$;
 
 -- ── RPC: upsert ──────────────────────────────────────────────────────────────
 create or replace function public.set_captador_offer_rate(

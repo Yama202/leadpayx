@@ -2,6 +2,8 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 
 import { AccountCard } from "@/components/domain/account-card";
+import { AccountTimeline } from "@/components/admin/account-timeline";
+import type { AccountAuditEvent } from "@/components/admin/account-timeline";
 import { RoleBasedLayout } from "@/components/layout/role-based-layout";
 import { EmptyState } from "@/components/ui/cards";
 import { operationalCredentialsFromAccount } from "@/lib/account-operational";
@@ -150,13 +152,31 @@ export default async function AdminContasPage({
   }
 
   const captadorIds = [...new Set(list.map((account) => account.captador_id).filter(Boolean))] as string[];
+  const accountIds = list.map((a) => a.id);
 
-  const [printUrls, profilesRes] = await Promise.all([
+  const [printUrls, profilesRes, auditRes] = await Promise.all([
     accountPrintSignedUrlMap(supabase, list),
     captadorIds.length
       ? supabase.from("profiles").select("id,name,pix_key").in("id", captadorIds)
       : Promise.resolve({ data: [] as { id: string; name: string | null; pix_key: string | null }[], error: null }),
+    accountIds.length
+      ? supabase
+          .from("audit_logs")
+          .select("id,action,metadata,created_at,user_id,entity_id")
+          .eq("entity_type", "account")
+          .in("entity_id", accountIds)
+          .order("created_at", { ascending: true })
+          .returns<(AccountAuditEvent & { entity_id: string })[]>()
+      : Promise.resolve({ data: [] as (AccountAuditEvent & { entity_id: string })[], error: null }),
   ]);
+
+  const timelineByAccountId = new Map<string, AccountAuditEvent[]>();
+  for (const ev of auditRes.data ?? []) {
+    const key = ev.entity_id;
+    const events = timelineByAccountId.get(key) ?? [];
+    events.push(ev);
+    timelineByAccountId.set(key, events);
+  }
 
   const captadorProfiles = profilesRes.data ?? [];
   const captadorPixMap = new Map(captadorProfiles.map((p) => [p.id, p.pix_key ?? null]));
@@ -255,7 +275,9 @@ export default async function AdminContasPage({
               captadorPixQrDataUrl={captadorPixQrMap.get(account.captador_id) ?? null}
               key={account.id}
               operationalCredentials={operationalCredentialsFromAccount(account)}
-            />
+            >
+              <AccountTimeline events={timelineByAccountId.get(account.id) ?? []} />
+            </AccountCard>
           ))
         ) : (
           <EmptyState description="As contas enviadas aparecerão aqui." title="Sem contas" />

@@ -326,6 +326,16 @@ export async function submitAccountAction(
     console.error("[submitAccountAction] push operadores", pushErr);
   }
 
+  try {
+    const { notifyAdminsOnNewAccount } = await import("@/lib/web-push/send-admin-account-event");
+    await notifyAdminsOnNewAccount({
+      accountIdentifier: parsed.data.accountIdentifier,
+      captadorName: profile.name ?? null,
+    });
+  } catch (pushErr) {
+    console.error("[submitAccountAction] push admins", pushErr);
+  }
+
   return { ok: true, message: "Conta enviada para a fila. Quando houver ciclo completo, um operador apto recebe o lote." };
 }
 
@@ -501,6 +511,23 @@ export async function completeAccountAction(formData: FormData): Promise<void> {
     console.error("[completeAccountAction] push pós-finalização", pushErr);
   }
 
+  try {
+    const adminSupabase = await createAdminClient();
+    const { data: accRow } = await adminSupabase
+      .from("accounts")
+      .select("account_identifier,captador_id,profiles!accounts_captador_id_fkey(name)")
+      .eq("id", parsed.data.accountId)
+      .maybeSingle();
+    const captadorName = (accRow?.profiles as { name?: string | null } | null)?.name ?? null;
+    const { notifyAdminsOnAccountCompleted } = await import("@/lib/web-push/send-admin-account-event");
+    await notifyAdminsOnAccountCompleted({
+      accountIdentifier: accRow?.account_identifier ?? "",
+      captadorName,
+    });
+  } catch (pushErr) {
+    console.error("[completeAccountAction] push admins", pushErr);
+  }
+
   revalidatePath("/operador/dashboard");
   revalidatePath("/operador/contas");
   revalidatePath("/captador/minhas-contas");
@@ -665,6 +692,24 @@ export async function rejectAccountAction(
     });
   } catch (pushErr) {
     console.error("[rejectAccountAction] push pós-recusa", pushErr);
+  }
+
+  try {
+    const adminSupabase = await createAdminClient();
+    const { data: accRow } = await adminSupabase
+      .from("accounts")
+      .select("account_identifier,profiles!accounts_captador_id_fkey(name)")
+      .eq("id", parsed.data.accountId)
+      .maybeSingle();
+    const captadorName = (accRow?.profiles as { name?: string | null } | null)?.name ?? null;
+    const { notifyAdminsOnAccountRejected } = await import("@/lib/web-push/send-admin-account-event");
+    await notifyAdminsOnAccountRejected({
+      accountIdentifier: accRow?.account_identifier ?? "",
+      captadorName,
+      reason: parsed.data.reason,
+    });
+  } catch (pushErr) {
+    console.error("[rejectAccountAction] push admins", pushErr);
   }
 
   revalidatePath("/operador/dashboard");
