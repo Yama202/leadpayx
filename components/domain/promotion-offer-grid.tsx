@@ -1,3 +1,5 @@
+"use client";
+
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { LinkButton } from "@/components/ui/button";
 import type { PromotionOffer } from "@/lib/types";
