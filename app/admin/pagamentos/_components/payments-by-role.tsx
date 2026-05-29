@@ -474,8 +474,8 @@ export async function PaymentsByRoleView({
                   ) : null}
                   <form action={processPayoutFormAction} className="space-y-4">
                     <input name="payoutId" type="hidden" value={payout.id} />
-                    {/* effectiveAmount = calculado + ajuste; permite dedução correta da dívida na action */}
-                    <input name="effectiveAmount" type="hidden" value={suggestedAmount.toFixed(2)} />
+                    {/* effectiveAmount = calculado + ajuste; nunca negativo (schema min(0)) */}
+                    <input name="effectiveAmount" type="hidden" value={Math.max(0, suggestedAmount).toFixed(2)} />
                     <label className="block">
                       <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                         Valor pago (R$)
