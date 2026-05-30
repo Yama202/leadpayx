@@ -1000,6 +1000,31 @@ export async function adminNotifyCaptadorPendingAccountsAction(
   return { ok: true, message: `Lembrete enviado (${pending.length} pendência(s)).` };
 }
 
+export async function adminForceCompleteAccountAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const accountId = formData.get("accountId");
+  if (typeof accountId !== "string" || !accountId) {
+    return { ok: false, message: "Conta inválida." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_force_complete_account", {
+    target_account_id: accountId,
+  });
+
+  if (error) return { ok: false, message: `Não foi possível concluir: ${error.message}` };
+
+  revalidatePath("/admin/captadores");
+  revalidatePath("/admin/contas");
+  revalidatePath("/captador/minhas-contas");
+  revalidatePath("/captador/dashboard");
+  revalidatePath("/captador/avisos");
+  return { ok: true, message: "Conta concluída. Comissão gerada para o captador." };
+}
+
 export async function adminApproveCaptadorAction(
   _prev: ActionState,
   formData: FormData,

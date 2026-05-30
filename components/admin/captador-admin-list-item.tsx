@@ -1,4 +1,5 @@
 import React from "react";
+import { AdminForceCompleteButton } from "@/components/admin/admin-force-complete-button";
 import { AdminNotifyCaptadorButton } from "@/components/admin/admin-notify-captador-button";
 import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
 import { CaptadorLoanPanel } from "@/components/admin/captador-loan-panel";
@@ -171,6 +172,12 @@ export function CaptadorAdminListItem({
                     <span className="text-[11px] text-zinc-600">
                       {new Date(acc.created_at).toLocaleDateString("pt-BR")}
                     </span>
+                    {!["completed", "rejected", "rejected_no_balance", "rejected_no_facial"].includes(acc.status) ? (
+                      <AdminForceCompleteButton
+                        accountId={acc.id}
+                        accountIdentifier={acc.account_identifier}
+                      />
+                    ) : null}
                   </div>
                 </div>
               ))}
