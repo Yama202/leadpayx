@@ -986,7 +986,8 @@ export async function adminNotifyCaptadorPendingAccountsAction(
   if (noFacial.length) parts.push(`${noFacial.length} conta(s) com selfie pendente (${noFacial.map((a) => a.account_identifier).join(", ")})`);
   if (wrongPw.length) parts.push(`${wrongPw.length} conta(s) com senha incorreta (${wrongPw.map((a) => a.account_identifier).join(", ")})`);
 
-  const { error } = await supabase.from("user_notifications").insert({
+  const adminSupabase = await createAdminClient();
+  const { error } = await adminSupabase.from("user_notifications").insert({
     user_id: captadorId,
     kind: "admin_reminder",
     title: "Ação necessária — contas com pendência",
