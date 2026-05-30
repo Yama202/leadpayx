@@ -585,15 +585,9 @@ export async function completeOperatorCycleAction(formData: FormData): Promise<v
     message = twoAccountCycleBalanceDestination(label);
   }
 
-  const isSingleAccount = orderedAccountIds.length === 1;
   const completionResults = await Promise.all(
     orderedAccountIds.map((accountId) =>
-      completeAccount(
-        accountId,
-        message,
-        isSingleAccount ? balanceInitialBrl : undefined,
-        isSingleAccount ? balanceFinalBrl : undefined,
-      ),
+      completeAccount(accountId, message, balanceInitialBrl, balanceFinalBrl),
     ),
   );
 

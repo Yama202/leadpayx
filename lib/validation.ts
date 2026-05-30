@@ -186,15 +186,23 @@ export const completeOperatorCycleSchema = z
     ),
     balanceInitialBrl: z.preprocess(
       (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
-      z.number().min(0).optional(),
+      z.number().min(0),
     ),
     balanceFinalBrl: z.preprocess(
       (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
-      z.number().min(0).optional(),
+      z.number().min(0),
     ),
   })
   .superRefine((data, ctx) => {
     const n = data.orderedAccountIds.length;
+
+    if (data.balanceInitialBrl === undefined || data.balanceInitialBrl === null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o saldo inicial da conta.", path: ["balanceInitialBrl"] });
+    }
+    if (data.balanceFinalBrl === undefined || data.balanceFinalBrl === null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o saldo após operação.", path: ["balanceFinalBrl"] });
+    }
+
     if (n === 1) {
       if (!data.balanceDestination) {
         ctx.addIssue({
