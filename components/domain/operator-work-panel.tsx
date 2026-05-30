@@ -80,6 +80,7 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
   );
   const [wrongPwAccountId, setWrongPwAccountId] = useState<string>(() => ordered[0]?.id ?? "");
   const [rejectedAccountId, setRejectedAccountId] = useState<string>(() => ordered[0]?.id ?? "");
+  const lastKnownWrongPwIdentifierRef = useRef<string>("");
   const [balanceInitial, setBalanceInitial] = useState("");
   const [balanceFinal, setBalanceFinal] = useState("");
   const baseId = useId();
@@ -118,14 +119,49 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
   // Só atualiza enquanto rejectState.ok é false: após recusa bem-sucedida, congela o identificador.
   if (currentIdentifier && !rejectState.ok) lastKnownIdentifierRef.current = currentIdentifier;
 
+  // Congela o identificador da conta marcada com senha incorreta.
+  const currentWrongPwIdentifier =
+    ordered.find((a) => a.id === wrongPwAccountId)?.account_identifier ??
+    ordered[0]?.account_identifier ??
+    "";
+  if (currentWrongPwIdentifier && !wrongPwState.ok) lastKnownWrongPwIdentifierRef.current = currentWrongPwIdentifier;
+
   // Mantém montado enquanto há notificação WhatsApp pendente de exibir ao operador.
   const hasPostRejectWhatsapp =
     rejectState.ok &&
     !!captadorWhatsapp &&
     (rejectPreset === "no_facial" || rejectPreset === "no_balance" || rejectPreset === "other");
 
-  if (!ordered.length && !hasPostRejectWhatsapp) {
+  const hasPostWrongPwWhatsapp = wrongPwState.ok && !!captadorWhatsapp;
+
+  if (!ordered.length && !hasPostRejectWhatsapp && !hasPostWrongPwWhatsapp) {
     return null;
+  }
+
+  // Após senha incorreta com 1 conta: ordered fica vazio mas o botão WhatsApp precisa aparecer.
+  if (!ordered.length && hasPostWrongPwWhatsapp) {
+    const identifier = lastKnownWrongPwIdentifierRef.current;
+    const firstName = captadorName ? ` ${captadorName.split(" ")[0]}` : "";
+    const msg = `Oi${firstName}! A senha da sua conta *${identifier}* está incorreta. Acesse "Minhas contas" no LeadPay, insira a senha certa e reenvie para a fila.`;
+    const link = whatsappLink(captadorWhatsapp, msg);
+    if (!link) return null;
+    return (
+      <section
+        aria-label="Ciclo operacional atual"
+        className="mt-6 rounded-[2rem] border border-amber-400/25 bg-amber-400/[0.06] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl"
+        role="region"
+      >
+        <p className="mb-3 text-sm font-semibold text-amber-300">Captador notificado para corrigir a senha.</p>
+        <a
+          className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366]/20 py-3 text-sm font-black text-[#25D366] ring-1 ring-[#25D366]/30 hover:bg-[#25D366]/30 transition-colors"
+          href={link}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          WhatsApp — avisar captador
+        </a>
+      </section>
+    );
   }
 
   // Após recusa de ciclo com 1 conta: ordered fica vazio mas o botão WhatsApp precisa aparecer.
@@ -537,6 +573,22 @@ export function OperatorWorkPanel({ accounts, captadorName, captadorWhatsapp }: 
                 {wrongPwState.message}
               </p>
             ) : null}
+            {wrongPwState.ok && captadorWhatsapp ? (() => {
+              const identifier = lastKnownWrongPwIdentifierRef.current;
+              const firstName = captadorName ? ` ${captadorName.split(" ")[0]}` : "";
+              const msg = `Oi${firstName}! A senha da sua conta *${identifier}* está incorreta. Acesse "Minhas contas" no LeadPay, insira a senha certa e reenvie para a fila.`;
+              const link = whatsappLink(captadorWhatsapp, msg);
+              return link ? (
+                <a
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366]/20 py-3 text-sm font-black text-[#25D366] ring-1 ring-[#25D366]/30 hover:bg-[#25D366]/30 transition-colors"
+                  href={link}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  WhatsApp — avisar captador
+                </a>
+              ) : null;
+            })() : null}
             <Button className="w-full" type="submit" variant="secondary">
               Notificar captador — senha incorreta
             </Button>

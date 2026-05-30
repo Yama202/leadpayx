@@ -1,4 +1,5 @@
 import React from "react";
+import { AdminNotifyCaptadorButton } from "@/components/admin/admin-notify-captador-button";
 import { ApproveCaptadorButton } from "@/components/admin/approve-captador-button";
 import { CaptadorLoanPanel } from "@/components/admin/captador-loan-panel";
 import { CaptadorOfferRatesPanel } from "@/components/admin/captador-offer-rates-panel";
@@ -146,9 +147,16 @@ export function CaptadorAdminListItem({
         ) : null}
         {accounts.length > 0 ? (
           <div className="mb-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] overflow-hidden">
-            <p className="px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500 border-b border-white/[0.06]">
-              Contas enviadas · {accounts.length}
-            </p>
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/[0.06]">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                Contas enviadas · {accounts.length}
+              </p>
+              {accounts.some((a) =>
+                ["rejected_no_balance", "rejected_no_facial", "wrong_password"].includes(a.status),
+              ) ? (
+                <AdminNotifyCaptadorButton captadorId={profile.id} />
+              ) : null}
+            </div>
             <div className="divide-y divide-white/[0.05]">
               {accounts.map((acc) => (
                 <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4" key={acc.id}>

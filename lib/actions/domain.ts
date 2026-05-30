@@ -957,6 +957,48 @@ export async function ensurePayoutFormAction(): Promise<void> {
   await ensurePayoutAction();
 }
 
+export async function adminNotifyCaptadorPendingAccountsAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireRole(["admin"]);
+  const captadorId = formData.get("captadorId");
+  if (typeof captadorId !== "string" || !captadorId) {
+    return { ok: false, message: "Captador inválido." };
+  }
+
+  const supabase = await createClient();
+  const { data: pending } = await supabase
+    .from("accounts")
+    .select("id, account_identifier, status")
+    .eq("captador_id", captadorId)
+    .in("status", ["rejected_no_balance", "rejected_no_facial", "wrong_password"]);
+
+  if (!pending?.length) {
+    return { ok: false, message: "Nenhuma conta com pendência encontrada." };
+  }
+
+  const noBalance = pending.filter((a) => a.status === "rejected_no_balance");
+  const noFacial = pending.filter((a) => a.status === "rejected_no_facial");
+  const wrongPw = pending.filter((a) => a.status === "wrong_password");
+  const parts: string[] = [];
+  if (noBalance.length) parts.push(`${noBalance.length} conta(s) sem saldo (${noBalance.map((a) => a.account_identifier).join(", ")})`);
+  if (noFacial.length) parts.push(`${noFacial.length} conta(s) com selfie pendente (${noFacial.map((a) => a.account_identifier).join(", ")})`);
+  if (wrongPw.length) parts.push(`${wrongPw.length} conta(s) com senha incorreta (${wrongPw.map((a) => a.account_identifier).join(", ")})`);
+
+  const { error } = await supabase.from("user_notifications").insert({
+    user_id: captadorId,
+    kind: "admin_reminder",
+    title: "Ação necessária — contas com pendência",
+    body: `Pendências: ${parts.join("; ")}. Acesse "Minhas contas" no LeadPay, corrija e reenvie para a fila.`,
+    metadata: { account_ids: pending.map((a) => a.id) },
+  });
+
+  if (error) return { ok: false, message: "Erro ao enviar notificação." };
+
+  return { ok: true, message: `Lembrete enviado (${pending.length} pendência(s)).` };
+}
+
 export async function adminApproveCaptadorAction(
   _prev: ActionState,
   formData: FormData,
