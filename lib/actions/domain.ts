@@ -137,6 +137,18 @@ export async function submitAccountAction(
   stateOrFormData: ActionState | FormData = initialActionState,
   maybeFormData?: FormData,
 ): Promise<ActionState> {
+  try {
+    return await _submitAccountActionInner(stateOrFormData, maybeFormData);
+  } catch (err) {
+    console.error("[submitAccountAction] uncaught exception", err);
+    return { ok: false, message: "Ocorreu um erro inesperado ao enviar a conta. Tente novamente." };
+  }
+}
+
+async function _submitAccountActionInner(
+  stateOrFormData: ActionState | FormData = initialActionState,
+  maybeFormData?: FormData,
+): Promise<ActionState> {
   const formData = maybeFormData ?? (stateOrFormData as FormData);
   const profile = await requireRole(["captador"]);
   const parsed = accountSchema.safeParse(formDataStringFields(formData));
@@ -308,11 +320,15 @@ export async function submitAccountAction(
     return { ok: false, message: userMessage };
   }
 
-  await createAuditLog("account.submitted", "account", data.id, {
-    has_print: Boolean(accountPrintPath),
-    declared_deposit_brl: declaredDeposit,
-    min_deposit_required_brl: minDepositRequired > 0 ? minDepositRequired : null,
-  });
+  try {
+    await createAuditLog("account.submitted", "account", data.id, {
+      has_print: Boolean(accountPrintPath),
+      declared_deposit_brl: declaredDeposit,
+      min_deposit_required_brl: minDepositRequired > 0 ? minDepositRequired : null,
+    });
+  } catch (auditErr) {
+    console.error("[submitAccountAction] audit log", auditErr);
+  }
   revalidatePath("/captador/dashboard");
   revalidatePath("/captador/minhas-contas");
   revalidatePath("/captador/enviar-conta");

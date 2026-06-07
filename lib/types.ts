@@ -87,7 +87,14 @@ export type Earning = {
 export type UserNotification = {
   id: string;
   user_id: string;
-  kind: "account_approved";
+  kind:
+    | "account_approved"
+    | "account_completed"
+    | "account_rejected"
+    | "payout_completed"
+    | "referral_bonus"
+    | "wrong_password"
+    | "admin_reminder";
   title: string;
   body: string;
   metadata: {

@@ -8,6 +8,7 @@ import { CaptadorDepositBriefBanner } from "@/components/domain/captador-deposit
 import { CaptadorWhatsappGroupAlert } from "@/components/domain/captador-whatsapp-group-alert";
 import { CaptadorRankingWidget } from "@/components/domain/captador-ranking-widget";
 import { RequeueAccountForm } from "@/components/domain/requeue-account-form";
+import { WrongPasswordCorrectionForm } from "@/components/domain/wrong-password-correction-form";
 import { LinkButton } from "@/components/ui/button";
 import { DashboardCard, EmptyState } from "@/components/ui/cards";
 import { fetchActivePromotionOffers } from "@/lib/queries/promotion-offers";
@@ -97,10 +98,10 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
         .returns<CaptadorLoan[]>(),
       supabase
         .from("accounts")
-        .select("id,account_identifier,status,rejected_at")
+        .select("id,account_identifier,status,updated_at")
         .eq("captador_id", profile.id)
-        .in("status", ["rejected_no_facial", "rejected_no_balance"])
-        .order("rejected_at", { ascending: false }),
+        .in("status", ["rejected_no_facial", "rejected_no_balance", "wrong_password"])
+        .order("updated_at", { ascending: false }),
     ]);
   let accounts = accountsPrimary.data;
 
@@ -169,7 +170,7 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
       details: requeueAccountsRes.error.details,
     });
   }
-  const requeueAccounts = (requeueAccountsRes.data ?? []) as Array<{ id: string; account_identifier: string; status: "rejected_no_facial" | "rejected_no_balance" }>;
+  const requeueAccounts = (requeueAccountsRes.data ?? []) as Array<{ id: string; account_identifier: string; status: "rejected_no_facial" | "rejected_no_balance" | "wrong_password" }>;
   const pushPublicKey =
     typeof process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY === "string"
       ? process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY
@@ -195,7 +196,11 @@ export async function CaptadorDashboardData({ profile }: { profile: Profile }) {
             {requeueAccounts.map((acc) => (
               <div className="rounded-2xl border border-amber-400/20 bg-black/20 p-4" key={acc.id}>
                 <p className="font-mono text-sm font-bold text-white">{acc.account_identifier}</p>
-                <RequeueAccountForm accountId={acc.id} status={acc.status} />
+                {acc.status === "wrong_password" ? (
+                  <WrongPasswordCorrectionForm accountId={acc.id} />
+                ) : (
+                  <RequeueAccountForm accountId={acc.id} status={acc.status} />
+                )}
               </div>
             ))}
           </div>
