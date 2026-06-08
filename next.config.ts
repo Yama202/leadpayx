@@ -6,6 +6,9 @@ const scriptSrc =
     : "'self' 'unsafe-inline'";
 
 const nextConfig: NextConfig = {
+  serverActions: {
+    bodySizeLimit: "5mb",
+  },
   poweredByHeader: false,
   compress: true,
   images: {
